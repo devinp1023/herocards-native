@@ -190,9 +190,28 @@ brew install node python watchman pandoc gh
 # 3. Claude Code CLI
 npm install -g @anthropic-ai/claude-code
 
-# 4. Project dependencies (after cloning the repo)
+# 4. Clone the original web app (needed as porting reference — must be sibling folder)
+# Run this from the same parent directory as herocards-native
+git clone https://github.com/devinp1023/herocards.git
+
+# 5. Project dependencies (in herocards-native)
 npm install
 ```
+
+### Expected folder structure on Mac
+```
+~/          (or wherever you keep projects)
+├── herocards/           ← original web app (porting reference)
+│   └── src/
+│       ├── data.js          ← ALL_CARDS, constants, Firebase init
+│       ├── components.js    ← HeroCard, AuthScreen, all UI components
+│       ├── game.js          ← Game + App, all screen logic
+│       ├── battle-engine.js ← pure JS battle engine
+│       └── battle-ui.js     ← live battle UI
+└── herocards-native/    ← this repo (React Native app)
+```
+
+Claude Code will read files from `../herocards/src/` when porting components and logic. If you clone to a different location, update the paths accordingly.
 
 ### What each tool is for
 | Tool | Why |
