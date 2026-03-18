@@ -164,3 +164,48 @@ Key rules:
 3. TypeScript check: `npx tsc --noEmit`
 4. Confirm app runs in Expo Go / iOS Simulator
 5. Commit and push (with user's permission)
+
+---
+
+## Mac Environment Setup
+
+**If this is the first session on a new Mac, run this setup before doing anything else.**
+
+### Manual steps (require App Store — Claude Code cannot do these)
+1. Install **Xcode** from the Mac App Store
+2. Open Xcode once to accept the license agreement
+3. Run `xcode-select --install` in Terminal to install Command Line Tools
+4. Install **Expo Go** on iPhone from the App Store
+
+### Automated setup (Claude Code can run all of these)
+Ask Claude Code: *"Set up my Mac for this project"* and it will run:
+
+```bash
+# 1. Homebrew (Mac package manager)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. Core tools
+brew install node python watchman pandoc gh
+
+# 3. Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# 4. Project dependencies (after cloning the repo)
+npm install
+```
+
+### What each tool is for
+| Tool | Why |
+|------|-----|
+| Homebrew | Mac package manager — installs everything else |
+| Node.js | Runs Metro bundler, npm, npx |
+| Python | Required for docx editing (tech spec + PRDs) |
+| Watchman | Facebook's file watcher — makes Metro faster and more reliable on Mac |
+| pandoc | Extracts text from .docx files cleanly (docx skill) |
+| GitHub CLI (`gh`) | Lets Claude Code push, create PRs, manage releases from terminal |
+| Claude Code CLI | The AI coding assistant itself |
+| Expo Go (iPhone) | Test the app on device by scanning QR code |
+| Xcode | iOS Simulator — press `i` in Metro to open without needing a phone |
+
+### Not needed until Session 16
+- **EAS CLI** (`npm install -g eas-cli`) — only for App Store build submission
