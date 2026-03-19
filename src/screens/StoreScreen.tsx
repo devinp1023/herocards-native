@@ -7,12 +7,14 @@ import {
 } from 'react-native';
 import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
-import { RC, TYPE_COLORS } from '../data/constants';
+import { RC } from '../data/constants';
 import {
   AVATARS, LEVEL_AVATARS, AVATAR_TIER_COLORS,
   PurchasableAvatar,
 } from '../data/packs';
 import { isOwned, getLevel } from '../hooks/useGameState';
+import { HeroCard } from '../components/HeroCard';
+import { CardWrapper } from '../components/CardWrapper';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -91,50 +93,7 @@ function SectionDivider({ label, color }: { label: string; color: string }) {
   );
 }
 
-// ── Mini card preview (card store) ────────────────────────────────────────────
-function CardPreview({ card }: { card: Card }) {
-  const cfg       = RC[card.rarity];
-  const typeColor = TYPE_COLORS[card.type] ?? '#888888';
-  return (
-    <View style={[cpStyles.card, { borderColor: cfg.color + '55' }]}>
-      <View style={[cpStyles.rarityStrip, { backgroundColor: cfg.color }]} />
-      <Text style={[cpStyles.rarityLabel, { color: cfg.color }]}>
-        {card.rarity.toUpperCase()}
-      </Text>
-      <Text style={cpStyles.name} numberOfLines={2}>{card.name}</Text>
-      <View style={[
-        cpStyles.typePill,
-        { backgroundColor: typeColor + '20', borderColor: typeColor + '60' },
-      ]}>
-        <Text style={[cpStyles.typeText, { color: typeColor }]}>
-          {card.type.toUpperCase()}
-        </Text>
-      </View>
-      <View style={cpStyles.statsRow}>
-        {([['PWR', card.power], ['DEF', card.defense], ['SPD', card.speed]] as const).map(
-          ([lbl, val]) => (
-            <View key={lbl} style={cpStyles.statBox}>
-              <Text style={cpStyles.statVal}>{val}</Text>
-              <Text style={cpStyles.statLbl}>{lbl}</Text>
-            </View>
-          ),
-        )}
-      </View>
-    </View>
-  );
-}
-const cpStyles = StyleSheet.create({
-  card:        { backgroundColor: '#0a0a1e', borderRadius: 12, borderWidth: 1.5, padding: 12, width: 130, overflow: 'hidden' },
-  rarityStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
-  rarityLabel: { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 1.5, marginTop: 7, marginBottom: 4 },
-  name:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#c0c8dc', letterSpacing: 0.3, lineHeight: 15, marginBottom: 8, minHeight: 30 },
-  typePill:    { alignSelf: 'flex-start', borderRadius: 4, borderWidth: 1, paddingHorizontal: 5, paddingVertical: 2, marginBottom: 10 },
-  typeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.5 },
-  statsRow:    { flexDirection: 'row', justifyContent: 'space-between' },
-  statBox:     { alignItems: 'center', flex: 1 },
-  statVal:     { fontFamily: 'Orbitron_900Black', fontSize: 12, color: '#c0c8dc' },
-  statLbl:     { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#404458', letterSpacing: 0.5 },
-});
+// Card store uses the real HeroCard at 0.45 scale via CardWrapper.
 
 // ── Avatar grid card ──────────────────────────────────────────────────────────
 function AvatarCard({
@@ -439,7 +398,9 @@ export default function StoreScreen() {
                 >
                   {/* Left rarity accent strip */}
                   <View style={[styles.offerAccent, { backgroundColor: cfg.color }]} />
-                  <CardPreview card={card} />
+                  <CardWrapper scale={0.45}>
+                    <HeroCard card={card} showShine />
+                  </CardWrapper>
                   <View style={styles.offerRight}>
                     <View style={[
                       styles.rarityPill,

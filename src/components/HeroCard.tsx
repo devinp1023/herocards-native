@@ -7,7 +7,7 @@
 //   - Tilt on touch: GestureDetector Pan → 3D transform on Animated.View
 
 import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Image as RNImage, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -27,8 +27,6 @@ import {
   LinearGradient,
   RadialGradient,
   vec,
-  Image,
-  useImage,
   Circle,
   Line,
   Text as SkText,
@@ -80,8 +78,7 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCardProps) {
-  const fonts     = useFontContext();
-  const heroImage = useImage(card.imageUrl ?? null);
+  const fonts = useFontContext();
 
   const cfg        = RC[card.rarity] ?? RC.Common;
   const typeColor  = TYPE_COLORS[card.type] ?? '#888888';
@@ -192,7 +189,7 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
           <Paint style="stroke" strokeWidth={1.5} color={typeColor} />
         </Circle>
 
-        {/* 7. Image window */}
+        {/* 7. Image window background (shows while loading or for cards without imageUrl) */}
         <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6} color="#000000" />
         {!card.imageUrl && (
           <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6}>
@@ -202,18 +199,11 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
             />
           </RoundedRect>
         )}
-        {heroImage && (
-          <Image image={heroImage} x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} fit="cover" />
+        {!card.imageUrl && (
+          <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6}>
+            <Paint style="stroke" strokeWidth={2} color={rarityColor + 'cc'} />
+          </RoundedRect>
         )}
-        <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6}>
-          <Paint style="stroke" strokeWidth={2} color={rarityColor + 'cc'} />
-        </RoundedRect>
-        <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={40} r={6}>
-          <LinearGradient
-            start={vec(PAD, IMG_Y)} end={vec(PAD, IMG_Y + 40)}
-            colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0)']}
-          />
-        </RoundedRect>
 
         {/* 8. Stats section */}
         <RoundedRect x={PAD} y={STATS_Y} width={INNER_W} height={STATS_H} r={6} color="rgba(0,0,0,0.65)" />
@@ -282,6 +272,32 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
         )}
 
       </Canvas>
+
+      {/* RN Image overlay — Skia's Image component can't render JSI host objects via
+          the static PictureRecorder path in Expo Go. RN Image renders remote URLs
+          natively and is positioned to match the image window coordinates exactly. */}
+      {card.imageUrl && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: PAD,
+            top: IMG_Y,
+            width: INNER_W,
+            height: IMG_H,
+            borderRadius: 6,
+            overflow: 'hidden',
+            borderWidth: 2,
+            borderColor: rarityColor + 'cc',
+          }}
+        >
+          <RNImage
+            source={{ uri: card.imageUrl }}
+            style={{ width: INNER_W, height: IMG_H }}
+            resizeMode="cover"
+          />
+        </View>
+      )}
     </Animated.View>
   );
 

@@ -16,9 +16,8 @@ import { useSession } from '../context/SessionContext';
 import { isOwned, totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS } from '../data/cards';
-import { RC } from '../data/constants';
-import { PACKS } from '../data/packs';
-import { PACK_COST } from '../data/constants';
+import { RC, PACK_COST } from '../data/constants';
+import { PACKS, AVATARS, LEVEL_AVATARS } from '../data/packs';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -117,15 +116,22 @@ export default function HomeScreen({ navigation }: Props) {
 
   const isMaxLevel = gs.level >= 100;
 
+  // Resolve active avatar symbol + color
+  const avatarData =
+    AVATARS.find(a => a.id === gs.activeAvatar) ??
+    LEVEL_AVATARS.find(a => a.id === gs.activeAvatar);
+  const avatarSymbol = avatarData?.symbol ?? username.charAt(0).toUpperCase();
+  const avatarColor  = avatarData?.color  ?? '#4fc3f7';
+
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile card ── */}
         <View style={styles.profileCard}>
-          {/* Avatar — initial in ring (emoji unreliable on Hermes) */}
-          <View style={styles.avatarRing}>
-            <Text style={styles.avatarInitial}>{username.charAt(0).toUpperCase()}</Text>
+          {/* Active avatar ring */}
+          <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
+            <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
           </View>
 
           {/* Username + level */}

@@ -3,13 +3,14 @@
 
 import React from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Platform,
+  View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
+import { auth } from '../firebase/config';
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
 function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
@@ -146,6 +147,17 @@ export default function ProfileScreen() {
           <Text style={styles.achSub}>Achievements, tiers, and unlock rewards</Text>
         </View>
 
+        <View style={styles.divider} />
+
+        {/* ── Log out ── */}
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() => auth.signOut()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logoutText}>LOG OUT</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
@@ -198,4 +210,13 @@ const styles = StyleSheet.create({
   achIconText: { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#404458', letterSpacing:1 },
   achTitle:    { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#606480', letterSpacing:0.5 },
   achSub:      { fontFamily:'Rajdhani_600SemiBold', fontSize:13, color:'#303050', textAlign:'center' },
+
+  // Log out
+  logoutBtn: {
+    alignItems:'center', justifyContent:'center',
+    paddingVertical:14, borderRadius:12,
+    borderWidth:1, borderColor:'#ef535033',
+    backgroundColor:'#ef535008', marginBottom:8,
+  },
+  logoutText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#ef5350', letterSpacing:2 },
 });
