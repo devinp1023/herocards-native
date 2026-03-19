@@ -32,7 +32,7 @@ import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
 import { RC, RO } from '../data/constants';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
-import { HeroCard } from '../components/HeroCard';
+import { MiniCard } from '../components/MiniCard';
 import { MissingCard } from '../components/MissingCard';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
@@ -275,7 +275,7 @@ export default function CollectionScreen({ navigation }: Props) {
       >
         <View>
           <CardWrapper scale={SCALE}>
-            {owned ? <HeroCard card={item} showShine /> : <MissingCard card={item} />}
+            {owned ? <MiniCard card={item} /> : <MissingCard card={item} />}
           </CardWrapper>
           {count > 1 && (
             <View style={styles.countBadge}>

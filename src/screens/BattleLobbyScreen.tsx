@@ -23,7 +23,7 @@ import {
 } from '../data/constants';
 import { isOwned } from '../hooks/useGameState';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
-import { HeroCard } from '../components/HeroCard';
+import { MiniCard } from '../components/MiniCard';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'BattleLobby'>;
 type Phase = 'deck' | 'opponent';
@@ -228,7 +228,7 @@ function DeckCardCell({ card, inDeck, canAdd, cooldowns, onToggle }: CellProps) 
     >
       <View style={{ opacity: dimmed ? 0.35 : 1 }}>
         <CardWrapper scale={SCALE}>
-          <HeroCard card={card} showShine={inDeck && (card.rarity === 'Legendary' || card.rarity === 'Epic')} />
+          <MiniCard card={card} />
         </CardWrapper>
       </View>
 
