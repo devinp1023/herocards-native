@@ -224,7 +224,7 @@ export default function App() {
 
   if (!fontsLoaded || !authReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#060610', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#010004', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#4fc3f7" size="large" />
       </View>
     );

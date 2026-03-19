@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
+  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import {
   createUserWithEmailAndPassword,
@@ -90,10 +90,12 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
     >
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Hero + title */}
-        <Text style={s.heroEmoji}>🦸</Text>
-        <Text style={[s.title, { fontFamily: FONTS.orbitronBlack }]}>HERO CARDS</Text>
-        <Text style={s.subtitle}>SUPERHERO COLLECTION</Text>
+        {/* Logo */}
+        <Image
+          source={require('../../assets/logo.png')}
+          style={s.logo}
+          resizeMode="contain"
+        />
 
         {/* Card */}
         <View style={s.card}>
@@ -195,14 +197,12 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
 }
 
 const s = StyleSheet.create({
-  root:             { flex:1, backgroundColor:'#060610' },
-  scroll:           { flexGrow:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, paddingVertical:52 },
+  root:             { flex:1, backgroundColor:'#010004' },
+  scroll:           { flexGrow:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, paddingVertical:24 },
 
-  heroEmoji:        { fontSize:80, marginBottom:16 },
-  title:            { fontSize:36, fontWeight:'900', color:'#4fc3f7', letterSpacing:3, marginBottom:6 },
-  subtitle:         { fontSize:14, color:'#d0d4e8', letterSpacing:3, fontFamily:'monospace', marginBottom:48 },
+  logo:             { width:380, height:240, marginBottom:0, backgroundColor:'#010004' },
 
-  card:             { width:'100%', maxWidth:360, backgroundColor:'#0a0a1e', borderRadius:22, padding:32, borderWidth:1, borderColor:'#12122a' },
+  card:             { width:'100%', maxWidth:360, backgroundColor:'#06060f', borderRadius:22, padding:32, borderWidth:1, borderColor:'#16163a' },
   toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:'#12122a' },
   toggleBtn:        { flex:1, paddingVertical:12, alignItems:'center', backgroundColor:'transparent' },
   toggleBtnActive:  { backgroundColor:'#4fc3f7' },
@@ -210,7 +210,7 @@ const s = StyleSheet.create({
   toggleTextActive: { color:'#060610' },
 
   inputs:           { gap:14 },
-  input:            { backgroundColor:'#0f0f24', borderWidth:1, borderColor:'#1e1e3a', borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:'#e0e4f4', fontSize:16, fontFamily:'monospace' },
+  input:            { backgroundColor:'#0a0a20', borderWidth:1, borderColor:'#1e1e3a', borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:'#e0e4f4', fontSize:16, fontFamily:'monospace' },
   error:            { color:'#ef5350', fontSize:14, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
   submitBtn:        { backgroundColor:'#4fc3f7', borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
