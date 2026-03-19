@@ -6,9 +6,10 @@ import { createContext, useContext } from 'react';
 export interface SessionData {
   uid: string;
   username: string;
+  logout: () => void;
 }
 
-export const SessionContext = createContext<SessionData>({ uid: '', username: '' });
+export const SessionContext = createContext<SessionData>({ uid: '', username: '', logout: () => {} });
 
 export function useSession(): SessionData {
   return useContext(SessionContext);

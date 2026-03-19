@@ -304,6 +304,13 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const collect = () => {
     gs.addCards(drawn.map(d => d.card.id));
     gs.addXp(XP_AWARDS.pack);
+    gs.incrementPacksOpened();
+    gs.advanceQuest('packs');
+    for (const { card, isDupe } of drawn) {
+      if (!isDupe) gs.advanceQuest('newcards');
+      gs.advanceQuest('rarity',   { rarity:   card.rarity });
+      gs.advanceQuest('alliance', { alliance: card.alliance });
+    }
     navigation.goBack();
   };
 

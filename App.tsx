@@ -10,7 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
 import { Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
 import { useFont } from '@shopify/react-native-skia';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
 
@@ -26,7 +26,9 @@ import ProfileScreen         from './src/screens/ProfileScreen';
 import { FontContext }        from './src/context/FontContext';
 import { SessionContext }     from './src/context/SessionContext';
 import { GameStateContext }   from './src/context/GameStateContext';
+import { useGameStateContext } from './src/context/GameStateContext';
 import { useGameState }       from './src/hooks/useGameState';
+import { AchievementPopup }  from './src/components/AchievementPopup';
 
 // ── Navigation param lists ────────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -187,6 +189,18 @@ function MainTabs() {
   );
 }
 
+// ── AchievementOverlay — renders inside GameStateContext so it can read state ─
+function AchievementOverlay() {
+  const gs = useGameStateContext();
+  const pending = gs.pendingAchievements[0] ?? null;
+  return (
+    <AchievementPopup
+      achievement={pending}
+      onDismiss={gs.dismissAchievement}
+    />
+  );
+}
+
 // ── GameStateProvider — owns the single shared GameState instance ─────────────
 // Placed above NavigationContainer so all screens share one instance.
 // key={uid} causes a clean remount (and re-init of useState) when uid changes,
@@ -221,10 +235,10 @@ export default function App() {
             const data = snap.data() as { username: string };
             setSession({ uid: user.uid, username: data.username });
           } else {
-            auth.signOut();
+            signOut(auth);
           }
         } catch {
-          auth.signOut();
+          signOut(auth);
         }
       } else {
         setSession(null);
@@ -251,7 +265,7 @@ export default function App() {
         fontName, fontNumber, fontStatLabel, fontStatValue,
         fontTotal, fontSmall, fontCardTitle, fontCardSub,
       }}>
-        <SessionContext.Provider value={session ?? { uid: '', username: '' }}>
+        <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
           <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''}>
           <NavigationContainer>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
@@ -271,6 +285,8 @@ export default function App() {
               )}
             </RootStack.Navigator>
           </NavigationContainer>
+          {/* Global achievement toast — rendered on top of all navigation */}
+          {session && <AchievementOverlay />}
           </GameStateProvider>
         </SessionContext.Provider>
       </FontContext.Provider>

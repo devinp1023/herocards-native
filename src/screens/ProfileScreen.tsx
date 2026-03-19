@@ -1,7 +1,7 @@
-// ProfileScreen — user profile header + daily quests + achievements placeholder.
-// Full quest progress wired in Session 9.
+// ProfileScreen — user profile header + daily quests + achievements.
+// Session 9: real quest progress + achievement families with tier pips.
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity,
 } from 'react-native';
@@ -9,20 +9,23 @@ import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
+import { ACHIEVEMENTS, ACHIEVEMENT_FAMILIES } from '../data/achievements';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
-import { auth } from '../firebase/config';
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
 function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
-  const target   = quest.req.n;
-  const done     = progress >= target;
-  const pct      = Math.min(progress / target, 1);
+  const target    = quest.req.n;
+  const done      = progress >= target;
+  const pct       = Math.min(progress / target, 1);
   const diffColor = DIFF_COLOR[quest.diff] ?? '#4fc3f7';
 
   return (
     <View style={[qStyles.card, done && qStyles.cardDone]}>
       <View style={qStyles.top}>
-        <View style={[qStyles.iconDot, { backgroundColor: diffColor }]} />
+        {/* Symbol icon */}
+        <View style={[qStyles.iconBox, { borderColor: quest.color + '55', backgroundColor: quest.color + '14' }]}>
+          <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={[qStyles.task, done && { color: '#4caf5099' }]}>{quest.task}</Text>
           <View style={qStyles.metaRow}>
@@ -34,7 +37,7 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
         </View>
         {done
           ? <View style={qStyles.checkBox}><Text style={qStyles.checkmark}>DONE</Text></View>
-          : <Text style={qStyles.progress}>{progress}/{target}</Text>
+          : <Text style={qStyles.progressText}>{progress}/{target}</Text>
         }
       </View>
       {/* Progress bar */}
@@ -50,32 +53,107 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
 }
 
 const qStyles = StyleSheet.create({
-  card:      { backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:14, marginBottom:10 },
-  cardDone:  { borderColor:'#4caf5033', backgroundColor:'#4caf5008' },
-  top:       { flexDirection:'row', alignItems:'flex-start', gap:12, marginBottom:10 },
-  iconDot:   { width:10, height:10, borderRadius:5, marginTop:4, flexShrink:0 },
-  task:      { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#c0c8dc', letterSpacing:0.3, lineHeight:16 },
-  metaRow:   { flexDirection:'row', alignItems:'center', gap:8, marginTop:5 },
-  diffBadge: { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
-  diffText:  { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
-  reward:    { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070' },
-  checkBox:  { backgroundColor:'#4caf5022', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#4caf5066' },
-  checkmark: { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#4caf50', letterSpacing:1 },
-  progress:  { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#606480' },
-  barTrack:  { height:4, backgroundColor:'#0d0d20', borderRadius:2, overflow:'hidden' },
-  barFill:   { height:'100%', borderRadius:2 },
+  card:         { backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:14, marginBottom:10 },
+  cardDone:     { borderColor:'#4caf5033', backgroundColor:'#4caf5008' },
+  top:          { flexDirection:'row', alignItems:'center', gap:12, marginBottom:10 },
+  iconBox:      { width:34, height:34, borderRadius:8, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
+  iconSymbol:   { fontSize:16, lineHeight:20 },
+  task:         { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#c0c8dc', letterSpacing:0.3, lineHeight:16 },
+  metaRow:      { flexDirection:'row', alignItems:'center', gap:8, marginTop:5 },
+  diffBadge:    { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
+  diffText:     { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
+  reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070' },
+  checkBox:     { backgroundColor:'#4caf5022', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#4caf5066' },
+  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#4caf50', letterSpacing:1 },
+  progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#606480' },
+  barTrack:     { height:4, backgroundColor:'#0d0d20', borderRadius:2, overflow:'hidden' },
+  barFill:      { height:'100%', borderRadius:2 },
+});
+
+// ── AchievementFamilyRow ──────────────────────────────────────────────────────
+const TIER_LABELS = ['I', 'II', 'III', 'IV', 'V'] as const;
+
+function AchievementFamilyRow({
+  family,
+  earnedSet,
+}: {
+  family: string;
+  earnedSet: Set<string>;
+}) {
+  const tiers = ACHIEVEMENTS.filter(a => a.family === family);
+  if (tiers.length === 0) return null;
+
+  const { symbol, color } = tiers[0];
+  const earnedCount = tiers.filter(a => earnedSet.has(a.id)).length;
+  const allDone     = earnedCount === tiers.length;
+
+  return (
+    <View style={[achStyles.familyRow, allDone && achStyles.familyRowDone]}>
+      {/* Symbol */}
+      <View style={[achStyles.symbolBox, { borderColor: color + '55', backgroundColor: color + '14' }]}>
+        <Text style={[achStyles.symbolText, { color }]}>{symbol}</Text>
+      </View>
+
+      {/* Family name + tier pips */}
+      <View style={{ flex: 1 }}>
+        <Text style={[achStyles.familyName, allDone && { color: color }]} numberOfLines={1}>
+          {family.toUpperCase()}
+        </Text>
+        <View style={achStyles.pipsRow}>
+          {tiers.map((a, i) => {
+            const earned = earnedSet.has(a.id);
+            return (
+              <View
+                key={a.id}
+                style={[
+                  achStyles.pip,
+                  earned
+                    ? { backgroundColor: color, borderColor: color }
+                    : { backgroundColor: 'transparent', borderColor: '#1e1e3a' },
+                ]}
+              >
+                <Text style={[achStyles.pipText, { color: earned ? '#000' : '#303050' }]}>
+                  {TIER_LABELS[i] ?? a.tier}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Count */}
+      <Text style={[achStyles.count, allDone && { color }]}>
+        {earnedCount}/{tiers.length}
+      </Text>
+    </View>
+  );
+}
+
+const achStyles = StyleSheet.create({
+  familyRow:     { flexDirection:'row', alignItems:'center', gap:12, backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:12, marginBottom:8 },
+  familyRowDone: { borderColor:'#4caf5022', backgroundColor:'#4caf5006' },
+  symbolBox:     { width:36, height:36, borderRadius:9, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
+  symbolText:    { fontSize:18, lineHeight:22 },
+  familyName:    { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#808898', letterSpacing:0.5, marginBottom:6 },
+  pipsRow:       { flexDirection:'row', gap:4 },
+  pip:           { width:22, height:18, borderRadius:4, borderWidth:1, alignItems:'center', justifyContent:'center' },
+  pipText:       { fontFamily:'Orbitron_700Bold', fontSize:7, letterSpacing:0.3 },
+  count:         { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#404458', minWidth:28, textAlign:'right' },
 });
 
 // ── ProfileScreen ─────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const { username } = useSession();
+  const session = useSession();
+  const { username } = session;
   const gs = useGameStateContext();
   const todaysQuests = getTodaysQuests();
 
-  // Mock progress — real tracking in Session 9
-  const questProgress: Record<string, number> = {};
+  const questProgress = gs.questProgress;
+  const doneCount     = todaysQuests.filter(q => (questProgress[q.id] ?? 0) >= q.req.n).length;
 
-  const doneCount = todaysQuests.filter(q => (questProgress[q.id] ?? 0) >= q.req.n).length;
+  const earnedSet = useMemo(() => new Set(gs.earnedAchievements), [gs.earnedAchievements]);
+  const totalEarned = gs.earnedAchievements.length;
+  const totalAch    = ACHIEVEMENTS.length;
 
   // Resolve active avatar symbol + color
   const avatarData =
@@ -90,7 +168,6 @@ export default function ProfileScreen() {
 
         {/* ── Profile header ── */}
         <View style={styles.header}>
-          {/* Active avatar ring — symbol + accent color */}
           <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
             <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
           </View>
@@ -137,22 +214,25 @@ export default function ProfileScreen() {
 
         <View style={styles.divider} />
 
-        {/* ── Achievements placeholder ── */}
+        {/* ── Achievements ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>— ACHIEVEMENTS</Text>
+          <Text style={[styles.doneLabel, { color: totalEarned === totalAch ? '#4caf50' : '#606480' }]}>
+            {totalEarned}/{totalAch}
+          </Text>
         </View>
-        <View style={styles.achPlaceholder}>
-          <View style={styles.achIconBox}><Text style={styles.achIconText}>ACH</Text></View>
-          <Text style={styles.achTitle}>Coming in Session 9</Text>
-          <Text style={styles.achSub}>Achievements, tiers, and unlock rewards</Text>
-        </View>
+        <Text style={styles.sectionSub}>Unlock tiers to earn XP and credits</Text>
+
+        {ACHIEVEMENT_FAMILIES.map(family => (
+          <AchievementFamilyRow key={family} family={family} earnedSet={earnedSet} />
+        ))}
 
         <View style={styles.divider} />
 
         {/* ── Log out ── */}
         <TouchableOpacity
           style={styles.logoutBtn}
-          onPress={() => auth.signOut()}
+          onPress={session.logout}
           activeOpacity={0.8}
         >
           <Text style={styles.logoutText}>LOG OUT</Text>
@@ -168,7 +248,6 @@ const styles = StyleSheet.create({
   root:   { flex:1, backgroundColor:'#060610' },
   scroll: { padding:20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom:50 },
 
-  // Header
   header: {
     flexDirection:'row', gap:16, alignItems:'center',
     backgroundColor:'#0a0a1e', borderRadius:20,
@@ -194,24 +273,11 @@ const styles = StyleSheet.create({
 
   divider: { height:1, backgroundColor:'#12122a', marginVertical:18 },
 
-  // Section headers
   sectionHeader: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:4 },
   sectionTitle:  { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#c0c8dc', letterSpacing:1.5 },
   doneLabel:     { fontFamily:'Orbitron_700Bold', fontSize:9, letterSpacing:1 },
   sectionSub:    { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#404458', marginBottom:14 },
 
-  // Achievement placeholder
-  achPlaceholder: {
-    alignItems:'center', padding:32,
-    backgroundColor:'#0a0a1e', borderRadius:14,
-    borderWidth:1, borderColor:'#14142a', gap:8,
-  },
-  achIconBox:  { width:48, height:48, borderRadius:12, backgroundColor:'#14142a', alignItems:'center', justifyContent:'center' },
-  achIconText: { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#404458', letterSpacing:1 },
-  achTitle:    { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#606480', letterSpacing:0.5 },
-  achSub:      { fontFamily:'Rajdhani_600SemiBold', fontSize:13, color:'#303050', textAlign:'center' },
-
-  // Log out
   logoutBtn: {
     alignItems:'center', justifyContent:'center',
     paddingVertical:14, borderRadius:12,
