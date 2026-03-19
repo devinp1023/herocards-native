@@ -1,21 +1,675 @@
-// BattleLobbyScreen — placeholder, built out in Session 10.
+// BattleLobbyScreen — Session 10.
+// Phase 'deck': 10-card deck builder — card grid + filter sidebar.
+// Phase 'opponent': difficulty tier selector with rewards preview.
 
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+  View, Text, ScrollView, FlatList, TouchableOpacity,
+  TextInput, StyleSheet, Platform, Dimensions,
+  ListRenderItemInfo, Pressable,
+} from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle,
+  withTiming, runOnJS, Easing,
+} from 'react-native-reanimated';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BattleStackParamList } from '../../App';
+import { useGameStateContext } from '../context/GameStateContext';
+import { ALL_CARDS, Card } from '../data/cards';
+import {
+  RC, RO, BATTLE_RARITY_LIMITS, DECK_SIZE,
+  BATTLE_REWARDS, TIER_INFO,
+  isCardOnCooldown, cooldownRemaining, formatCooldown,
+} from '../data/constants';
+import { isOwned } from '../hooks/useGameState';
+import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
+import { HeroCard } from '../components/HeroCard';
 
-export default function BattleLobbyScreen() {
+type Props = NativeStackScreenProps<BattleStackParamList, 'BattleLobby'>;
+type Phase = 'deck' | 'opponent';
+
+const SCALE     = 0.38;
+const NUM_COLS  = 3;
+const SIDEBAR_W = 280;
+const { width: SCREEN_W } = Dimensions.get('window');
+
+const RARITY_ORDER = ['Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
+const RARITIES     = ['All', 'Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
+const PACK_OPTIONS = [
+  { label: 'All Packs', value: 0 },
+  { label: 'Pack 1',    value: 1 },
+  { label: 'Pack 2',    value: 2 },
+] as const;
+const SORT_OPTIONS = [
+  { key: 'rarity',  label: 'Rarity',      chipLabel: 'RARITY' },
+  { key: 'name_az', label: 'Name A → Z',  chipLabel: 'NAME A-Z' },
+  { key: 'name_za', label: 'Name Z → A',  chipLabel: 'NAME Z-A' },
+  { key: 'power',   label: 'Total Power', chipLabel: 'POWER' },
+] as const;
+type SortKey = typeof SORT_OPTIONS[number]['key'];
+
+const ALL_TYPES = ['All', ...Array.from(new Set(ALL_CARDS.map(c => c.type))).sort()];
+
+// ── FilterSidebar ─────────────────────────────────────────────────────────────
+interface SidebarProps {
+  visible: boolean;
+  rarity: string;
+  typeFilter: string;
+  packFilter: number;
+  sortBy: SortKey;
+  onRarity: (v: string) => void;
+  onType: (v: string) => void;
+  onPack: (v: number) => void;
+  onSort: (v: SortKey) => void;
+  onClear: () => void;
+  onClose: () => void;
+}
+
+function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, onRarity, onType, onPack, onSort, onClear, onClose }: SidebarProps) {
+  const translateX = useSharedValue(SIDEBAR_W);
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setRendered(true);
+      translateX.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+    } else {
+      translateX.value = withTiming(SIDEBAR_W, { duration: 220, easing: Easing.in(Easing.cubic) },
+        (finished) => { if (finished) runOnJS(setRendered)(false); });
+    }
+  }, [visible]);
+
+  const slideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
+  if (!rendered) return null;
+
   return (
-    <View style={styles.root}>
-      <Text style={styles.title}>BATTLE</Text>
-      <Text style={styles.sub}>Deck builder · Difficulty select · PvE</Text>
-      <Text style={styles.session}>Coming in Session 10</Text>
+    <>
+      <Pressable style={sb.backdrop} onPress={onClose} />
+      <Animated.View style={[sb.panel, slideStyle]}>
+        <View style={sb.header}>
+          <Text style={sb.title}>FILTERS</Text>
+          <TouchableOpacity onPress={onClose} style={sb.closeBtn}>
+            <Text style={sb.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={sb.scroll}>
+
+          <Text style={sb.sectionLabel}>RARITY</Text>
+          {RARITIES.map(r => {
+            const active = rarity === r;
+            const color  = r === 'All' ? '#4fc3f7' : (RC[r]?.color ?? '#fff');
+            return (
+              <TouchableOpacity key={r} style={sb.radioRow} onPress={() => onRarity(r)}>
+                <View style={[sb.radioOuter, { borderColor: active ? color : '#303050' }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: color }]} />}
+                </View>
+                <Text style={[sb.radioLabel, { color: active ? color : '#8890b0' }]}>{r}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <View style={sb.divider} />
+          <Text style={sb.sectionLabel}>TYPE</Text>
+          {ALL_TYPES.map(t => {
+            const active = typeFilter === t;
+            return (
+              <TouchableOpacity key={t} style={sb.radioRow} onPress={() => onType(t)}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                </View>
+                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{t}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <View style={sb.divider} />
+          <Text style={sb.sectionLabel}>PACK</Text>
+          {PACK_OPTIONS.map(p => {
+            const active = packFilter === p.value;
+            return (
+              <TouchableOpacity key={p.value} style={sb.radioRow} onPress={() => onPack(p.value)}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                </View>
+                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{p.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <View style={sb.divider} />
+          <Text style={sb.sectionLabel}>SORT BY</Text>
+          {SORT_OPTIONS.map(opt => {
+            const active = sortBy === opt.key;
+            return (
+              <TouchableOpacity key={opt.key} style={sb.radioRow} onPress={() => onSort(opt.key)}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: '#cc6dff' }]} />}
+                </View>
+                <Text style={[sb.radioLabel, { color: active ? '#cc6dff' : '#8890b0' }]}>{opt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <View style={sb.divider} />
+          <TouchableOpacity style={sb.clearBtn} onPress={onClear}>
+            <Text style={sb.clearText}>CLEAR ALL FILTERS</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
+    </>
+  );
+}
+
+const sb = StyleSheet.create({
+  backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor:'rgba(0,0,0,0.55)', zIndex:10 },
+  panel:      { position:'absolute', right:0, top:0, bottom:0, width:SIDEBAR_W, backgroundColor:'#0a0a18', borderLeftWidth:1, borderLeftColor:'#1e2040', zIndex:11, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
+  header:     { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingBottom:12, borderBottomWidth:1, borderBottomColor:'#1e2040' },
+  title:      { fontFamily:'Orbitron_700Bold', fontSize:14, color:'#4fc3f7', letterSpacing:2 },
+  closeBtn:   { padding:4 },
+  closeText:  { color:'#606480', fontSize:16 },
+  scroll:     { paddingHorizontal:20, paddingBottom:40, paddingTop:8 },
+  sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:'#506070', letterSpacing:2, marginBottom:8, marginTop:4 },
+  radioRow:   { flexDirection:'row', alignItems:'center', paddingVertical:8, gap:12 },
+  radioOuter: { width:18, height:18, borderRadius:9, borderWidth:2, alignItems:'center', justifyContent:'center' },
+  radioInner: { width:8, height:8, borderRadius:4 },
+  radioLabel: { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:0.3 },
+  divider:    { height:1, backgroundColor:'#1a1a30', marginVertical:12 },
+  clearBtn:   { marginTop:8, paddingVertical:12, borderRadius:8, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011' },
+  clearText:  { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#ff6060', letterSpacing:1 },
+});
+
+// ── DeckSlot ──────────────────────────────────────────────────────────────────
+function DeckSlot({ card, onRemove }: { card: Card | undefined; onRemove: () => void }) {
+  if (!card) {
+    return <View style={slot.empty}><Text style={slot.emptyText}>+</Text></View>;
+  }
+  const color = RC[card.rarity]?.color ?? '#808898';
+  return (
+    <TouchableOpacity style={[slot.filled, { borderColor: color + '55' }]} onPress={onRemove} activeOpacity={0.7}>
+      <View style={[slot.rarityBar, { backgroundColor: color }]} />
+      <Text style={[slot.cardNum, { color: color + 'aa' }]}>#{String(card.id).padStart(3,'0')}</Text>
+      <Text style={slot.cardName} numberOfLines={2}>{card.name.toUpperCase()}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const slot = StyleSheet.create({
+  empty:     { width:64, height:88, borderRadius:8, borderWidth:1, borderColor:'#1e1e38', borderStyle:'dashed', alignItems:'center', justifyContent:'center' },
+  emptyText: { fontFamily:'Orbitron_700Bold', fontSize:18, color:'#2a2a48' },
+  filled:    { width:64, height:88, borderRadius:8, borderWidth:1, backgroundColor:'#0a0a1e', overflow:'hidden' },
+  rarityBar: { height:3, width:'100%' },
+  cardNum:   { fontFamily:'Orbitron_700Bold', fontSize:7, letterSpacing:0.5, marginTop:4, marginHorizontal:5 },
+  cardName:  { fontFamily:'Orbitron_700Bold', fontSize:7.5, color:'#c0c8dc', letterSpacing:0.2, marginHorizontal:5, marginTop:2, lineHeight:10 },
+});
+
+// ── DeckCardCell ─────────────────────────────────────────────────────────────
+const CARD_DISPLAY_W = CARD_W * SCALE;
+const CARD_DISPLAY_H = CARD_H * SCALE;
+
+interface CellProps {
+  card: Card;
+  inDeck: boolean;
+  canAdd: boolean;
+  cooldowns: Record<number, number>;
+  onToggle: () => void;
+}
+
+function DeckCardCell({ card, inDeck, canAdd, cooldowns, onToggle }: CellProps) {
+  const onCd = isCardOnCooldown(card.id, cooldowns);
+  const cdMs = cooldownRemaining(card.id, cooldowns);
+  const dimmed = (!inDeck && !canAdd) || onCd;
+
+  return (
+    <TouchableOpacity
+      style={grid.cell}
+      onPress={onToggle}
+      activeOpacity={dimmed && !inDeck ? 1 : 0.85}
+      disabled={dimmed && !inDeck}
+    >
+      <View style={{ opacity: dimmed ? 0.35 : 1 }}>
+        <CardWrapper scale={SCALE}>
+          <HeroCard card={card} showShine={inDeck && (card.rarity === 'Legendary' || card.rarity === 'Epic')} />
+        </CardWrapper>
+      </View>
+
+      {/* Selected overlay — green border + check badge */}
+      {inDeck && (
+        <View style={[grid.overlay, { borderColor: '#4caf50', borderWidth: 2, borderRadius: 6 }]}>
+          <View style={grid.checkBadge}>
+            <Text style={grid.checkText}>✓</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Cooldown overlay */}
+      {onCd && (
+        <View style={[grid.overlay, grid.cdOverlay]}>
+          <Text style={grid.cdTime}>{formatCooldown(cdMs)}</Text>
+          <Text style={grid.cdLabel}>COOLDOWN</Text>
+        </View>
+      )}
+
+      {/* Rarity-limit overlay */}
+      {!inDeck && !canAdd && !onCd && (
+        <View style={[grid.overlay, grid.limitOverlay]}>
+          <Text style={grid.limitText}>MAX</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+const grid = StyleSheet.create({
+  cell:         { width: CARD_DISPLAY_W, alignItems: 'center' },
+  overlay:      { position:'absolute', top:0, left:0, width:CARD_DISPLAY_W, height:CARD_DISPLAY_H, borderRadius:6, alignItems:'center', justifyContent:'center' },
+  checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:'#4caf50', alignItems:'center', justifyContent:'center' },
+  checkText:    { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#fff' },
+  cdOverlay:    { backgroundColor:'rgba(0,0,0,0.65)', flexDirection:'column', gap:4 },
+  cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:'#ef5350' },
+  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:'#ef535088', letterSpacing:1 },
+  limitOverlay: { backgroundColor:'rgba(0,0,0,0.0)' },
+  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#ff9800', letterSpacing:1, backgroundColor:'#ff980022', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:'#ff980055' },
+});
+
+// ── OpponentCard ──────────────────────────────────────────────────────────────
+function OpponentCard({ tier, onPress }: { tier: typeof TIER_INFO[0]; onPress: () => void }) {
+  const rewards = BATTLE_REWARDS[tier.tier];
+  return (
+    <TouchableOpacity style={[opp.card, { borderColor: tier.color + '44' }]} onPress={onPress} activeOpacity={0.8}>
+      <View style={[opp.badge, { borderColor: tier.color + '55', backgroundColor: tier.color + '18' }]}>
+        <Text style={[opp.symbol, { color: tier.color }]}>{tier.symbol}</Text>
+      </View>
+      <View style={opp.info}>
+        <View style={opp.nameRow}>
+          <Text style={[opp.name, { color: tier.color }]}>{tier.name.toUpperCase()}</Text>
+          <View style={opp.dots}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <View key={i} style={[opp.dot, { backgroundColor: i < tier.difficulty ? tier.color : tier.color + '28' }]} />
+            ))}
+          </View>
+        </View>
+        <Text style={opp.desc} numberOfLines={2}>{tier.description}</Text>
+        <View style={opp.rewards}>
+          <Text style={opp.win}>Win  +{rewards.winCredits} CR  +{rewards.winXp} XP</Text>
+          <Text style={opp.loss}>Loss  +{rewards.lossCredits} CR  +{rewards.lossXp} XP</Text>
+        </View>
+      </View>
+      {/* Compact battle arrow */}
+      <TouchableOpacity style={[opp.arrow, { borderColor: tier.color + '66' }]} onPress={onPress}>
+        <Text style={[opp.arrowText, { color: tier.color }]}>→</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
+
+const opp = StyleSheet.create({
+  card:      { flexDirection:'row', alignItems:'center', backgroundColor:'#0a0a1e', borderRadius:14, borderWidth:1, padding:14, marginBottom:10, gap:12 },
+  badge:     { width:40, height:40, borderRadius:10, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
+  symbol:    { fontSize:20, lineHeight:24 },
+  info:      { flex:1, gap:4 },
+  nameRow:   { flexDirection:'row', alignItems:'center', gap:10 },
+  name:      { fontFamily:'Orbitron_700Bold', fontSize:12, letterSpacing:0.5 },
+  dots:      { flexDirection:'row', gap:3 },
+  dot:       { width:6, height:6, borderRadius:3 },
+  desc:      { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#707898', lineHeight:16 },
+  rewards:   { flexDirection:'row', gap:12 },
+  win:       { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#4fc3f7' },
+  loss:      { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#404868' },
+  arrow:     { width:32, height:32, borderRadius:16, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
+  arrowText: { fontFamily:'Orbitron_700Bold', fontSize:16 },
+});
+
+// ── BattleLobbyScreen ─────────────────────────────────────────────────────────
+export default function BattleLobbyScreen({ navigation }: Props) {
+  const gs = useGameStateContext();
+
+  const [phase, setPhase]               = useState<Phase>('deck');
+  const [battleDeck, setBattleDeck]     = useState<number[]>([]);
+  const [rarity, setRarity]             = useState<string>('All');
+  const [typeFilter, setTypeFilter]     = useState<string>('All');
+  const [packFilter, setPackFilter]     = useState<number>(0);
+  const [sortBy, setSortBy]             = useState<SortKey>('rarity');
+  const [search, setSearch]             = useState('');
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
+
+  const activeFilterCount = [rarity !== 'All', typeFilter !== 'All', packFilter !== 0, sortBy !== 'rarity'].filter(Boolean).length;
+
+  const clearFilters = useCallback(() => {
+    setRarity('All'); setTypeFilter('All'); setPackFilter(0); setSortBy('rarity');
+  }, []);
+
+  // Owned cards
+  const ownedCards = useMemo(() =>
+    ALL_CARDS.filter(c => isOwned(gs.collection, c.id)),
+    [gs.collection],
+  );
+
+  const notEnoughCards = ownedCards.length < DECK_SIZE;
+
+  // Filtered + sorted
+  const filteredCards = useMemo(() => {
+    let list = ownedCards;
+    if (rarity !== 'All')      list = list.filter(c => c.rarity === rarity);
+    if (typeFilter !== 'All')  list = list.filter(c => c.type === typeFilter);
+    if (packFilter !== 0)      list = list.filter(c => c.pack === packFilter);
+    if (search.trim())         list = list.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'rarity':  return RO[a.rarity] - RO[b.rarity] || a.name.localeCompare(b.name);
+        case 'name_az': return a.name.localeCompare(b.name);
+        case 'name_za': return b.name.localeCompare(a.name);
+        case 'power':   return (b.power + b.defense + b.speed) - (a.power + a.defense + a.speed);
+        default:        return 0;
+      }
+    });
+  }, [ownedCards, rarity, typeFilter, packFilter, search, sortBy]);
+
+  // Add null fillers for last row
+  const gridData = useMemo<(Card | null)[]>(() => {
+    const rem = filteredCards.length % NUM_COLS;
+    if (rem === 0) return filteredCards;
+    return [...filteredCards, ...Array(NUM_COLS - rem).fill(null)];
+  }, [filteredCards]);
+
+  // Rarity counts currently in deck
+  const rarityCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const id of battleDeck) {
+      const card = ALL_CARDS.find(c => c.id === id);
+      if (card) counts[card.rarity] = (counts[card.rarity] ?? 0) + 1;
+    }
+    return counts;
+  }, [battleDeck]);
+
+  const canAdd = useCallback((card: Card): boolean => {
+    if (battleDeck.length >= DECK_SIZE) return false;
+    if (battleDeck.includes(card.id)) return false;
+    if ((rarityCounts[card.rarity] ?? 0) >= (BATTLE_RARITY_LIMITS[card.rarity] ?? 10)) return false;
+    return true;
+  }, [battleDeck, rarityCounts]);
+
+  const toggleCard = useCallback((card: Card) => {
+    if (battleDeck.includes(card.id)) {
+      setBattleDeck(prev => prev.filter(id => id !== card.id));
+    } else if (canAdd(card)) {
+      setBattleDeck(prev => [...prev, card.id]);
+    }
+  }, [battleDeck, canAdd]);
+
+  const deckFull       = battleDeck.length === DECK_SIZE;
+  const anyOnCooldown  = battleDeck.some(id => isCardOnCooldown(id, gs.battleCooldowns));
+  const canStartBattle = deckFull && !anyOnCooldown;
+
+  const deckCards = useMemo(() =>
+    battleDeck.map(id => ALL_CARDS.find(c => c.id === id)),
+    [battleDeck],
+  );
+
+  const renderCard = useCallback(({ item }: ListRenderItemInfo<Card | null>) => {
+    if (!item) return <View style={{ width: CARD_DISPLAY_W }} />;
+    return (
+      <DeckCardCell
+        card={item}
+        inDeck={battleDeck.includes(item.id)}
+        canAdd={canAdd(item)}
+        cooldowns={gs.battleCooldowns}
+        onToggle={() => toggleCard(item)}
+      />
+    );
+  }, [battleDeck, canAdd, gs.battleCooldowns, toggleCard]);
+
+  const keyExtractor = useCallback((item: Card | null, idx: number) =>
+    item ? String(item.id) : `filler-${idx}`, []);
+
+  // ── Opponent select ───────────────────────────────────────────────────────
+  if (phase === 'opponent') {
+    return (
+      <View style={s.root}>
+        <ScrollView contentContainerStyle={s.oppScroll} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity onPress={() => setPhase('deck')} style={s.backBtn} activeOpacity={0.7}>
+            <Text style={s.backText}>← CHANGE DECK</Text>
+          </TouchableOpacity>
+          <Text style={s.screenTitle}>CHOOSE OPPONENT</Text>
+          <Text style={s.oppSub}>Higher tiers mean tougher opponents and bigger rewards.</Text>
+
+          {/* Deck summary */}
+          <View style={s.deckSummary}>
+            <Text style={s.deckSummaryLabel}>YOUR DECK  ·  {DECK_SIZE} CARDS</Text>
+            <View style={s.deckSummaryChips}>
+              {RARITY_ORDER.filter(r => (rarityCounts[r] ?? 0) > 0).map(r => (
+                <View key={r} style={[s.summaryChip, { borderColor: RC[r].color + '55', backgroundColor: RC[r].color + '14' }]}>
+                  <Text style={[s.summaryChipText, { color: RC[r].color }]}>
+                    {rarityCounts[r]}× {r.toUpperCase()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {TIER_INFO.map(tier => (
+            <OpponentCard key={tier.tier} tier={tier} onPress={() => navigation.navigate('Battle', { playerDeck: battleDeck, tier: tier.tier })} />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Deck builder ─────────────────────────────────────────────────────────
+  return (
+    <View style={s.root}>
+      {/* Fixed header */}
+      <View style={s.header}>
+        {/* Title row */}
+        <View style={s.titleRow}>
+          <Text style={s.screenTitle}>BUILD YOUR DECK</Text>
+          <View style={s.titleRight}>
+            <TouchableOpacity
+              style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
+              onPress={() => setSidebarOpen(true)}
+            >
+              <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
+                ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </Text>
+            </TouchableOpacity>
+            <Text style={[s.deckCount, { color: deckFull ? '#4caf50' : '#606480' }]}>
+              {battleDeck.length}/{DECK_SIZE}
+            </Text>
+          </View>
+        </View>
+
+        {/* Rarity limits row */}
+        <View style={s.limitsRow}>
+          {RARITY_ORDER.map(r => {
+            const limit = BATTLE_RARITY_LIMITS[r] ?? 10;
+            const count = rarityCounts[r] ?? 0;
+            const color = RC[r].color;
+            const atLimit = count >= limit;
+            return (
+              <View key={r} style={[s.limitChip, { borderColor: atLimit ? color + '88' : '#1e1e38' }]}>
+                <Text style={[s.limitRarity, { color: atLimit ? color : '#404458' }]}>{r.slice(0,3).toUpperCase()}</Text>
+                <Text style={[s.limitCount, { color: atLimit ? color : '#606480' }]}>{count}/{limit}</Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Deck slots */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.slotsScroll}>
+          {Array.from({ length: DECK_SIZE }).map((_, i) => (
+            <DeckSlot
+              key={i}
+              card={deckCards[i]}
+              onRemove={() => {
+                const id = battleDeck[i];
+                if (id != null) setBattleDeck(prev => prev.filter(x => x !== id));
+              }}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Active filter chips */}
+        {activeFilterCount > 0 && (
+          <View style={s.chipRow}>
+            {rarity !== 'All' && (
+              <TouchableOpacity style={[s.chip, { borderColor: RC[rarity]?.color ?? '#4fc3f7' }]} onPress={() => setRarity('All')}>
+                <Text style={[s.chipText, { color: RC[rarity]?.color ?? '#4fc3f7' }]}>{rarity} ✕</Text>
+              </TouchableOpacity>
+            )}
+            {typeFilter !== 'All' && (
+              <TouchableOpacity style={s.chip} onPress={() => setTypeFilter('All')}>
+                <Text style={s.chipText}>{typeFilter} ✕</Text>
+              </TouchableOpacity>
+            )}
+            {packFilter !== 0 && (
+              <TouchableOpacity style={s.chip} onPress={() => setPackFilter(0)}>
+                <Text style={s.chipText}>Pack {packFilter} ✕</Text>
+              </TouchableOpacity>
+            )}
+            {sortBy !== 'rarity' && (
+              <TouchableOpacity style={[s.chip, { borderColor: '#cc6dff' }]} onPress={() => setSortBy('rarity')}>
+                <Text style={[s.chipText, { color: '#cc6dff' }]}>{SORT_OPTIONS.find(o => o.key === sortBy)?.chipLabel} ✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Search */}
+        <View style={s.searchRow}>
+          <Text style={s.searchIcon}>⌕</Text>
+          <TextInput
+            style={s.searchInput}
+            placeholder="Search cards..."
+            placeholderTextColor="#303050"
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Text style={s.searchClear}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={s.resultsText}>{filteredCards.length} cards</Text>
+      </View>
+
+      {/* Card grid */}
+      {notEnoughCards ? (
+        <View style={s.emptyState}>
+          <Text style={s.emptyTitle}>NOT ENOUGH CARDS</Text>
+          <Text style={s.emptySub}>You need at least {DECK_SIZE} cards to build a deck.{'\n'}Open packs to collect more!</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={gridData}
+          keyExtractor={keyExtractor}
+          renderItem={renderCard}
+          numColumns={NUM_COLS}
+          columnWrapperStyle={s.columnWrapper}
+          contentContainerStyle={s.listContent}
+          removeClippedSubviews
+          windowSize={5}
+          maxToRenderPerBatch={9}
+          initialNumToRender={12}
+        />
+      )}
+
+      {/* Bottom CTA */}
+      <View style={s.footer}>
+        {anyOnCooldown && (
+          <Text style={s.cooldownWarning}>Some deck cards are on cooldown</Text>
+        )}
+        <TouchableOpacity
+          style={[s.ctaBtn, canStartBattle && s.ctaBtnReady]}
+          onPress={() => canStartBattle && setPhase('opponent')}
+          activeOpacity={canStartBattle ? 0.85 : 1}
+        >
+          <Text style={[s.ctaText, canStartBattle && s.ctaTextReady]}>
+            {anyOnCooldown
+              ? 'CARDS ON COOLDOWN'
+              : deckFull
+                ? 'CHOOSE OPPONENT  →'
+                : `SELECT ${DECK_SIZE - battleDeck.length} MORE CARD${DECK_SIZE - battleDeck.length !== 1 ? 'S' : ''}`}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Filter sidebar */}
+      <FilterSidebar
+        visible={sidebarOpen}
+        rarity={rarity}
+        typeFilter={typeFilter}
+        packFilter={packFilter}
+        sortBy={sortBy}
+        onRarity={setRarity}
+        onType={setTypeFilter}
+        onPack={setPackFilter}
+        onSort={setSortBy}
+        onClear={clearFilters}
+        onClose={() => setSidebarOpen(false)}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root:    { flex:1, backgroundColor:'#060610', alignItems:'center', justifyContent:'center', paddingTop: Platform.OS === 'ios' ? 44 : 0 },
-  title:   { fontFamily:'Orbitron_900Black', fontSize:28, color:'#ff4060', letterSpacing:3, marginBottom:8 },
-  sub:     { fontFamily:'Rajdhani_600SemiBold', fontSize:16, color:'#506070', marginBottom:24 },
-  session: { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#303050', letterSpacing:1 },
+// ── Styles ────────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex:1, backgroundColor:'#060610' },
+
+  // Header
+  header:      { backgroundColor:'#060610', paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:'#10102a' },
+  titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
+  screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:'#ffffff', letterSpacing:1.5 },
+  titleRight:  { flexDirection:'row', alignItems:'center', gap:10 },
+  filterBtn:   { flexDirection:'row', alignItems:'center', paddingHorizontal:10, paddingVertical:6, borderRadius:8, borderWidth:1, borderColor:'#252540', backgroundColor:'#0e0e1e' },
+  filterBtnActive: { borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
+  filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#8890b0', letterSpacing:0.5 },
+  deckCount:   { fontFamily:'Orbitron_900Black', fontSize:18 },
+
+  limitsRow:   { flexDirection:'row', gap:6, marginBottom:8 },
+  limitChip:   { flex:1, borderWidth:1, borderRadius:6, paddingVertical:4, alignItems:'center', gap:1 },
+  limitRarity: { fontFamily:'Orbitron_700Bold', fontSize:7, letterSpacing:0.5 },
+  limitCount:  { fontFamily:'Orbitron_900Black', fontSize:10 },
+
+  slotsScroll: { gap:8, paddingBottom:8 },
+
+  chipRow:     { flexDirection:'row', flexWrap:'wrap', gap:6, marginBottom:6 },
+  chip:        { paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
+  chipText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#4fc3f7', letterSpacing:0.5 },
+
+  searchRow:   { flexDirection:'row', alignItems:'center', backgroundColor:'#0e0e1e', borderRadius:10, borderWidth:1, borderColor:'#252540', paddingHorizontal:10, marginBottom:4 },
+  searchIcon:  { fontSize:16, color:'#404458', marginRight:4 },
+  searchInput: { flex:1, height:36, color:'#d8dcea', fontFamily:'Rajdhani_600SemiBold', fontSize:14 },
+  searchClear: { color:'#606480', fontSize:14, padding:4 },
+  resultsText: { fontFamily:'monospace', fontSize:10, color:'#404458', marginBottom:2 },
+
+  // Grid
+  listContent:   { paddingHorizontal:8, paddingBottom:120 },
+  columnWrapper: { justifyContent:'space-evenly', marginBottom:8 },
+
+  // Empty state
+  emptyState: { flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, gap:10 },
+  emptyTitle: { fontFamily:'Orbitron_700Bold', fontSize:14, color:'#606480', letterSpacing:1 },
+  emptySub:   { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:'#303050', textAlign:'center', lineHeight:20 },
+
+  // Footer CTA
+  footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'#060610', borderTopWidth:1, borderTopColor:'#10102a', paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
+  cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#ef5350', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
+  ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:'#1e1e38', backgroundColor:'#0a0a1e' },
+  ctaBtnReady:     { backgroundColor:'#4fc3f7', borderColor:'#4fc3f7' },
+  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:'#303050', letterSpacing:1.5 },
+  ctaTextReady:    { color:'#060610' },
+
+  // Opponent select
+  oppScroll:        { paddingHorizontal:16, paddingBottom:48 },
+  backBtn:          { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingBottom:16 },
+  backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#4fc3f7', letterSpacing:1 },
+  oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:'#606480', marginBottom:16 },
+  deckSummary:      { backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:12, marginBottom:16, gap:8 },
+  deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#404458', letterSpacing:1.5 },
+  deckSummaryChips: { flexDirection:'row', flexWrap:'wrap', gap:6 },
+  summaryChip:      { paddingHorizontal:8, paddingVertical:3, borderRadius:5, borderWidth:1 },
+  summaryChipText:  { fontFamily:'Orbitron_700Bold', fontSize:9, letterSpacing:0.5 },
 });

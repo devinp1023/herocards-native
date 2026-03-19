@@ -20,6 +20,7 @@ import PackOpeningScreen     from './src/screens/PackOpeningScreen';
 import CollectionScreen      from './src/screens/CollectionScreen';
 import CardDetailScreen      from './src/screens/CardDetailScreen';
 import BattleLobbyScreen     from './src/screens/BattleLobbyScreen';
+import BattleScreen          from './src/screens/BattleScreen';
 import StoreScreen           from './src/screens/StoreScreen';
 import ProfileScreen         from './src/screens/ProfileScreen';
 
@@ -54,7 +55,10 @@ export type CollectionStackParamList = {
   CardDetail: { cardId: number; owned: boolean; ownedCount: number };
 };
 
-export type BattleStackParamList  = { BattleLobby: undefined };
+export type BattleStackParamList  = {
+  BattleLobby: undefined;
+  Battle: { playerDeck: number[]; tier: number };
+};
 export type StoreStackParamList   = { Store:        undefined };
 export type ProfileStackParamList = { Profile:      undefined };
 
@@ -63,6 +67,7 @@ const RootStack        = createNativeStackNavigator<RootStackParamList>();
 const Tab              = createBottomTabNavigator<MainTabParamList>();
 const HomeStack        = createNativeStackNavigator<HomeStackParamList>();
 const CollectionStack  = createNativeStackNavigator<CollectionStackParamList>();
+const BattleStack      = createNativeStackNavigator<BattleStackParamList>();
 
 // Font asset paths for Skia
 const orbitronBoldTtf  = require('./assets/fonts/Orbitron_700Bold.ttf');
@@ -126,6 +131,15 @@ function CollectionStackNav() {
   );
 }
 
+function BattleStackNav() {
+  return (
+    <BattleStack.Navigator screenOptions={{ headerShown: false }}>
+      <BattleStack.Screen name="BattleLobby" component={BattleLobbyScreen} />
+      <BattleStack.Screen name="Battle"      component={BattleScreen} />
+    </BattleStack.Navigator>
+  );
+}
+
 // ── Main tab navigator ────────────────────────────────────────────────────────
 function MainTabs() {
   return (
@@ -163,7 +177,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="BattleTab"
-        component={BattleLobbyScreen}
+        component={BattleStackNav}
         options={{
           tabBarIcon:  ({ focused }) => <TabIcon  label="BATTLE"  focused={focused} />,
           tabBarLabel: ({ focused }) => <TabLabel label="BATTLE"  focused={focused} />,

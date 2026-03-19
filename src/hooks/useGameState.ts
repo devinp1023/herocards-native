@@ -9,6 +9,7 @@ import { ALL_CARDS } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
+import { hasBattleCooldown } from '../data/constants';
 import { DAILY_QUESTS, getTodaysQuests, Quest } from '../data/quests';
 
 // ── Level helpers (mirrors web getLevel) ─────────────────────────────────────
@@ -100,6 +101,7 @@ function computeNewAchievements(
 }
 
 export interface GameState {
+  battleCooldowns: Record<number, number>;  // card id → cooldown start timestamp (ms)
   coins: number;
   xp: number;
   level: number;
@@ -125,6 +127,7 @@ export interface GameState {
   incrementTrades: (n?: number) => void;
   advanceQuest: (type: Quest['req']['type'], opts?: { rarity?: string; alliance?: string }) => void;
   dismissAchievement: () => void;
+  addBattleCooldowns: (cardIds: number[]) => void;
 }
 
 export function useGameState(uid: string): GameState {
@@ -142,6 +145,9 @@ export function useGameState(uid: string): GameState {
       : ['a1'],
   );
   const [activeAvatar, setActiveAvatar] = useState('a1');
+
+  // ── Battle state ─────────────────────────────────────────────────────────
+  const [battleCooldowns, setBattleCooldowns] = useState<Record<number, number>>({});
 
   // ── Quest state ───────────────────────────────────────────────────────────
   const [packsOpened,  setPacksOpened]  = useState(0);
@@ -264,7 +270,20 @@ export function useGameState(uid: string): GameState {
   const dismissAchievement = () =>
     setPendingAchievements(prev => prev.slice(1));
 
+  const addBattleCooldowns = (cardIds: number[]) => {
+    const now = Date.now();
+    setBattleCooldowns(prev => {
+      const next = { ...prev };
+      for (const id of cardIds) {
+        const card = ALL_CARDS.find(c => c.id === id);
+        if (card && hasBattleCooldown(card.rarity)) next[id] = now;
+      }
+      return next;
+    });
+  };
+
   return {
+    battleCooldowns,
     coins, xp, level, xpInLevel, xpNeeded,
     collection, activeAvatar, ownedAvatars,
     packsOpened, totalTrades,
@@ -274,5 +293,6 @@ export function useGameState(uid: string): GameState {
     equipAvatar, purchaseAvatar,
     incrementPacksOpened, incrementTrades,
     advanceQuest, dismissAchievement,
+    addBattleCooldowns,
   };
 }

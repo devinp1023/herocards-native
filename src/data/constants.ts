@@ -60,3 +60,62 @@ export const DECK_SIZE = 10;
 
 // ── Starting credits ────────────────────────────────────────────────
 export const STARTING_CREDITS = 350;
+
+// ── Battle cooldowns ─────────────────────────────────────────────────
+// Only Legendary and Epic cards go on cooldown after battle.
+export const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+
+export function hasBattleCooldown(rarity: string): boolean {
+  return rarity === 'Legendary' || rarity === 'Epic';
+}
+export function isCardOnCooldown(cardId: number, cooldowns: Record<number, number>): boolean {
+  const ts = cooldowns[cardId];
+  return ts ? Date.now() - ts < COOLDOWN_MS : false;
+}
+export function cooldownRemaining(cardId: number, cooldowns: Record<number, number>): number {
+  const ts = cooldowns[cardId];
+  if (!ts) return 0;
+  return Math.max(0, COOLDOWN_MS - (Date.now() - ts));
+}
+export function formatCooldown(ms: number): string {
+  if (ms <= 0) return 'Ready';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+// ── Battle rewards per tier ──────────────────────────────────────────
+export const BATTLE_REWARDS: Record<number, { winCredits: number; winXp: number; lossCredits: number; lossXp: number }> = {
+  1: { winCredits: 50,  winXp: 100, lossCredits: 10, lossXp: 25 },
+  2: { winCredits: 100, winXp: 150, lossCredits: 15, lossXp: 35 },
+  3: { winCredits: 200, winXp: 250, lossCredits: 20, lossXp: 50 },
+  4: { winCredits: 350, winXp: 375, lossCredits: 30, lossXp: 75 },
+  5: { winCredits: 600, winXp: 500, lossCredits: 50, lossXp: 100 },
+};
+
+// ── AI deck composition per tier ─────────────────────────────────────
+export const AI_DECK_COMP: Record<number, Record<string, number>> = {
+  1: { Common:10, Uncommon:0,  Rare:0, Epic:0, Legendary:0 },
+  2: { Common:6,  Uncommon:4,  Rare:0, Epic:0, Legendary:0 },
+  3: { Common:3,  Uncommon:4,  Rare:3, Epic:0, Legendary:0 },
+  4: { Common:2,  Uncommon:3,  Rare:3, Epic:2, Legendary:0 },
+  5: { Common:1,  Uncommon:1,  Rare:2, Epic:3, Legendary:3 },
+};
+
+// ── Opponent tier info (symbols instead of emoji for Hermes) ─────────
+export interface TierInfo {
+  tier: number;
+  name: string;
+  symbol: string;
+  color: string;
+  difficulty: number;   // 1–5 filled difficulty dots
+  description: string;
+}
+export const TIER_INFO: TierInfo[] = [
+  { tier:1, name:'Rookie',   symbol:'○', color:'#78909c', difficulty:1, description:'A brand-new trainer running a random collection. Great for testing your deck.' },
+  { tier:2, name:'Scrapper', symbol:'✦', color:'#66bb6a', difficulty:2, description:'A scrappy fighter who plays fast and loose with common and uncommon cards.' },
+  { tier:3, name:'Fighter',  symbol:'▲', color:'#42a5f5', difficulty:3, description:'A seasoned duelist with a balanced deck and a few rare tricks up their sleeve.' },
+  { tier:4, name:'Elite',    symbol:'◆', color:'#ab47bc', difficulty:4, description:'An elite challenger running powerful epic combinations. Expect a real fight.' },
+  { tier:5, name:'Champion', symbol:'★', color:'#ffa726', difficulty:5, description:'The reigning champion. Runs legendary cards and counters everything.' },
+];
