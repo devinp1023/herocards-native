@@ -53,6 +53,8 @@ export type BattleEvent =
   | { type: 'CARD_ENTER';     side: 'player' | 'ai'; card: string; rarity: string; hp: number; maxHp: number }
   | { type: 'FORCED_DRAW';    side: 'player' | 'ai'; card: string }
   | { type: 'AI_SWAP';        card: string; prev: string }
+  | { type: 'PLAYER_DRAW';   card: string }
+  | { type: 'PLAYER_SWAP';   card: string; prev: string }
   | { type: 'BATTLE_END';     winner: 'player' | 'ai'; reason?: string };
 
 // ── 1. Type system ────────────────────────────────────────────────────────────
