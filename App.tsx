@@ -16,14 +16,17 @@ import { auth, db } from './src/firebase/config';
 
 import AuthScreen            from './src/screens/AuthScreen';
 import HomeScreen            from './src/screens/HomeScreen';
+import PackOpeningScreen     from './src/screens/PackOpeningScreen';
 import CollectionScreen      from './src/screens/CollectionScreen';
 import CardDetailScreen      from './src/screens/CardDetailScreen';
 import BattleLobbyScreen     from './src/screens/BattleLobbyScreen';
 import StoreScreen           from './src/screens/StoreScreen';
 import ProfileScreen         from './src/screens/ProfileScreen';
 
-import { FontContext }    from './src/context/FontContext';
-import { SessionContext } from './src/context/SessionContext';
+import { FontContext }        from './src/context/FontContext';
+import { SessionContext }     from './src/context/SessionContext';
+import { GameStateContext }   from './src/context/GameStateContext';
+import { useGameState }       from './src/hooks/useGameState';
 
 // ── Navigation param lists ────────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -46,7 +49,7 @@ export type HomeStackParamList = {
 
 export type CollectionStackParamList = {
   Collection: undefined;
-  CardDetail: { cardId: number; owned: boolean };
+  CardDetail: { cardId: number; owned: boolean; ownedCount: number };
 };
 
 export type BattleStackParamList  = { BattleLobby: undefined };
@@ -106,8 +109,8 @@ function TabLabel({ label, focused }: { label: string; focused: boolean }) {
 function HomeStackNav() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen name="Home" component={HomeScreen} />
-      {/* PackOpeningScreen added in Session 7 */}
+      <HomeStack.Screen name="Home"        component={HomeScreen} />
+      <HomeStack.Screen name="PackOpening" component={PackOpeningScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -184,6 +187,15 @@ function MainTabs() {
   );
 }
 
+// ── GameStateProvider — owns the single shared GameState instance ─────────────
+// Placed above NavigationContainer so all screens share one instance.
+// key={uid} causes a clean remount (and re-init of useState) when uid changes,
+// which correctly handles switching between god mode and regular accounts.
+function GameStateProvider({ uid, children }: { uid: string; children: React.ReactNode }) {
+  const gs = useGameState(uid);
+  return <GameStateContext.Provider value={gs}>{children}</GameStateContext.Provider>;
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
@@ -240,6 +252,7 @@ export default function App() {
         fontTotal, fontSmall, fontCardTitle, fontCardSub,
       }}>
         <SessionContext.Provider value={session ?? { uid: '', username: '' }}>
+          <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''}>
           <NavigationContainer>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (
@@ -258,6 +271,7 @@ export default function App() {
               )}
             </RootStack.Navigator>
           </NavigationContainer>
+          </GameStateProvider>
         </SessionContext.Provider>
       </FontContext.Provider>
     </GestureHandlerRootView>

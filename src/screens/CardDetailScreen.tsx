@@ -71,7 +71,7 @@ function AnimatedBar({ value, color, delay }: { value: number; color: string; de
 
 // ── CardDetailScreen ──────────────────────────────────────────────────────────
 export default function CardDetailScreen({ route, navigation }: Props) {
-  const { cardId, owned } = route.params;
+  const { cardId, owned, ownedCount } = route.params;
   const card = ALL_CARDS.find(c => c.id === cardId);
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -114,6 +114,17 @@ export default function CardDetailScreen({ route, navigation }: Props) {
 
           {/* Name */}
           <Text style={styles.cardName}>{card.name.toUpperCase()}</Text>
+
+          {/* Owned count badge */}
+          {owned && (
+            <View style={styles.ownedRow}>
+              <View style={[styles.ownedBadge, ownedCount > 1 && styles.ownedBadgeMulti]}>
+                <Text style={[styles.ownedText, ownedCount > 1 && styles.ownedTextMulti]}>
+                  {ownedCount > 1 ? `YOU OWN x${ownedCount}` : 'IN COLLECTION'}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Top meta row: rarity · #id · pack */}
           <View style={styles.metaRow}>
@@ -260,6 +271,12 @@ const styles = StyleSheet.create({
     lineHeight: 34,
     marginBottom: 10,
   },
+
+  ownedRow:        { marginBottom: 10 },
+  ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: '#4caf5018', borderColor: '#4caf5055' },
+  ownedBadgeMulti: { backgroundColor: '#4fc3f718', borderColor: '#4fc3f755' },
+  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#4caf50', letterSpacing: 1 },
+  ownedTextMulti:  { color: '#4fc3f7' },
 
   metaRow: {
     flexDirection: 'row',

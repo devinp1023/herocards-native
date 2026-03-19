@@ -13,7 +13,8 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainTabParamList, HomeStackParamList } from '../../App';
 import { useSession } from '../context/SessionContext';
-import { useGameState } from '../hooks/useGameState';
+import { isOwned, totalUniqueOwned } from '../hooks/useGameState';
+import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS } from '../data/cards';
 import { RC } from '../data/constants';
 import { PACKS } from '../data/packs';
@@ -55,10 +56,10 @@ const xpStyles = StyleSheet.create({
 });
 
 // ── PackStatCard ──────────────────────────────────────────────────────────────
-function PackStatCard({ packId, collection }: { packId: number; collection: number[] }) {
+function PackStatCard({ packId, collection }: { packId: number; collection: Record<number, number> }) {
   const pack      = PACKS[packId];
   const packCards = ALL_CARDS.filter(c => c.pack === packId);
-  const owned     = packCards.filter(c => collection.includes(c.id));
+  const owned     = packCards.filter(c => isOwned(collection, c.id));
   const pct       = packCards.length > 0 ? Math.round(owned.length / packCards.length * 100) : 0;
 
   const statsByRarity = RARITIES.map(r => ({
@@ -110,8 +111,8 @@ const packStyles = StyleSheet.create({
 
 // ── HomeScreen ────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: Props) {
-  const { uid, username } = useSession();
-  const gs = useGameState(uid);
+  const { username } = useSession();
+  const gs = useGameStateContext();
   const doneCount = 0; // real progress tracked in Session 9
 
   const isMaxLevel = gs.level >= 100;
@@ -134,7 +135,7 @@ export default function HomeScreen({ navigation }: Props) {
               <View style={styles.levelBadge}>
                 <Text style={styles.levelText}>LVL {gs.level}</Text>
               </View>
-              <Text style={styles.cardCount}>{gs.collection.length} CARDS</Text>
+              <Text style={styles.cardCount}>{totalUniqueOwned(gs.collection)} CARDS</Text>
             </View>
             <XpBar xpInLevel={gs.xpInLevel} xpNeeded={gs.xpNeeded} />
             <View style={styles.xpLabelRow}>

@@ -20,19 +20,33 @@ export function xpForLevel(level: number): number {
   return XP_THRESHOLDS[level - 1] ?? 0;
 }
 
+// ── Collection helpers ────────────────────────────────────────────────────────
+export function isOwned(collection: Record<number, number>, cardId: number): boolean {
+  return (collection[cardId] ?? 0) > 0;
+}
+
+export function cardCount(collection: Record<number, number>, cardId: number): number {
+  return collection[cardId] ?? 0;
+}
+
+export function totalUniqueOwned(collection: Record<number, number>): number {
+  return Object.keys(collection).length;
+}
+
 export interface GameState {
   coins: number;
   xp: number;
   level: number;
   xpInLevel: number;
   xpNeeded: number;
-  collection: number[];    // owned card ids
-  activeAvatar: string;    // avatar id
+  collection: Record<number, number>;  // card id → count owned
+  activeAvatar: string;
   ownedAvatars: string[];
   // Mutators (real implementations added in Session 13)
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  addCards: (ids: number[]) => void;
 }
 
 export function useGameState(uid: string): GameState {
@@ -40,13 +54,12 @@ export function useGameState(uid: string): GameState {
 
   // ── Mock initial state ───────────────────────────────────────────────────
   // Session 13 replaces these with Firestore-loaded values.
-  const [coins, setCoins] = useState(isGod ? 99999 : STARTING_CREDITS);
-  const [xp,    setXp]    = useState(isGod ? 45000 : 0);
-
-  const collection  = useMemo(
-    () => isGod ? ALL_CARDS.map(c => c.id) : [],
-    [isGod],
+  const [coins,      setCoins]      = useState(isGod ? 99999 : STARTING_CREDITS);
+  const [xp,         setXp]         = useState(isGod ? 45000 : 0);
+  const [collection, setCollection] = useState<Record<number, number>>(
+    () => isGod ? Object.fromEntries(ALL_CARDS.map(c => [c.id, 1])) : {},
   );
+
   const ownedAvatars = useMemo(() => ['a1'], []);
   const activeAvatar = 'a1';
 
@@ -63,10 +76,19 @@ export function useGameState(uid: string): GameState {
     setCoins(prev => prev - amount);
     return true;
   };
+  const addCards = (ids: number[]) => {
+    setCollection(prev => {
+      const next = { ...prev };
+      for (const id of ids) {
+        next[id] = (next[id] ?? 0) + 1;
+      }
+      return next;
+    });
+  };
 
   return {
     coins, xp, level, xpInLevel, xpNeeded,
     collection, activeAvatar, ownedAvatars,
-    addXp, addCoins, spendCoins,
+    addXp, addCoins, spendCoins, addCards,
   };
 }

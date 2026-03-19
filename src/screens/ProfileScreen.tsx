@@ -6,7 +6,8 @@ import {
   View, Text, ScrollView, StyleSheet, Platform,
 } from 'react-native';
 import { useSession } from '../context/SessionContext';
-import { useGameState } from '../hooks/useGameState';
+import { totalUniqueOwned } from '../hooks/useGameState';
+import { useGameStateContext } from '../context/GameStateContext';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
@@ -65,8 +66,8 @@ const qStyles = StyleSheet.create({
 
 // ── ProfileScreen ─────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const { uid, username } = useSession();
-  const gs = useGameState(uid);
+  const { username } = useSession();
+  const gs = useGameStateContext();
   const todaysQuests = getTodaysQuests();
 
   // Mock progress — real tracking in Session 9
@@ -98,7 +99,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statBox}>
-                <Text style={styles.statVal}>{gs.collection.length}</Text>
+                <Text style={styles.statVal}>{totalUniqueOwned(gs.collection)}</Text>
                 <Text style={styles.statLbl}>CARDS</Text>
               </View>
               <View style={styles.statDivider} />

@@ -19,6 +19,7 @@
     "babel-preset-expo": "~55.0.8",
     "expo": "~55.0.7",
     "expo-font": "^55.0.4",
+    "expo-haptics": "~55.0.9",
     "expo-status-bar": "~55.0.4",
     "firebase": "^10.14.1",
     "react": "19.2.0",

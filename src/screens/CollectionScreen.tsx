@@ -27,7 +27,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CollectionStackParamList } from '../../App';
-import { useSession } from '../context/SessionContext';
+import { isOwned, cardCount, totalUniqueOwned } from '../hooks/useGameState';
+import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
 import { RC, RO } from '../data/constants';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
@@ -44,10 +45,11 @@ const PACKS    = [
   { label: 'Pack 2 🌑', value: 2 },
 ] as const;
 const SORT_OPTIONS = [
-  { key: 'rarity',  label: 'Rarity' },
-  { key: 'name_az', label: 'Name A → Z' },
-  { key: 'name_za', label: 'Name Z → A' },
-  { key: 'power',   label: 'Total Power' },
+  { key: 'rarity',  label: 'Rarity',       chipLabel: 'RARITY' },
+  { key: 'name_az', label: 'Name A → Z',   chipLabel: 'NAME A-Z' },
+  { key: 'name_za', label: 'Name Z → A',   chipLabel: 'NAME Z-A' },
+  { key: 'power',   label: 'Total Power',  chipLabel: 'POWER' },
+  { key: 'owned',   label: 'Number Owned', chipLabel: '# OWNED' },
 ] as const;
 type SortKey = typeof SORT_OPTIONS[number]['key'];
 
@@ -197,13 +199,7 @@ function FilterSidebar({
 
 // ── CollectionScreen ──────────────────────────────────────────────────────────
 export default function CollectionScreen({ navigation }: Props) {
-  const { uid } = useSession();
-  const isGod   = uid === '__god__';
-
-  const ownedIds = useMemo<Set<number>>(
-    () => new Set(isGod ? ALL_CARDS.map(c => c.id) : ALL_CARDS.slice(0, 40).map(c => c.id)),
-    [isGod],
-  );
+  const gs = useGameStateContext();
 
   const [search,      setSearch]      = useState('');
   const [rarity,      setRarity]      = useState<string>('All');
@@ -226,6 +222,17 @@ export default function CollectionScreen({ navigation }: Props) {
     setSortBy('rarity');
   }, []);
 
+  // Reset filters + search when leaving the Collection tab entirely.
+  // Using the parent (tab) navigator's blur event means this does NOT fire
+  // when navigating to CardDetail (same stack), only when switching tabs.
+  useEffect(() => {
+    const unsub = navigation.getParent()?.addListener('blur', () => {
+      clearFilters();
+      setSearch('');
+    });
+    return unsub;
+  }, [navigation, clearFilters]);
+
   const cards = useMemo(() => {
     let list = ALL_CARDS as Card[];
     if (packFilter !== 0)     list = list.filter(c => c.pack === packFilter);
@@ -239,6 +246,7 @@ export default function CollectionScreen({ navigation }: Props) {
         case 'name_az': return a.name.localeCompare(b.name);
         case 'name_za': return b.name.localeCompare(a.name);
         case 'power':   return (b.power + b.defense + b.speed) - (a.power + a.defense + a.speed);
+        case 'owned':   return cardCount(gs.collection, b.id) - cardCount(gs.collection, a.id);
         default:        return 0;
       }
     });
@@ -250,23 +258,34 @@ export default function CollectionScreen({ navigation }: Props) {
     return [...cards, ...Array(NUM_COLS - rem).fill(null)];
   }, [cards]);
 
-  const ownedCount = useMemo(() => ALL_CARDS.filter(c => ownedIds.has(c.id)).length, [ownedIds]);
+  const totalOwned = useMemo(
+    () => totalUniqueOwned(gs.collection),
+    [gs.collection],
+  );
 
   const renderItem = useCallback(({ item }: ListRenderItemInfo<Card | null>) => {
     if (!item) return <View style={[styles.cardSlot, { width: CARD_W * SCALE }]} />;
-    const owned = ownedIds.has(item.id);
+    const owned = isOwned(gs.collection, item.id);
+    const count = cardCount(gs.collection, item.id);
     return (
       <TouchableOpacity
         style={styles.cardSlot}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('CardDetail', { cardId: item.id, owned } as never)}
+        onPress={() => navigation.navigate('CardDetail', { cardId: item.id, owned, ownedCount: count } as never)}
       >
-        <CardWrapper scale={SCALE}>
-          {owned ? <HeroCard card={item} showShine /> : <MissingCard card={item} />}
-        </CardWrapper>
+        <View>
+          <CardWrapper scale={SCALE}>
+            {owned ? <HeroCard card={item} showShine /> : <MissingCard card={item} />}
+          </CardWrapper>
+          {count > 1 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>x{count}</Text>
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
     );
-  }, [ownedIds, navigation]);
+  }, [gs.collection, navigation]);
 
   const keyExtractor = useCallback((item: Card | null, idx: number) =>
     item ? String(item.id) : `filler-${idx}`, []);
@@ -277,7 +296,7 @@ export default function CollectionScreen({ navigation }: Props) {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>COLLECTION</Text>
-          <Text style={styles.headerSub}>{ownedCount} / {ALL_CARDS.length} owned</Text>
+          <Text style={styles.headerSub}>{totalOwned} / {ALL_CARDS.length} owned</Text>
         </View>
         {/* Filter button */}
         <TouchableOpacity
@@ -313,8 +332,7 @@ export default function CollectionScreen({ navigation }: Props) {
 
       {/* ── Active filter chips ── */}
       {activeFilterCount > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          style={styles.chipRow} contentContainerStyle={styles.chipContent}>
+        <View style={styles.chipRow}>
           {rarity !== 'All' && (
             <TouchableOpacity style={[styles.chip, { borderColor: RC[rarity]?.color ?? '#4fc3f7' }]}
               onPress={() => setRarity('All')}>
@@ -334,11 +352,11 @@ export default function CollectionScreen({ navigation }: Props) {
           {sortBy !== 'rarity' && (
             <TouchableOpacity style={[styles.chip, { borderColor: '#cc6dff' }]} onPress={() => setSortBy('rarity')}>
               <Text style={[styles.chipText, { color: '#cc6dff' }]}>
-                {SORT_OPTIONS.find(s => s.key === sortBy)?.label} ✕
+                {SORT_OPTIONS.find(s => s.key === sortBy)?.chipLabel} ✕
               </Text>
             </TouchableOpacity>
           )}
-        </ScrollView>
+        </View>
       )}
 
       {/* ── Results count ── */}
@@ -458,8 +476,7 @@ const styles = StyleSheet.create({
   clearText: { color: '#606480', fontSize: 14 },
 
   // Active filter chips
-  chipRow: { flexGrow: 0, marginBottom: 4 },
-  chipContent: { paddingHorizontal: 12, gap: 6 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 6, marginBottom: 6 },
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -485,9 +502,19 @@ const styles = StyleSheet.create({
   },
 
   // Grid
-  listContent: { paddingHorizontal: 8, paddingBottom: 40 },
+  listContent:   { paddingHorizontal: 8, paddingBottom: 40 },
   columnWrapper: { justifyContent: 'space-evenly', marginBottom: 6 },
-  cardSlot: { alignItems: 'center' },
+  cardSlot:      { alignItems: 'center' },
+  countBadge: {
+    position: 'absolute', bottom: 6, right: 2,
+    backgroundColor: '#4fc3f7', borderRadius: 6,
+    paddingHorizontal: 5, paddingVertical: 2,
+    borderWidth: 1, borderColor: '#060610',
+  },
+  countText: {
+    fontFamily: 'Orbitron_700Bold', fontSize: 8,
+    color: '#060610', letterSpacing: 0.5,
+  },
 
   // Sidebar
   backdrop: {
