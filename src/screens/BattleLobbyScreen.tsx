@@ -462,19 +462,9 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {/* Title row */}
         <View style={s.titleRow}>
           <Text style={s.screenTitle}>BUILD YOUR DECK</Text>
-          <View style={s.titleRight}>
-            <TouchableOpacity
-              style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
-              onPress={() => setSidebarOpen(true)}
-            >
-              <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
-                ⚙ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-              </Text>
-            </TouchableOpacity>
-            <Text style={[s.deckCount, { color: deckFull ? '#4caf50' : '#606480' }]}>
-              {battleDeck.length}/{DECK_SIZE}
-            </Text>
-          </View>
+          <Text style={[s.deckCount, { color: deckFull ? '#4caf50' : '#606480' }]}>
+            {battleDeck.length}/{DECK_SIZE}
+          </Text>
         </View>
 
         {/* Rarity limits row */}
@@ -533,23 +523,33 @@ export default function BattleLobbyScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* Search */}
-        <View style={s.searchRow}>
-          <Text style={s.searchIcon}>⌕</Text>
-          <TextInput
-            style={s.searchInput}
-            placeholder="Search cards..."
-            placeholderTextColor="#303050"
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <Text style={s.searchClear}>✕</Text>
-            </TouchableOpacity>
-          )}
+        {/* Search + filter row */}
+        <View style={s.searchAndFilter}>
+          <View style={s.searchRow}>
+            <Text style={s.searchIcon}>⌕</Text>
+            <TextInput
+              style={s.searchInput}
+              placeholder="Search cards..."
+              placeholderTextColor="#303050"
+              value={search}
+              onChangeText={setSearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Text style={s.searchClear}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
+            onPress={() => setSidebarOpen(true)}
+          >
+            <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
+              ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={s.resultsText}>{filteredCards.length} cards</Text>
@@ -622,8 +622,7 @@ const s = StyleSheet.create({
   header:      { backgroundColor:'#060610', paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:'#10102a' },
   titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
   screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:'#ffffff', letterSpacing:1.5 },
-  titleRight:  { flexDirection:'row', alignItems:'center', gap:10 },
-  filterBtn:   { flexDirection:'row', alignItems:'center', paddingHorizontal:10, paddingVertical:6, borderRadius:8, borderWidth:1, borderColor:'#252540', backgroundColor:'#0e0e1e' },
+  filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:'#252540', backgroundColor:'#0e0e1e' },
   filterBtnActive: { borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
   filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#8890b0', letterSpacing:0.5 },
   deckCount:   { fontFamily:'Orbitron_900Black', fontSize:18 },
@@ -639,7 +638,8 @@ const s = StyleSheet.create({
   chip:        { paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
   chipText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#4fc3f7', letterSpacing:0.5 },
 
-  searchRow:   { flexDirection:'row', alignItems:'center', backgroundColor:'#0e0e1e', borderRadius:10, borderWidth:1, borderColor:'#252540', paddingHorizontal:10, marginBottom:4 },
+  searchAndFilter: { flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 },
+  searchRow:   { flex:1, flexDirection:'row', alignItems:'center', backgroundColor:'#0e0e1e', borderRadius:10, borderWidth:1, borderColor:'#252540', paddingHorizontal:10 },
   searchIcon:  { fontSize:16, color:'#404458', marginRight:4 },
   searchInput: { flex:1, height:36, color:'#d8dcea', fontFamily:'Rajdhani_600SemiBold', fontSize:14 },
   searchClear: { color:'#606480', fontSize:14, padding:4 },

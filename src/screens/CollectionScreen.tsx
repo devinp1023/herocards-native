@@ -294,40 +294,38 @@ export default function CollectionScreen({ navigation }: Props) {
     <View style={styles.root}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>COLLECTION</Text>
-          <Text style={styles.headerSub}>{totalOwned} / {ALL_CARDS.length} owned</Text>
+        <Text style={styles.headerTitle}>COLLECTION</Text>
+        <Text style={styles.headerSub}>{totalOwned} / {ALL_CARDS.length} owned</Text>
+      </View>
+
+      {/* ── Search + filter ── */}
+      <View style={styles.searchAndFilter}>
+        <View style={styles.searchRow}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search cards…"
+            placeholderTextColor="#404458"
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
+              <Text style={styles.clearText}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        {/* Filter button */}
         <TouchableOpacity
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setSidebarOpen(true)}
         >
-          <Text style={styles.filterBtnIcon}>⚙</Text>
-          <Text style={[styles.filterBtnText, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
-            Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          <Text style={[styles.filterBtnIcon, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
+            ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </Text>
         </TouchableOpacity>
-      </View>
-
-      {/* ── Search ── */}
-      <View style={styles.searchRow}>
-        <Text style={styles.searchIcon}>⌕</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search cards…"
-          placeholderTextColor="#404458"
-          value={search}
-          onChangeText={setSearch}
-          returnKeyType="search"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-            <Text style={styles.clearText}>✕</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* ── Active filter chips ── */}
@@ -403,9 +401,6 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 10,
@@ -423,12 +418,20 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: 2,
   },
-  filterBtn: {
+
+  // Search + filter row
+  searchAndFilter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    marginHorizontal: 12,
+    marginBottom: 6,
+    gap: 8,
+  },
+  filterBtn: {
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#252540',
@@ -451,10 +454,9 @@ const styles = StyleSheet.create({
 
   // Search
   searchRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 12,
-    marginBottom: 6,
     backgroundColor: '#0e0e1e',
     borderRadius: 10,
     borderWidth: 1,
