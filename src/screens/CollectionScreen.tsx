@@ -26,14 +26,15 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App';
+import { CollectionStackParamList } from '../../App';
+import { useSession } from '../context/SessionContext';
 import { ALL_CARDS, Card } from '../data/cards';
 import { RC, RO } from '../data/constants';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MissingCard } from '../components/MissingCard';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Main'>;
+type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
 
 // ── Filter / sort config ──────────────────────────────────────────────────────
 const RARITIES = ['All', 'Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
@@ -195,8 +196,8 @@ function FilterSidebar({
 }
 
 // ── CollectionScreen ──────────────────────────────────────────────────────────
-export default function CollectionScreen({ route, navigation }: Props) {
-  const { uid } = route.params;
+export default function CollectionScreen({ navigation }: Props) {
+  const { uid } = useSession();
   const isGod   = uid === '__god__';
 
   const ownedIds = useMemo<Set<number>>(
@@ -258,7 +259,7 @@ export default function CollectionScreen({ route, navigation }: Props) {
       <TouchableOpacity
         style={styles.cardSlot}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('CardDetail', { cardId: item.id, owned })}
+        onPress={() => navigation.navigate('CardDetail', { cardId: item.id, owned } as never)}
       >
         <CardWrapper scale={SCALE}>
           {owned ? <HeroCard card={item} showShine /> : <MissingCard card={item} />}

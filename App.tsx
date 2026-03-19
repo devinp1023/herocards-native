@@ -1,48 +1,196 @@
 // ⚠️ react-native-get-random-values MUST be the first import.
-// It patches the global crypto.getRandomValues() required by the Firebase Web SDK.
 import 'react-native-get-random-values';
 
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
 import { Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
 import { useFont } from '@shopify/react-native-skia';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
-import AuthScreen from './src/screens/AuthScreen';
-import CollectionScreen from './src/screens/CollectionScreen';
-import CardDetailScreen from './src/screens/CardDetailScreen';
-import { FontContext } from './src/context/FontContext';
 
-// ── Navigation types ──────────────────────────────────────────────────
+import AuthScreen            from './src/screens/AuthScreen';
+import HomeScreen            from './src/screens/HomeScreen';
+import CollectionScreen      from './src/screens/CollectionScreen';
+import CardDetailScreen      from './src/screens/CardDetailScreen';
+import BattleLobbyScreen     from './src/screens/BattleLobbyScreen';
+import StoreScreen           from './src/screens/StoreScreen';
+import ProfileScreen         from './src/screens/ProfileScreen';
+
+import { FontContext }    from './src/context/FontContext';
+import { SessionContext } from './src/context/SessionContext';
+
+// ── Navigation param lists ────────────────────────────────────────────────────
 export type RootStackParamList = {
-  Auth:       undefined;
-  Main:       { uid: string; username: string };
+  Auth: undefined;
+  Main: undefined;
+};
+
+export type MainTabParamList = {
+  HomeTab:       undefined;
+  CollectionTab: undefined;
+  BattleTab:     undefined;
+  StoreTab:      undefined;
+  ProfileTab:    undefined;
+};
+
+export type HomeStackParamList = {
+  Home:        undefined;
+  PackOpening: undefined;  // Session 7
+};
+
+export type CollectionStackParamList = {
+  Collection: undefined;
   CardDetail: { cardId: number; owned: boolean };
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+export type BattleStackParamList  = { BattleLobby: undefined };
+export type StoreStackParamList   = { Store:        undefined };
+export type ProfileStackParamList = { Profile:      undefined };
 
-// Font asset requires — Skia useFont() reads raw .ttf files
+// ── Navigators ────────────────────────────────────────────────────────────────
+const RootStack        = createNativeStackNavigator<RootStackParamList>();
+const Tab              = createBottomTabNavigator<MainTabParamList>();
+const HomeStack        = createNativeStackNavigator<HomeStackParamList>();
+const CollectionStack  = createNativeStackNavigator<CollectionStackParamList>();
+
+// Font asset paths for Skia
 const orbitronBoldTtf  = require('./assets/fonts/Orbitron_700Bold.ttf');
 const orbitronBlackTtf = require('./assets/fonts/Orbitron_900Black.ttf');
 const rajdhaniSemiTtf  = require('./assets/fonts/Rajdhani_600SemiBold.ttf');
 
-// ── App ──────────────────────────────────────────────────────────────
+// ── Tab bar helpers ───────────────────────────────────────────────────────────
+// Emoji are unreliable with Hermes + custom fonts — use styled letter icons.
+const TAB_ICONS: Record<string, string> = {
+  HOME: 'H', CARDS: 'C', BATTLE: 'B', STORE: 'S', PROFILE: 'P',
+};
+
+function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+  const letter = TAB_ICONS[label] ?? label[0];
+  return (
+    <View style={{
+      width: 28, height: 28, borderRadius: 8,
+      backgroundColor: focused ? '#4fc3f722' : 'transparent',
+      borderWidth: focused ? 1 : 0,
+      borderColor: '#4fc3f7',
+      alignItems: 'center', justifyContent: 'center',
+    }}>
+      <Text style={{
+        fontFamily: 'Orbitron_900Black',
+        fontSize: 11,
+        color: focused ? '#4fc3f7' : '#404458',
+      }}>{letter}</Text>
+    </View>
+  );
+}
+function TabLabel({ label, focused }: { label: string; focused: boolean }) {
+  return (
+    <Text style={{
+      fontFamily: 'Orbitron_700Bold',
+      fontSize: 7,
+      letterSpacing: 0.5,
+      marginTop: 2,
+      color: focused ? '#4fc3f7' : '#404458',
+    }}>
+      {label}
+    </Text>
+  );
+}
+
+// ── Nested stack navigators ───────────────────────────────────────────────────
+function HomeStackNav() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      {/* PackOpeningScreen added in Session 7 */}
+    </HomeStack.Navigator>
+  );
+}
+
+function CollectionStackNav() {
+  return (
+    <CollectionStack.Navigator screenOptions={{ headerShown: false }}>
+      <CollectionStack.Screen name="Collection" component={CollectionScreen} />
+      <CollectionStack.Screen name="CardDetail"  component={CardDetailScreen} />
+    </CollectionStack.Navigator>
+  );
+}
+
+// ── Main tab navigator ────────────────────────────────────────────────────────
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#08081a',
+          borderTopColor: '#14142a',
+          borderTopWidth: 1,
+          height: 64,
+          paddingBottom: 8,
+        },
+        // No tabBarLabelStyle here — fontFamily at navigator level propagates
+        // into screen content and breaks all emoji. Labels use per-tab render fns.
+        tabBarActiveTintColor:   '#4fc3f7',
+        tabBarInactiveTintColor: '#404458',
+      }}
+    >
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeStackNav}
+        options={{
+          tabBarIcon:  ({ focused }) => <TabIcon  label="HOME"    focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabLabel label="HOME"    focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="CollectionTab"
+        component={CollectionStackNav}
+        options={{
+          tabBarIcon:  ({ focused }) => <TabIcon  label="CARDS"   focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabLabel label="CARDS"   focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="BattleTab"
+        component={BattleLobbyScreen}
+        options={{
+          tabBarIcon:  ({ focused }) => <TabIcon  label="BATTLE"  focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabLabel label="BATTLE"  focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="StoreTab"
+        component={StoreScreen}
+        options={{
+          tabBarIcon:  ({ focused }) => <TabIcon  label="STORE"   focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabLabel label="STORE"   focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon:  ({ focused }) => <TabIcon  label="PROFILE" focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabLabel label="PROFILE" focused={focused} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [session, setSession]     = useState<{ uid: string; username: string } | null>(null);
-  const [godMode, setGodMode]     = useState(false);
 
-  // expo-font — for native Text components throughout the app
   const [fontsLoaded] = useFonts({ Orbitron_700Bold, Orbitron_900Black, Rajdhani_600SemiBold });
 
-  // Skia fonts — loaded once at root, shared via FontContext.
-  // useFont() returns null until decoded; HeroCard/FaceDownCard guard on null.
   const fontName      = useFont(orbitronBoldTtf,  17);
   const fontNumber    = useFont(orbitronBoldTtf,  10);
   const fontStatLabel = useFont(orbitronBoldTtf,  10);
@@ -52,7 +200,6 @@ export default function App() {
   const fontCardTitle = useFont(orbitronBoldTtf,  13);
   const fontCardSub   = useFont(orbitronBoldTtf,  10);
 
-  // Firebase auth listener — restores session on app reopen
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -92,31 +239,26 @@ export default function App() {
         fontName, fontNumber, fontStatLabel, fontStatValue,
         fontTotal, fontSmall, fontCardTitle, fontCardSub,
       }}>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {!session ? (
-              <Stack.Screen name="Auth">
-                {() => (
-                  <AuthScreen
-                    onLogin={handleLogin}
-                    godMode={godMode}
-                    onToggleGodMode={() => { if (!godMode) handleEnterGodMode(); else setGodMode(false); }}
-                    onEnterGodMode={handleEnterGodMode}
-                  />
-                )}
-              </Stack.Screen>
-            ) : (
-              <>
-                <Stack.Screen
-                  name="Main"
-                  component={CollectionScreen}
-                  initialParams={{ uid: session.uid, username: session.username }}
-                />
-                <Stack.Screen name="CardDetail" component={CardDetailScreen} />
-              </>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
+        <SessionContext.Provider value={session ?? { uid: '', username: '' }}>
+          <NavigationContainer>
+            <RootStack.Navigator screenOptions={{ headerShown: false }}>
+              {!session ? (
+                <RootStack.Screen name="Auth">
+                  {() => (
+                    <AuthScreen
+                      onLogin={handleLogin}
+                      godMode={false}
+                      onToggleGodMode={handleEnterGodMode}
+                      onEnterGodMode={handleEnterGodMode}
+                    />
+                  )}
+                </RootStack.Screen>
+              ) : (
+                <RootStack.Screen name="Main" component={MainTabs} />
+              )}
+            </RootStack.Navigator>
+          </NavigationContainer>
+        </SessionContext.Provider>
       </FontContext.Provider>
     </GestureHandlerRootView>
   );

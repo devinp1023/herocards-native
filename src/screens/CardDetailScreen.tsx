@@ -21,14 +21,14 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../App';
+import { CollectionStackParamList } from '../../App';
 import { ALL_CARDS } from '../data/cards';
 import { RC, TYPE_COLORS, RO } from '../data/constants';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MissingCard } from '../components/MissingCard';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'CardDetail'>;
+type Props = NativeStackScreenProps<CollectionStackParamList, 'CardDetail'>;
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const SCALE      = 0.85;
