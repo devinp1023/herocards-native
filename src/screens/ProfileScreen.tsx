@@ -9,6 +9,7 @@ import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
+import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
 function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
@@ -75,15 +76,22 @@ export default function ProfileScreen() {
 
   const doneCount = todaysQuests.filter(q => (questProgress[q.id] ?? 0) >= q.req.n).length;
 
+  // Resolve active avatar symbol + color
+  const avatarData =
+    AVATARS.find(a => a.id === gs.activeAvatar) ??
+    LEVEL_AVATARS.find(a => a.id === gs.activeAvatar);
+  const avatarSymbol = avatarData?.symbol ?? username.charAt(0).toUpperCase();
+  const avatarColor  = avatarData?.color  ?? '#4fc3f7';
+
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile header ── */}
         <View style={styles.header}>
-          {/* Avatar — username initial (emoji unreliable on Hermes) */}
-          <View style={styles.avatarRing}>
-            <Text style={styles.avatarInitial}>{username.charAt(0).toUpperCase()}</Text>
+          {/* Active avatar ring — symbol + accent color */}
+          <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
+            <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.username} numberOfLines={1}>{username.toUpperCase()}</Text>

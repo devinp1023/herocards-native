@@ -4,9 +4,10 @@
 // Boundary rule: this hook never imports Firebase directly.
 // It will call useFirebase().saveData() once Session 13 wires persistence.
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { ALL_CARDS } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
+import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 
 // ── Level helpers (mirrors web getLevel) ─────────────────────────────────────
 export function getLevel(xp: number): number {
@@ -47,6 +48,8 @@ export interface GameState {
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
   addCards: (ids: number[]) => void;
+  equipAvatar: (id: string) => void;
+  purchaseAvatar: (id: string, price: number) => boolean;
 }
 
 export function useGameState(uid: string): GameState {
@@ -60,8 +63,12 @@ export function useGameState(uid: string): GameState {
     () => isGod ? Object.fromEntries(ALL_CARDS.map(c => [c.id, 1])) : {},
   );
 
-  const ownedAvatars = useMemo(() => ['a1'], []);
-  const activeAvatar = 'a1';
+  const [ownedAvatars, setOwnedAvatars] = useState<string[]>(() =>
+    isGod
+      ? [...new Set([...AVATARS.map(a => a.id), ...LEVEL_AVATARS.map(a => a.id)])]
+      : ['a1'],
+  );
+  const [activeAvatar, setActiveAvatar] = useState('a1');
 
   // ── Derived XP progress ───────────────────────────────────────────────────
   const level      = getLevel(xp);
@@ -86,9 +93,20 @@ export function useGameState(uid: string): GameState {
     });
   };
 
+  const equipAvatar = (id: string) => setActiveAvatar(id);
+
+  const purchaseAvatar = (id: string, price: number): boolean => {
+    if (coins < price) return false;
+    setCoins(prev => prev - price);
+    setOwnedAvatars(prev => prev.includes(id) ? prev : [...prev, id]);
+    setActiveAvatar(id);
+    return true;
+  };
+
   return {
     coins, xp, level, xpInLevel, xpNeeded,
     collection, activeAvatar, ownedAvatars,
     addXp, addCoins, spendCoins, addCards,
+    equipAvatar, purchaseAvatar,
   };
 }

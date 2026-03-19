@@ -13,6 +13,50 @@ export const PACKS: Record<number, Pack> = {
   2:{id:2,name:"Shrouded Mysteries",subtitle:"Shadows, secrets and arcane power",emoji:"🌑",color:"#cc6dff",glow:"#cc6dff44",grad:"linear-gradient(135deg,#180d28,#2a1040)"},
 };
 
+// ── Purchaseable avatars ──────────────────────────────────────────────────────
+export interface PurchasableAvatar {
+  id: string;
+  symbol: string;   // Unicode symbol — no emoji, renders on Hermes
+  color: string;    // accent color for avatar ring + symbol
+  name: string;
+  tier: 'Common' | 'Rare' | 'Epic' | 'Legendary';
+  price: number;    // in credits
+}
+
+export const AVATAR_TIER_COLORS: Record<string, { color: string; bg: string; border: string }> = {
+  Common:    { color: '#9e9e9e', bg: '#9e9e9e18', border: '#9e9e9e44' },
+  Rare:      { color: '#2196f3', bg: '#2196f318', border: '#2196f344' },
+  Epic:      { color: '#cc6dff', bg: '#cc6dff18', border: '#cc6dff44' },
+  Legendary: { color: '#ff9800', bg: '#ff980018', border: '#ff980044' },
+  LevelUp:   { color: '#00e676', bg: '#00e67618', border: '#00e67644' },
+};
+
+export const AVATARS: PurchasableAvatar[] = [
+  // Common — 200 credits
+  { id: 'a1',  symbol: 'θ', color: '#cc6dff', name: 'Mystic Elder',    tier: 'Common',    price: 200  },
+  { id: 'a2',  symbol: 'Λ', color: '#607d8b', name: 'Iron Bot',        tier: 'Common',    price: 200  },
+  { id: 'a3',  symbol: 'ξ', color: '#7a7a8a', name: 'Undead One',      tier: 'Common',    price: 200  },
+  { id: 'a4',  symbol: 'δ', color: '#78909c', name: 'Wolfpack',        tier: 'Common',    price: 200  },
+  { id: 'a5',  symbol: 'σ', color: '#ff8c00', name: 'Fox Spirit',      tier: 'Common',    price: 200  },
+  { id: 'a6',  symbol: 'Γ', color: '#43a047', name: 'Young Drake',     tier: 'Common',    price: 200  },
+  // Rare — 500 credits
+  { id: 'a7',  symbol: 'Δ', color: '#2196f3', name: 'The Hero',        tier: 'Rare',      price: 500  },
+  { id: 'a8',  symbol: 'Σ', color: '#ef5350', name: 'The Villain',     tier: 'Rare',      price: 500  },
+  { id: 'a9',  symbol: 'β', color: '#7c3aed', name: 'Night Lord',      tier: 'Rare',      price: 500  },
+  { id: 'a10', symbol: '∞', color: '#4fc3f7', name: 'Sea Sovereign',   tier: 'Rare',      price: 500  },
+  { id: 'a11', symbol: 'μ', color: '#00e676', name: 'Forest Warden',   tier: 'Rare',      price: 500  },
+  { id: 'a12', symbol: 'ν', color: '#ffd700', name: 'Sky Stalker',     tier: 'Rare',      price: 500  },
+  // Epic — 1200 credits
+  { id: 'a13', symbol: 'Π', color: '#ff6d00', name: 'Inferno',         tier: 'Epic',      price: 1200 },
+  { id: 'a14', symbol: 'Ξ', color: '#ffc400', name: 'Stormcaller',     tier: 'Epic',      price: 1200 },
+  { id: 'a15', symbol: 'Υ', color: '#00e5ff', name: 'Tidal Force',     tier: 'Epic',      price: 1200 },
+  { id: 'a16', symbol: 'χ', color: '#9c27b0', name: 'Shadow Wraith',   tier: 'Epic',      price: 1200 },
+  // Legendary — 3000 credits
+  { id: 'a17', symbol: 'Θ', color: '#ff9800', name: 'The Sovereign',   tier: 'Legendary', price: 3000 },
+  { id: 'a18', symbol: 'Ω', color: '#ef5350', name: 'Death Incarnate', tier: 'Legendary', price: 3000 },
+];
+
+// ── Level-up avatars ──────────────────────────────────────────────────────────
 export interface LevelAvatar {
   id: string;
   symbol: string;   // Unicode symbol — no emoji, renders on Hermes
