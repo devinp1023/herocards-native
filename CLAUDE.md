@@ -117,7 +117,8 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 ### Card Data
 - 200 cards — `id, name, type, rarity, power, defense, speed, emoji, desc, pack, alliance, imageUrl?, ability?`
 - Firestore is the live source; `src/data/cards.ts` is the offline fallback
-- To update cards: edit in CMS → click "Re-seed All Cards" → Firestore updates → app picks up on next launch
+- To update a card: edit in CMS → click Save — saves that card individually to Firestore → app picks up on next launch
+- "Re-seed All Cards" button: overwrites ALL 200 Firestore cards with DEFAULT_CARDS — use when abilities/bulk data need to be pushed fresh
 - To sync Firestore → cards.ts: `npm run sync-cards`
 - 17 cards have `imageUrl` (Firebase Storage `card-images/card_XXX.png`)
 - All 200 cards have `ability` assigned (25 abilities across 5 rarity tiers)
@@ -145,7 +146,7 @@ Key rules:
 - AI proactively swaps when active HP < 35% and a better card exists in hand
 - 5 combat types (Melee/Agility/Energy/Intelligence/Magic) mapped from 15 card subtypes
 - Type advantage: ×1.5 | Type disadvantage: ×0.75 | Same type: ×0.75 | Neutral: ×1.0
-- 3 AI tiers: Rookie (1), Veteran (2), Elite (3)
+- 5 AI tiers: Rookie (1), Scrapper (2), Fighter (3), Elite (4), Champion (5)
 - All 25 abilities fully implemented in `battleEngine.ts`
 
 ### Battle UI Architecture
@@ -173,14 +174,23 @@ Root Stack
 | `useBattle` | Battle state machine, animation signals, round sequencing |
 
 ## God Mode
-Login with username `__god__` — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements. Skips Firestore save.
+Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements. Skips Firestore save.
 
 ## Git Workflow
+
+### Native App (herocards-native)
 - Repo: https://github.com/devinp1023/herocards-native
 - Branch: **always work on `main` directly** — no worktrees or feature branches
 - Git user: Devin Patel / devinp1023@gmail.com
 - Always ask before pushing to GitHub
 - Run `npx tsc --noEmit` before committing — must pass with zero errors
+
+### CMS (herocards-CMS)
+- Repo: https://github.com/devinp1023/herocards-CMS
+- Local path: `/Users/devinpatel/Desktop/herocards-cms`
+- Branch: **always work on `main` directly**
+- After editing `public/index.html`, deploy with: `cd /Users/devinpatel/Desktop/herocards-cms && npx firebase-tools deploy --only hosting`
+- Always ask before pushing to GitHub or deploying
 
 ---
 
