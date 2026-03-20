@@ -388,7 +388,17 @@ export function executeAIProactiveSwap(aSide: SideState, pSide: SideState, log: 
   return true;
 }
 
-// ── 14. Battle reward calculation ─────────────────────────────────────────────
+// ── 14. AI independent action decision ────────────────────────────────────────
+// Called once per round, independently of what the player chose.
+// Priority: swap (critical HP) > draw (empty hand) > attack.
+
+export function aiDecide(aSide: SideState, pSide: SideState): 'attack' | 'draw' | 'swap' {
+  if (aiSwapTarget(aSide, pSide)) return 'swap';
+  if (aSide.hand.length === 0 && aSide.deck.length > 0) return 'draw';
+  return 'attack';
+}
+
+// ── 15. Battle reward calculation ─────────────────────────────────────────────
 
 export function calcBattleRewards(tier: number, winner: 'player' | 'ai', streak: number): { credits: number; xp: number; streakBonus: boolean } {
   const t = BATTLE_REWARDS[tier] ?? BATTLE_REWARDS[1];

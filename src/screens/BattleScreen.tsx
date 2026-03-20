@@ -104,7 +104,11 @@ const ch = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted }: { card: BattleCard | null; revealed: boolean; deckCount: number; targeted: boolean }) {
+function AIActiveSection({ card, revealed, deckCount, targeted, onCardMeasure }: {
+  card: BattleCard | null; revealed: boolean; deckCount: number;
+  targeted: boolean; onCardMeasure: (b: Bounds) => void;
+}) {
+  const cardRef = useRef<View>(null);
   if (!card) {
     return <View style={[aas.row, { height: ACTIVE_H, justifyContent: 'center' }]}><Text style={aas.empty}>—</Text></View>;
   }
@@ -112,9 +116,16 @@ function AIActiveSection({ card, revealed, deckCount, targeted }: { card: Battle
     <View style={aas.row}>
       <CircleHp hp={card.hp} maxHp={card.maxHp} />
       <View style={{ width: HP_GAP }} />
-      <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+      {/* Measure only the card itself — this is the precise attack drop-zone */}
+      <View
+        ref={cardRef}
+        style={{ position: 'relative' }}
+        onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
+      >
+        <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+        {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
+      </View>
       <View style={{ width: HP_GAP }} />
-      {/* Deck sits beside the active card, like Pokémon TCG Pocket */}
       <View style={aas.deckCol}>
         {deckCount > 0 ? (
           <View style={aas.deckWrap}>
@@ -128,7 +139,6 @@ function AIActiveSection({ card, revealed, deckCount, targeted }: { card: Battle
           <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
         )}
       </View>
-      {targeted && <View style={aas.glow} pointerEvents="none" />}
     </View>
   );
 }
@@ -141,17 +151,18 @@ const aas = StyleSheet.create({
   badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#9966ff', lineHeight: 14 },
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
-  glow:         { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 10, borderWidth: 2, borderColor: '#ff5722cc', backgroundColor: '#ff572218', pointerEvents: 'none' },
+  cardGlow:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, borderWidth: 2, borderColor: '#ff5722dd', backgroundColor: '#ff572220' },
 });
 
 // ── Player active section (drag onto AI card = attack; deck beside, tap to draw)
 function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw,
-  aiActiveBoundsRef, onAttackHover, swapTargeted }: {
+  aiActiveBoundsRef, onAttackHover, swapTargeted, onCardMeasure }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase; onAttack: () => void;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   aiActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onAttackHover: (h: boolean) => void;
   swapTargeted: boolean;
+  onCardMeasure: (b: Bounds) => void;
 }) {
   const dragX            = useRef(new Animated.Value(0)).current;
   const dragY            = useRef(new Animated.Value(0)).current;
@@ -165,6 +176,10 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
   onAttackRef.current      = onAttack;
   onAttackHoverRef.current = onAttackHover;
   aiBoundsRef.current      = aiActiveBoundsRef;
+
+  const cardSlotRef      = useRef<View>(null);
+  const onCardMeasureRef = useRef(onCardMeasure);
+  onCardMeasureRef.current = onCardMeasure;
 
   const rotate = dragX.interpolate({ inputRange: [-80, 80], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
@@ -192,10 +207,42 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
     onPanResponderTerminate: () => { onAttackHoverRef.current(false); springBack(); },
   })).current;
 
+  const deckSection = (
+    <View style={aas.deckCol}>
+      {deckCount > 0 ? (
+        <TouchableOpacity onPress={onDraw} disabled={!canDraw} activeOpacity={canDraw ? 0.7 : 1}>
+          <View style={aas.deckWrap}>
+            <CardBack w={DECK_W} h={DECK_H} />
+            <View style={[aas.badge, canDraw && pas.deckBadgeActive]}>
+              <Text style={[aas.badgeText, canDraw && pas.deckCountActive]}>{deckCount}</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      ) : (
+        <View style={{ width: DECK_W, height: DECK_H }} />
+      )}
+      {card?.ability && revealed && (
+        <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
+      )}
+    </View>
+  );
+
   if (!card) {
     return (
-      <View style={[pas.row, { height: ACTIVE_H, justifyContent: 'center' }]}>
-        <Text style={pas.empty}>—</Text>
+      <View style={pas.row}>
+        {/* Spacer to match CircleHp width */}
+        <View style={{ width: CH_SIZE, height: CH_SIZE }} />
+        <View style={{ width: HP_GAP }} />
+        {/* Empty active slot — measured as the swap drop-zone for hand card drags */}
+        <View
+          ref={cardSlotRef}
+          style={[pas.emptyActive, { width: ACTIVE_W, height: ACTIVE_H }, swapTargeted && pas.emptyActiveTargeted]}
+          onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
+        >
+          <Text style={pas.emptyActiveHint}>drag card{'\n'}here</Text>
+        </View>
+        <View style={{ width: HP_GAP }} />
+        {deckSection}
       </View>
     );
   }
@@ -205,7 +252,12 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
       <CircleHp hp={card.hp} maxHp={card.maxHp} />
       <View style={{ width: HP_GAP }} />
 
-      <View style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted]}>
+      {/* Measure only the card slot — this is the precise swap drop-zone */}
+      <View
+        ref={cardSlotRef}
+        style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted]}
+        onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
+      >
         <View {...pan.panHandlers}>
           <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
             <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
@@ -214,47 +266,33 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
       </View>
 
       <View style={{ width: HP_GAP }} />
-      {/* Deck beside active card — tap to draw */}
-      <View style={aas.deckCol}>
-        {deckCount > 0 ? (
-          <TouchableOpacity onPress={onDraw} disabled={!canDraw} activeOpacity={canDraw ? 0.7 : 1}>
-            <View style={aas.deckWrap}>
-              <CardBack w={DECK_W} h={DECK_H} />
-              <View style={[aas.badge, canDraw && pas.deckBadgeActive]}>
-                <Text style={[aas.badgeText, canDraw && pas.deckCountActive]}>{deckCount}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: DECK_W, height: DECK_H }} />
-        )}
-        {card.ability && revealed && (
-          <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
-        )}
-      </View>
+      {deckSection}
     </View>
   );
 }
 const pas = StyleSheet.create({
-  row:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  empty:           { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
-  deckBadgeActive: { borderColor: '#4fc3f755' },
-  deckCountActive: { color: '#4fc3f7' },
-  cardSlot:        { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  cardSlotTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f712' },
+  row:               { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  deckBadgeActive:   { borderColor: '#4fc3f755' },
+  deckCountActive:   { color: '#4fc3f7' },
+  cardSlot:          { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  cardSlotTargeted:  { borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f712' },
+  emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: '#4fc3f744', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  emptyActiveTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f718' },
+  emptyActiveHint:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f766', letterSpacing: 0.5, textAlign: 'center', lineHeight: 11 },
 });
 
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
 function AIZone({ handCount }: { handCount: number }) {
   return (
     <View style={az.container}>
-      {Array.from({ length: MAX_HAND }).map((_, i) => (
-        <View key={i} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP, zIndex: i < handCount ? 1 : 0 }}>
-          {i < handCount
-            ? <CardBack w={HAND_W} h={HAND_H} />
-            : <EmptySlot w={HAND_W} h={HAND_H} />}
-        </View>
-      ))}
+      {Array.from({ length: MAX_HAND }).map((_, i) => {
+        const filled = i < handCount;
+        return (
+          <View key={i} style={{ marginLeft: i === 0 ? 0 : (filled ? -HAND_OVERLAP : 4), zIndex: filled ? 1 : 0 }}>
+            {filled ? <CardBack w={HAND_W} h={HAND_H} /> : <EmptySlot w={HAND_W} h={HAND_H} />}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -296,59 +334,45 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   ]).start();
 
   const pan = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => phaseRef.current === 'selecting',
-    onMoveShouldSetPanResponder:  (_, gs) => Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3,
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder:  (_, gs) => (phaseRef.current === 'ready' || phaseRef.current === 'selecting') && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
     onPanResponderMove: (_, gs) => {
       dragX.setValue(gs.dx * 0.7);
       dragY.setValue(gs.dy * 0.7);
-      if (phaseRef.current === 'ready') {
+      const p = phaseRef.current;
+      if (p === 'ready' || p === 'selecting') {
         const bounds = playerBoundsRef.current?.current ?? null;
         onSwapHoverRef.current(isOver(bounds, gs.moveX, gs.moveY));
       }
     },
     onPanResponderRelease: (_, gs) => {
-      const p         = phaseRef.current;
-      const id        = cardIdRef.current;
-      const bounds    = playerBoundsRef.current?.current ?? null;
-      const overTarget  = isOver(bounds, gs.moveX, gs.moveY);
-      const firedSelect = p === 'selecting';
+      const p          = phaseRef.current;
+      const id         = cardIdRef.current;
+      const bounds     = playerBoundsRef.current?.current ?? null;
+      const overTarget = isOver(bounds, gs.moveX, gs.moveY);
       onSwapHoverRef.current(false);
       springBack();
-      if (firedSelect)                      setTimeout(() => onSelectRef.current(id), 50);
+      if (p === 'selecting' && overTarget)  setTimeout(() => onSelectRef.current(id), 50);
       else if (p === 'ready' && overTarget) setTimeout(() => onSwapRef.current(id),   80);
     },
     onPanResponderTerminate: () => { onSwapHoverRef.current(false); springBack(); },
   })).current;
 
   const color = RC[card.rarity]?.color ?? '#808898';
-  const selecting = phase === 'selecting';
 
   return (
     <Animated.View
       style={{ marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index, transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
       {...pan.panHandlers}
     >
-      <View style={[hc.frame, { borderColor: selecting ? color : color + '33' }, selecting && hc.frameActive]}>
+      <View style={[hc.frame, { borderColor: color + '33' }]}>
         <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
-        {selecting && (
-          <View style={[hc.badge, { backgroundColor: color }]}>
-            <Text style={hc.badgeText}>PLAY</Text>
-          </View>
-        )}
-        {phase === 'ready' && (
-          <View style={hc.swapHint}><Text style={[hc.swapHintText, { color: color + '99' }]}>swap</Text></View>
-        )}
       </View>
     </Animated.View>
   );
 }
 const hc = StyleSheet.create({
-  frame:       { borderWidth: 1, borderRadius: 6, overflow: 'hidden', position: 'relative' },
-  frameActive: { borderWidth: 2 },
-  badge:       { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', paddingVertical: 2 },
-  badgeText:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#060610' },
-  swapHint:    { position: 'absolute', bottom: 2, left: 0, right: 0, alignItems: 'center' },
-  swapHintText:{ fontFamily: 'Orbitron_700Bold', fontSize: 6, letterSpacing: 0.5 },
+  frame: { borderWidth: 1, borderRadius: 6, overflow: 'hidden', position: 'relative' },
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
@@ -371,7 +395,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
             onSwapHover={onSwapHover}
           />
         ) : (
-          <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP, zIndex: 0 }}>
+          <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: 0 }}>
             <EmptySlot w={HAND_W} h={HAND_H} />
           </View>
         );
@@ -455,18 +479,12 @@ export default function BattleScreen({ navigation, route }: Props) {
   const { playerDeck, tier } = route.params;
   const battle = useBattle(playerDeck, tier);
 
-  // ── Drop-zone measurement ──────────────────────────────────────────────────
-  const aiSectionRef     = useRef<View>(null);
-  const playerSectionRef = useRef<View>(null);
+  // ── Drop-zone measurement (card-level, not section-level) ─────────────────
   const aiActiveBounds     = useRef<Bounds | null>(null);
   const playerActiveBounds = useRef<Bounds | null>(null);
 
-  const measureAi     = useCallback(() => {
-    aiSectionRef.current?.measureInWindow((x, y, w, h) => { aiActiveBounds.current = { x, y, w, h }; });
-  }, []);
-  const measurePlayer = useCallback(() => {
-    playerSectionRef.current?.measureInWindow((x, y, w, h) => { playerActiveBounds.current = { x, y, w, h }; });
-  }, []);
+  const onAiCardMeasure     = useCallback((b: Bounds) => { aiActiveBounds.current = b; }, []);
+  const onPlayerCardMeasure = useCallback((b: Bounds) => { playerActiveBounds.current = b; }, []);
 
   // ── Hover state (drives visual indicators) ────────────────────────────────
   const [attackTargeted, setAttackTargeted] = useState(false);
@@ -493,12 +511,7 @@ export default function BattleScreen({ navigation, route }: Props) {
 
   const tc = battle.tierColor;
 
-  // Footer — only shown when player must pick a replacement card
-  const footer = battle.phase === 'selecting' ? (
-    <View style={[s.btn, { borderColor: '#ff406033' }]}>
-      <Text style={[s.btnText, { color: '#ff6080' }]}>SELECT YOUR NEXT CARD</Text>
-    </View>
-  ) : null;
+  // No footer needed — the empty active slot in PlayerActiveSection guides the user
 
   const visibleEvents = battle.lastEvents
     .filter(e => e.type !== 'ROUND_START' && e.type !== 'BATTLE_START')
@@ -524,10 +537,11 @@ export default function BattleScreen({ navigation, route }: Props) {
 
       {/* Combat zone */}
       <View style={s.combatZone}>
-        <View style={s.cardSection} ref={aiSectionRef} onLayout={measureAi}>
+        <View style={s.cardSection}>
           <AIActiveSection
             card={battle.aiActive} revealed={battle.typeRevealed}
             deckCount={battle.aiDeckCount} targeted={attackTargeted}
+            onCardMeasure={onAiCardMeasure}
           />
         </View>
 
@@ -543,7 +557,7 @@ export default function BattleScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        <View style={s.cardSection} ref={playerSectionRef} onLayout={measurePlayer}>
+        <View style={s.cardSection}>
           <PlayerActiveSection
             card={battle.playerActive}
             revealed={battle.typeRevealed}
@@ -555,6 +569,7 @@ export default function BattleScreen({ navigation, route }: Props) {
             aiActiveBoundsRef={aiActiveBounds}
             onAttackHover={onAttackHover}
             swapTargeted={swapTargeted}
+            onCardMeasure={onPlayerCardMeasure}
           />
         </View>
       </View>
@@ -569,8 +584,6 @@ export default function BattleScreen({ navigation, route }: Props) {
         onSwapHover={onSwapHover}
       />
 
-      {/* Footer — NEXT ROUND / hints only */}
-      {footer && <View style={s.footer}>{footer}</View>}
 
     </View>
   );
@@ -593,7 +606,4 @@ const s = StyleSheet.create({
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: 11, color: '#4fc3f744', letterSpacing: 4, paddingHorizontal: 10 },
   logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 
-  footer:  { paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 28 : 12, paddingTop: 8, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
-  btn:     { borderRadius: 12, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#0a0a1e' },
-  btnText: { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 2 },
 });
