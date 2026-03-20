@@ -21,7 +21,7 @@ import { MiniCard } from '../components/MiniCard';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE = 0.42;
+const ACTIVE_SCALE = 0.36;
 const HAND_SCALE   = 0.22;
 const DECK_SCALE   = 0.26;
 const HAND_OVERLAP = 10;
@@ -157,9 +157,6 @@ function PlayerActiveSection({ card, revealed, phase, onAttack }: {
         <Animated.View style={{ transform: [{ translateY: dragY }] }}>
           <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
         </Animated.View>
-        {phase === 'ready' && (
-          <View style={pas.hint}><Text style={pas.hintText}>drag up to attack</Text></View>
-        )}
       </View>
 
       <View style={{ width: HP_GAP }} />
@@ -174,8 +171,6 @@ function PlayerActiveSection({ card, revealed, phase, onAttack }: {
 const pas = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
   empty:    { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
-  hint:     { alignItems: 'center', marginTop: 4 },
-  hintText: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f744', letterSpacing: 1 },
 });
 
 // ── Top zone — AI face-down hand + deck ───────────────────────────────────────
@@ -413,31 +408,12 @@ export default function BattleScreen({ navigation, route }: Props) {
 
   const tc = battle.tierColor;
 
-  // Footer — only non-gesture actions live here
-  const footer = (() => {
-    if (battle.phase === 'result') {
-      return (
-        <TouchableOpacity style={[s.btn, { borderColor: tc + 'aa', backgroundColor: '#0d0d22' }]} onPress={battle.nextRound} activeOpacity={0.8}>
-          <Text style={[s.btnText, { color: tc }]}>NEXT ROUND</Text>
-        </TouchableOpacity>
-      );
-    }
-    if (battle.phase === 'selecting') {
-      return (
-        <View style={[s.btn, { borderColor: '#ff406033' }]}>
-          <Text style={[s.btnText, { color: '#ff6080' }]}>SELECT YOUR NEXT CARD</Text>
-        </View>
-      );
-    }
-    if (battle.phase === 'ready') {
-      return (
-        <View style={s.hintBar}>
-          <Text style={s.hintText}>Drag card to attack  ·  Drag hand to swap  ·  Tap deck to draw</Text>
-        </View>
-      );
-    }
-    return null;
-  })();
+  // Footer — only shown when player must pick a replacement card
+  const footer = battle.phase === 'selecting' ? (
+    <View style={[s.btn, { borderColor: '#ff406033' }]}>
+      <Text style={[s.btnText, { color: '#ff6080' }]}>SELECT YOUR NEXT CARD</Text>
+    </View>
+  ) : null;
 
   const visibleEvents = battle.lastEvents
     .filter(e => e.type !== 'ROUND_START' && e.type !== 'BATTLE_START')
@@ -527,6 +503,4 @@ const s = StyleSheet.create({
   footer:  { paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 28 : 12, paddingTop: 8, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
   btn:     { borderRadius: 12, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#0a0a1e' },
   btnText: { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 2 },
-  hintBar: { paddingVertical: 10, alignItems: 'center' },
-  hintText:{ fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#30305a', letterSpacing: 0.5 },
 });
