@@ -46,6 +46,7 @@ export interface UseBattleResult {
   // ── Session 12 animation signals ─────────────────────────────────────────
   playerHitKey:            number;              // increments each time player's card is hit
   aiHitKey:                number;              // increments each time AI's card is hit
+  aiAttackKey:             number;              // increments when AI card lunges to attack
   lastDefeatedPlayerCard:  BattleCard | null;  // player's last killed card (for defeat animation)
   lastDefeatedAiCard:      BattleCard | null;  // AI's last killed card (for defeat animation)
   swapOutCardId:           number | null;      // id of the card that just moved from active→hand
@@ -57,6 +58,18 @@ export interface UseBattleResult {
   selectCard:      (id: number) => void;
 }
 
+// Stable snapshot of the mutable ref state, committed at each refresh() call.
+// This guarantees the UI always reads a consistent, atomic display state rather
+// than whatever pRef/aRef happen to contain at React's unpredictable render time.
+interface DisplaySnapshot {
+  playerActive:    BattleCard | null;
+  aiActive:        BattleCard | null;
+  playerHand:      BattleCard[];
+  aiHandCount:     number;
+  playerDeckCount: number;
+  aiDeckCount:     number;
+}
+
 export function useBattle(playerDeckIds: number[], tier: number): UseBattleResult {
   const gs = useGameStateContext();
 
@@ -65,7 +78,10 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   const eventsRef = useRef<BattleEvent[]>([]);
 
   const [phase,        setPhase]        = useState<BattlePhase>('init');
-  const [tick,         setTick]         = useState(0);
+  const [snap,         setSnap]         = useState<DisplaySnapshot>({
+    playerActive: null, aiActive: null, playerHand: [],
+    aiHandCount: 0, playerDeckCount: 0, aiDeckCount: 0,
+  });
   const [round,        setRound]        = useState(1);
   const [winner,       setWinner]       = useState<'player' | 'ai' | null>(null);
   const [typeRevealed, setTypeRevealed] = useState(false);
@@ -74,14 +90,27 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   // ── Session 12 animation state ────────────────────────────────────────────
   const [playerHitKey,           setPlayerHitKey]           = useState(0);
   const [aiHitKey,               setAiHitKey]               = useState(0);
+  const [aiAttackKey,            setAiAttackKey]            = useState(0);
   const [lastDefeatedPlayerCard, setLastDefeatedPlayerCard] = useState<BattleCard | null>(null);
   const [lastDefeatedAiCard,     setLastDefeatedAiCard]     = useState<BattleCard | null>(null);
   const [swapOutCardId,          setSwapOutCardId]          = useState<number | null>(null);
 
-  const refresh = () => setTick(t => t + 1);
+  // refresh() snapshots the current ref state into React state.
+  // Using useCallback with no deps ensures a stable identity while always
+  // reading the latest ref values (refs are always current by definition).
+  const refresh = useCallback(() => {
+    setSnap({
+      playerActive:    pRef.current?.active ?? null,
+      aiActive:        aRef.current?.active ?? null,
+      playerHand:      pRef.current ? [...pRef.current.hand] : [],
+      aiHandCount:     aRef.current?.hand.length ?? 0,
+      playerDeckCount: pRef.current?.deck.length ?? 0,
+      aiDeckCount:     aRef.current?.deck.length ?? 0,
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** ms between sequential animation steps within a round */
-  const STEP_MS = 650;
+  const STEP_MS = 1000;
 
   const tierInfo = TIER_INFO.find(t => t.tier === tier) ?? TIER_INFO[0];
 
@@ -295,7 +324,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       // Step 1 (t=0): first hit (player's spring-back is the visual "lunge")
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events);
       setTypeRevealed(true);
-      if (fSide === p) setAiHitKey(k => k + 1); else setPlayerHitKey(k => k + 1);
+      if (fSide === p) { setAiHitKey(k => k + 1); }
+      else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
       const firstKilled = r1.killed || fOpp.active.hp <= 0;
       refresh();
 
@@ -309,7 +339,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
           const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events);
-          if (sSide === p) setAiHitKey(k => k + 1); else setPlayerHitKey(k => k + 1);
+          if (sSide === p) { setAiHitKey(k => k + 1); }
+          else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
           const pKilled = p.active.hp <= 0;
           const aKilled = a.active.hp <= 0;
           if (aKilled) setLastDefeatedAiCard(a.active);
@@ -361,6 +392,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       setTimeout(() => {
         const r = executeAttack(a.active, p.active, a, p, events);
         setPlayerHitKey(k => k + 1);
+        setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
         if (pKilled) setLastDefeatedPlayerCard(p.active);
         refresh();
@@ -436,6 +468,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         setSwapOutCardId(null);
         const r = executeAttack(a.active, p.active, a, p, events);
         setPlayerHitKey(k => k + 1);
+        setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
         if (pKilled) setLastDefeatedPlayerCard(p.active);
         refresh();
@@ -473,28 +506,26 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     refresh();
   }, [phase]);
 
-  const p = pRef.current;
-  const a = aRef.current;
-
   return {
     phase,
     round,
-    playerActive:    p?.active ?? null,
-    aiActive:        a?.active ?? null,
-    playerHand:      p?.hand ?? [],
-    aiHandCount:     a?.hand.length ?? 0,
-    playerDeckCount: p?.deck.length ?? 0,
-    aiDeckCount:     a?.deck.length ?? 0,
+    playerActive:    snap.playerActive,
+    aiActive:        snap.aiActive,
+    playerHand:      snap.playerHand,
+    aiHandCount:     snap.aiHandCount,
+    playerDeckCount: snap.playerDeckCount,
+    aiDeckCount:     snap.aiDeckCount,
     lastEvents:      eventsRef.current,
     winner,
     typeRevealed,
     rewards,
     tierColor:       tierInfo.color,
     tierName:        tierInfo.name,
-    canDraw:         (p?.hand.length ?? 0) < 5 && (p?.deck.length ?? 0) > 0,
-    canSwap:         !!(p?.active) && (p?.hand.length ?? 0) > 0,
+    canDraw:         snap.playerHand.length < 5 && snap.playerDeckCount > 0,
+    canSwap:         !!snap.playerActive && snap.playerHand.length > 0,
     playerHitKey,
     aiHitKey,
+    aiAttackKey,
     lastDefeatedPlayerCard,
     lastDefeatedAiCard,
     swapOutCardId,

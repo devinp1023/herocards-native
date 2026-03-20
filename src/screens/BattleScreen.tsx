@@ -132,9 +132,9 @@ const da = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, onCardMeasure }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
-  targeted: boolean; hitKey: number; defeatingCard: BattleCard | null;
+  targeted: boolean; hitKey: number; attackKey: number; defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
 }) {
   const cardRef = useRef<View>(null);
@@ -153,6 +153,18 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
   }, [hitKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
   const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }));
+
+  // ── Lunge toward player when AI attacks ──────────────────────────────────────
+  const lungeY = useSharedValue(0);
+  useEffect(() => {
+    if (attackKey === 0) return;
+    // AI is at the top — positive Y moves toward player (downward)
+    lungeY.value = withSequence(
+      withTiming(28, { duration: 110, easing: Easing.out(Easing.quad) }),
+      withSpring(0,  { damping: 8, stiffness: 220 }),
+    );
+  }, [attackKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lungeStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lungeY.value }] }));
 
   // ── Card entrance on new card ────────────────────────────────────────────────
   const entryScale = useSharedValue(1);
@@ -186,19 +198,22 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
       <CircleHp hp={card.hp} maxHp={card.maxHp} />
       <View style={{ width: HP_GAP }} />
       {/* Measure only the card itself — this is the precise attack drop-zone */}
-      <ReAnimated.View style={shakeStyle}>
-        <View
-          ref={cardRef}
-          style={{ position: 'relative' }}
-          onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
-        >
-          <ReAnimated.View style={entryStyle}>
-            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
-          </ReAnimated.View>
-          {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
-          <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
-          {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
-        </View>
+      {/* lungeStyle moves the whole card+shake together toward the player */}
+      <ReAnimated.View style={lungeStyle}>
+        <ReAnimated.View style={shakeStyle}>
+          <View
+            ref={cardRef}
+            style={{ position: 'relative' }}
+            onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
+          >
+            <ReAnimated.View style={entryStyle}>
+              <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+            </ReAnimated.View>
+            {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
+            <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
+            {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
+          </View>
+        </ReAnimated.View>
       </ReAnimated.View>
       <View style={{ width: HP_GAP }} />
       <View style={aas.deckCol}>
@@ -684,6 +699,7 @@ export default function BattleScreen({ navigation, route }: Props) {
             card={battle.aiActive} revealed={battle.typeRevealed}
             deckCount={battle.aiDeckCount} targeted={attackTargeted}
             hitKey={battle.aiHitKey}
+            attackKey={battle.aiAttackKey}
             defeatingCard={battle.lastDefeatedAiCard}
             onCardMeasure={onAiCardMeasure}
           />

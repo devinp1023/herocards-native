@@ -13,6 +13,7 @@ import { useFont } from '@shopify/react-native-skia';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
+import { loadGameData, PersistedGameData } from './src/hooks/useFirebase';
 
 import AuthScreen            from './src/screens/AuthScreen';
 import HomeScreen            from './src/screens/HomeScreen';
@@ -219,8 +220,8 @@ function AchievementOverlay() {
 // Placed above NavigationContainer so all screens share one instance.
 // key={uid} causes a clean remount (and re-init of useState) when uid changes,
 // which correctly handles switching between god mode and regular accounts.
-function GameStateProvider({ uid, children }: { uid: string; children: React.ReactNode }) {
-  const gs = useGameState(uid);
+function GameStateProvider({ uid, initialData, children }: { uid: string; initialData: PersistedGameData | null; children: React.ReactNode }) {
+  const gs = useGameState(uid, initialData);
   return <GameStateContext.Provider value={gs}>{children}</GameStateContext.Provider>;
 }
 
@@ -228,6 +229,7 @@ function GameStateProvider({ uid, children }: { uid: string; children: React.Rea
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [session, setSession]     = useState<{ uid: string; username: string } | null>(null);
+  const [gameData, setGameData]   = useState<PersistedGameData | null>(null);
 
   const [fontsLoaded] = useFonts({ Orbitron_700Bold, Orbitron_900Black, Rajdhani_600SemiBold });
 
@@ -247,6 +249,9 @@ export default function App() {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
             const data = snap.data() as { username: string };
+            // Load saved game state alongside the user profile
+            const saved = await loadGameData(user.uid);
+            setGameData(saved);
             setSession({ uid: user.uid, username: data.username });
           } else {
             signOut(auth);
@@ -256,6 +261,7 @@ export default function App() {
         }
       } else {
         setSession(null);
+        setGameData(null);
       }
       setAuthReady(true);
     });
@@ -280,7 +286,7 @@ export default function App() {
         fontTotal, fontSmall, fontCardTitle, fontCardSub,
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
-          <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''}>
+          <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData}>
           <NavigationContainer>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (

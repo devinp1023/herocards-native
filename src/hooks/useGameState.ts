@@ -11,6 +11,7 @@ import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
 import { hasBattleCooldown } from '../data/constants';
 import { DAILY_QUESTS, getTodaysQuests, Quest } from '../data/quests';
+import { saveGameData, PersistedGameData } from './useFirebase';
 
 // ── Level helpers (mirrors web getLevel) ─────────────────────────────────────
 export function getLevel(xp: number): number {
@@ -130,35 +131,48 @@ export interface GameState {
   addBattleCooldowns: (cardIds: number[]) => void;
 }
 
-export function useGameState(uid: string): GameState {
+export function useGameState(uid: string, initialData?: PersistedGameData | null): GameState {
   const isGod = uid === '__god__';
 
   // ── Core state ────────────────────────────────────────────────────────────
-  const [coins,      setCoins]      = useState(isGod ? 99999 : STARTING_CREDITS);
-  const [xp,         setXp]         = useState(isGod ? 45000 : 0);
-  const [collection, setCollection] = useState<Record<number, number>>(
-    () => isGod ? Object.fromEntries(ALL_CARDS.map(c => [c.id, 1])) : {},
-  );
-  const [ownedAvatars, setOwnedAvatars] = useState<string[]>(() =>
-    isGod
-      ? [...new Set([...AVATARS.map(a => a.id), ...LEVEL_AVATARS.map(a => a.id)])]
-      : ['a1'],
-  );
-  const [activeAvatar, setActiveAvatar] = useState('a1');
+  const [coins,      setCoins]      = useState(() =>
+    isGod ? 99999 : (initialData?.coins ?? STARTING_CREDITS));
+  const [xp,         setXp]         = useState(() =>
+    isGod ? 45000 : (initialData?.xp ?? 0));
+  const [collection, setCollection] = useState<Record<number, number>>(() => {
+    if (isGod) return Object.fromEntries(ALL_CARDS.map(c => [c.id, 1]));
+    if (initialData?.collection) {
+      return Object.fromEntries(
+        Object.entries(initialData.collection).map(([k, v]) => [parseInt(k, 10), v]),
+      );
+    }
+    return {};
+  });
+  const [ownedAvatars, setOwnedAvatars] = useState<string[]>(() => {
+    if (isGod) return [...new Set([...AVATARS.map(a => a.id), ...LEVEL_AVATARS.map(a => a.id)])];
+    return initialData?.ownedAvatars ?? ['a1'];
+  });
+  const [activeAvatar, setActiveAvatar] = useState(() =>
+    initialData?.activeAvatar ?? 'a1');
 
   // ── Battle state ─────────────────────────────────────────────────────────
-  const [battleCooldowns, setBattleCooldowns] = useState<Record<number, number>>({});
+  const [battleCooldowns, setBattleCooldowns] = useState<Record<number, number>>(() => {
+    if (!initialData?.battleCooldowns) return {};
+    return Object.fromEntries(
+      Object.entries(initialData.battleCooldowns).map(([k, v]) => [parseInt(k, 10), v]),
+    );
+  });
 
   // ── Quest state ───────────────────────────────────────────────────────────
-  const [packsOpened,  setPacksOpened]  = useState(0);
-  const [totalTrades,  setTotalTrades]  = useState(0);
-  const [questDate,    setQuestDate]    = useState(() => todayStr());
-  const [questProgress,setQuestProgress]= useState<Record<string, number>>({});
+  const [packsOpened,  setPacksOpened]  = useState(() => initialData?.packsOpened  ?? 0);
+  const [totalTrades,  setTotalTrades]  = useState(() => initialData?.totalTrades  ?? 0);
+  const [questDate,    setQuestDate]    = useState(() => initialData?.questDate || todayStr());
+  const [questProgress,setQuestProgress]= useState<Record<string, number>>(() =>
+    initialData?.questProgress ?? {});
 
   // ── Achievement state ─────────────────────────────────────────────────────
   const [earnedAchievements, setEarnedAchievements] = useState<string[]>(() =>
-    isGod ? ACHIEVEMENTS.map(a => a.id) : [],
-  );
+    isGod ? ACHIEVEMENTS.map(a => a.id) : (initialData?.earnedAchievements ?? []));
   const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
 
   // ── Derived XP progress ───────────────────────────────────────────────────
@@ -205,6 +219,47 @@ export function useGameState(uid: string): GameState {
     if (bonusXp > 0) setXp(prev => prev + bonusXp);
     if (bonusCredits > 0) setCoins(prev => prev + bonusCredits);
   }, [collection, packsOpened, level, totalTrades, ownedAvatars]);
+
+  // ── Firestore save ────────────────────────────────────────────────────────
+  // Always keep a ref with the latest payload so the unmount save is never stale.
+  const currentSaveRef = useRef<PersistedGameData | null>(null);
+  currentSaveRef.current = (isGod || !uid) ? null : {
+    coins, xp,
+    collection:      Object.fromEntries(Object.entries(collection)),
+    activeAvatar,    ownedAvatars,
+    packsOpened,     totalTrades,
+    questDate,       questProgress,
+    earnedAchievements,
+    battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
+  };
+
+  // Skip saving on the very first render — the mount-time state is just
+  // defaults (or loaded initialData) and writing it back would overwrite
+  // Firestore with stale/empty values if React didn't batch the state updates.
+  const mountedRef = useRef(false);
+  const dirtyRef   = useRef(false);
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
+    if (!currentSaveRef.current) return;
+    dirtyRef.current = true;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      if (currentSaveRef.current) saveGameData(uid, currentSaveRef.current);
+    }, 500);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
+      questDate, questProgress, earnedAchievements, battleCooldowns]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save on unmount — only if the user actually changed something.
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current && currentSaveRef.current) {
+        saveGameData(uid, currentSaveRef.current);
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Mutators ──────────────────────────────────────────────────────────────
   const addXp    = (amount: number) => setXp(prev => prev + amount);
