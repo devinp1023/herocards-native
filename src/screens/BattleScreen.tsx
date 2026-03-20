@@ -5,7 +5,7 @@
 //   Draw    — tap the deck card back
 // Session 12 adds full Reanimated lunge/shake/defeat animations.
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity,
   StyleSheet, Platform, PanResponder, Animated,
@@ -38,11 +38,14 @@ const CH_SW   = 6;
 const CH_OVAL = { x: CH_SW / 2, y: CH_SW / 2, width: CH_SIZE - CH_SW, height: CH_SIZE - CH_SW };
 const HP_GAP  = 12;
 
-// Drag thresholds (negative = upward)
-const ATTACK_THRESHOLD = -60;
-const SWAP_THRESHOLD   = -40;
-
 const MAX_HAND = 5;
+
+// Drop-zone hit testing — compare finger screen coords against measureInWindow bounds
+type Bounds = { x: number; y: number; w: number; h: number };
+function isOver(b: Bounds | null, mx: number, my: number): boolean {
+  if (!b) return false;
+  return mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h;
+}
 
 // ── Face-down card back ────────────────────────────────────────────────────────
 function CardBack({ w, h }: { w: number; h: number }) {
@@ -101,7 +104,7 @@ const ch = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount }: { card: BattleCard | null; revealed: boolean; deckCount: number }) {
+function AIActiveSection({ card, revealed, deckCount, targeted }: { card: BattleCard | null; revealed: boolean; deckCount: number; targeted: boolean }) {
   if (!card) {
     return <View style={[aas.row, { height: ACTIVE_H, justifyContent: 'center' }]}><Text style={aas.empty}>—</Text></View>;
   }
@@ -125,6 +128,7 @@ function AIActiveSection({ card, revealed, deckCount }: { card: BattleCard | nul
           <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
         )}
       </View>
+      {targeted && <View style={aas.glow} pointerEvents="none" />}
     </View>
   );
 }
@@ -137,19 +141,30 @@ const aas = StyleSheet.create({
   badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#9966ff', lineHeight: 14 },
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
+  glow:         { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 10, borderWidth: 2, borderColor: '#ff5722cc', backgroundColor: '#ff572218', pointerEvents: 'none' },
 });
 
-// ── Player active section (drag up = attack; deck beside card, tap to draw) ───
-function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw }: {
+// ── Player active section (drag onto AI card = attack; deck beside, tap to draw)
+function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw,
+  aiActiveBoundsRef, onAttackHover, swapTargeted }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase; onAttack: () => void;
   deckCount: number; onDraw: () => void; canDraw: boolean;
+  aiActiveBoundsRef: React.MutableRefObject<Bounds | null>;
+  onAttackHover: (h: boolean) => void;
+  swapTargeted: boolean;
 }) {
-  const dragX       = useRef(new Animated.Value(0)).current;
-  const dragY       = useRef(new Animated.Value(0)).current;
-  const phaseRef    = useRef(phase);
-  const onAttackRef = useRef(onAttack);
-  phaseRef.current    = phase;
-  onAttackRef.current = onAttack;
+  const dragX            = useRef(new Animated.Value(0)).current;
+  const dragY            = useRef(new Animated.Value(0)).current;
+  const phaseRef         = useRef(phase);
+  const onAttackRef      = useRef(onAttack);
+  const onAttackHoverRef = useRef(onAttackHover);
+  // Wrap the incoming prop ref in a local ref so the PanResponder closure
+  // (created once on mount) always reads the latest value via a stable pointer.
+  const aiBoundsRef      = useRef(aiActiveBoundsRef);
+  phaseRef.current         = phase;
+  onAttackRef.current      = onAttack;
+  onAttackHoverRef.current = onAttackHover;
+  aiBoundsRef.current      = aiActiveBoundsRef;
 
   const rotate = dragX.interpolate({ inputRange: [-80, 80], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
@@ -161,13 +176,20 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
     onMoveShouldSetPanResponder:  (_, gs) => phaseRef.current === 'ready' && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
-    onPanResponderMove:   (_, gs) => { dragX.setValue(gs.dx * 0.7); dragY.setValue(gs.dy * 0.7); },
-    onPanResponderRelease: (_, gs) => {
-      const fired = phaseRef.current === 'ready' && gs.dy < ATTACK_THRESHOLD;
-      springBack();
-      if (fired) setTimeout(() => onAttackRef.current(), 80);
+    onPanResponderMove: (_, gs) => {
+      dragX.setValue(gs.dx * 0.7);
+      dragY.setValue(gs.dy * 0.7);
+      const bounds = aiBoundsRef.current?.current ?? null;
+      onAttackHoverRef.current(isOver(bounds, gs.moveX, gs.moveY));
     },
-    onPanResponderTerminate: () => springBack(),
+    onPanResponderRelease: (_, gs) => {
+      const bounds    = aiBoundsRef.current?.current ?? null;
+      const overTarget = isOver(bounds, gs.moveX, gs.moveY);
+      onAttackHoverRef.current(false);
+      springBack();
+      if (phaseRef.current === 'ready' && overTarget) setTimeout(() => onAttackRef.current(), 80);
+    },
+    onPanResponderTerminate: () => { onAttackHoverRef.current(false); springBack(); },
   })).current;
 
   if (!card) {
@@ -183,10 +205,12 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
       <CircleHp hp={card.hp} maxHp={card.maxHp} />
       <View style={{ width: HP_GAP }} />
 
-      <View {...pan.panHandlers}>
-        <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
-          <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
-        </Animated.View>
+      <View style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted]}>
+        <View {...pan.panHandlers}>
+          <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
+            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+          </Animated.View>
+        </View>
       </View>
 
       <View style={{ width: HP_GAP }} />
@@ -212,10 +236,12 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
   );
 }
 const pas = StyleSheet.create({
-  row:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  empty:          { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
-  deckBadgeActive:{ borderColor: '#4fc3f755' },
-  deckCountActive:{ color: '#4fc3f7' },
+  row:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  empty:           { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
+  deckBadgeActive: { borderColor: '#4fc3f755' },
+  deckCountActive: { color: '#4fc3f7' },
+  cardSlot:        { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  cardSlotTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f712' },
 });
 
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
@@ -236,22 +262,31 @@ const az = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderBottomWidth: 1, borderBottomColor: '#0f0f24' },
 });
 
-// ── Hand card — drag up to swap (or tap to play when selecting) ───────────────
-function HandCard({ card, phase, onSelect, onSwap, index, total }: {
+// ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
+function HandCard({ card, phase, onSelect, onSwap, index, total,
+  playerActiveBoundsRef, onSwapHover }: {
   card: BattleCard; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   index: number; total: number;
+  playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
+  onSwapHover: (h: boolean) => void;
 }) {
-  const dragX       = useRef(new Animated.Value(0)).current;
-  const dragY       = useRef(new Animated.Value(0)).current;
-  const phaseRef    = useRef(phase);
-  const onSelectRef = useRef(onSelect);
-  const onSwapRef   = useRef(onSwap);
-  const cardIdRef   = useRef(card.id);
-  phaseRef.current    = phase;
-  onSelectRef.current = onSelect;
-  onSwapRef.current   = onSwap;
-  cardIdRef.current   = card.id;
+  const dragX          = useRef(new Animated.Value(0)).current;
+  const dragY          = useRef(new Animated.Value(0)).current;
+  const phaseRef       = useRef(phase);
+  const onSelectRef    = useRef(onSelect);
+  const onSwapRef      = useRef(onSwap);
+  const onSwapHoverRef = useRef(onSwapHover);
+  const cardIdRef      = useRef(card.id);
+  // Stable local ref so the PanResponder closure (created once) always reads
+  // the latest prop value rather than the stale first-render value.
+  const playerBoundsRef = useRef(playerActiveBoundsRef);
+  phaseRef.current        = phase;
+  onSelectRef.current     = onSelect;
+  onSwapRef.current       = onSwap;
+  onSwapHoverRef.current  = onSwapHover;
+  cardIdRef.current       = card.id;
+  playerBoundsRef.current = playerActiveBoundsRef;
 
   const rotate = dragX.interpolate({ inputRange: [-60, 60], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
@@ -263,17 +298,26 @@ function HandCard({ card, phase, onSelect, onSwap, index, total }: {
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => phaseRef.current === 'selecting',
     onMoveShouldSetPanResponder:  (_, gs) => Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3,
-    onPanResponderMove:   (_, gs) => { dragX.setValue(gs.dx * 0.7); dragY.setValue(gs.dy * 0.7); },
-    onPanResponderRelease: (_, gs) => {
-      const p  = phaseRef.current;
-      const id = cardIdRef.current;
-      const firedSwap   = p === 'ready' && gs.dy < SWAP_THRESHOLD;
-      const firedSelect = p === 'selecting';
-      springBack();
-      if (firedSelect)    setTimeout(() => onSelectRef.current(id), 50);
-      else if (firedSwap) setTimeout(() => onSwapRef.current(id),   80);
+    onPanResponderMove: (_, gs) => {
+      dragX.setValue(gs.dx * 0.7);
+      dragY.setValue(gs.dy * 0.7);
+      if (phaseRef.current === 'ready') {
+        const bounds = playerBoundsRef.current?.current ?? null;
+        onSwapHoverRef.current(isOver(bounds, gs.moveX, gs.moveY));
+      }
     },
-    onPanResponderTerminate: () => springBack(),
+    onPanResponderRelease: (_, gs) => {
+      const p         = phaseRef.current;
+      const id        = cardIdRef.current;
+      const bounds    = playerBoundsRef.current?.current ?? null;
+      const overTarget  = isOver(bounds, gs.moveX, gs.moveY);
+      const firedSelect = p === 'selecting';
+      onSwapHoverRef.current(false);
+      springBack();
+      if (firedSelect)                      setTimeout(() => onSelectRef.current(id), 50);
+      else if (p === 'ready' && overTarget) setTimeout(() => onSwapRef.current(id),   80);
+    },
+    onPanResponderTerminate: () => { onSwapHoverRef.current(false); springBack(); },
   })).current;
 
   const color = RC[card.rarity]?.color ?? '#808898';
@@ -308,9 +352,11 @@ const hc = StyleSheet.create({
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
-function PlayerZone({ hand, phase, onSelect, onSwap }: {
+function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover }: {
   hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
+  playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
+  onSwapHover: (h: boolean) => void;
 }) {
   return (
     <View style={pz.container}>
@@ -321,6 +367,8 @@ function PlayerZone({ hand, phase, onSelect, onSwap }: {
             key={card.id} card={card} phase={phase}
             onSelect={onSelect} onSwap={onSwap}
             index={i} total={MAX_HAND}
+            playerActiveBoundsRef={playerActiveBoundsRef}
+            onSwapHover={onSwapHover}
           />
         ) : (
           <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP, zIndex: 0 }}>
@@ -407,6 +455,32 @@ export default function BattleScreen({ navigation, route }: Props) {
   const { playerDeck, tier } = route.params;
   const battle = useBattle(playerDeck, tier);
 
+  // ── Drop-zone measurement ──────────────────────────────────────────────────
+  const aiSectionRef     = useRef<View>(null);
+  const playerSectionRef = useRef<View>(null);
+  const aiActiveBounds     = useRef<Bounds | null>(null);
+  const playerActiveBounds = useRef<Bounds | null>(null);
+
+  const measureAi     = useCallback(() => {
+    aiSectionRef.current?.measureInWindow((x, y, w, h) => { aiActiveBounds.current = { x, y, w, h }; });
+  }, []);
+  const measurePlayer = useCallback(() => {
+    playerSectionRef.current?.measureInWindow((x, y, w, h) => { playerActiveBounds.current = { x, y, w, h }; });
+  }, []);
+
+  // ── Hover state (drives visual indicators) ────────────────────────────────
+  const [attackTargeted, setAttackTargeted] = useState(false);
+  const [swapTargeted,   setSwapTargeted]   = useState(false);
+  const attackTargetedRef = useRef(false);
+  const swapTargetedRef   = useRef(false);
+
+  const onAttackHover = useCallback((h: boolean) => {
+    if (h !== attackTargetedRef.current) { attackTargetedRef.current = h; setAttackTargeted(h); }
+  }, []);
+  const onSwapHover = useCallback((h: boolean) => {
+    if (h !== swapTargetedRef.current) { swapTargetedRef.current = h; setSwapTargeted(h); }
+  }, []);
+
   if (battle.phase === 'done' && battle.winner) {
     return (
       <ResultScreen
@@ -450,8 +524,11 @@ export default function BattleScreen({ navigation, route }: Props) {
 
       {/* Combat zone */}
       <View style={s.combatZone}>
-        <View style={s.cardSection}>
-          <AIActiveSection card={battle.aiActive} revealed={battle.typeRevealed} deckCount={battle.aiDeckCount} />
+        <View style={s.cardSection} ref={aiSectionRef} onLayout={measureAi}>
+          <AIActiveSection
+            card={battle.aiActive} revealed={battle.typeRevealed}
+            deckCount={battle.aiDeckCount} targeted={attackTargeted}
+          />
         </View>
 
         <View style={s.vsRow}>
@@ -466,7 +543,7 @@ export default function BattleScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        <View style={s.cardSection}>
+        <View style={s.cardSection} ref={playerSectionRef} onLayout={measurePlayer}>
           <PlayerActiveSection
             card={battle.playerActive}
             revealed={battle.typeRevealed}
@@ -475,6 +552,9 @@ export default function BattleScreen({ navigation, route }: Props) {
             deckCount={battle.playerDeckCount}
             onDraw={battle.draw}
             canDraw={battle.canDraw}
+            aiActiveBoundsRef={aiActiveBounds}
+            onAttackHover={onAttackHover}
+            swapTargeted={swapTargeted}
           />
         </View>
       </View>
@@ -485,6 +565,8 @@ export default function BattleScreen({ navigation, route }: Props) {
         phase={battle.phase}
         onSelect={battle.selectCard}
         onSwap={battle.swapCard}
+        playerActiveBoundsRef={playerActiveBounds}
+        onSwapHover={onSwapHover}
       />
 
       {/* Footer — NEXT ROUND / hints only */}

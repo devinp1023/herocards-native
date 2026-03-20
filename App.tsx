@@ -135,7 +135,7 @@ function BattleStackNav() {
   return (
     <BattleStack.Navigator screenOptions={{ headerShown: false }}>
       <BattleStack.Screen name="BattleLobby" component={BattleLobbyScreen} />
-      <BattleStack.Screen name="Battle"      component={BattleScreen} />
+      <BattleStack.Screen name="Battle" component={BattleScreen} options={{ gestureEnabled: false }} />
     </BattleStack.Navigator>
   );
 }
