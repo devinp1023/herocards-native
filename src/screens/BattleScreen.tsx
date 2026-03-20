@@ -5,11 +5,14 @@
 //   Draw    — tap the deck card back
 // Session 12 adds full Reanimated lunge/shake/defeat animations.
 
-import React, { useRef, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity,
   StyleSheet, Platform, PanResponder, Animated,
 } from 'react-native';
+import ReAnimated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, Easing,
+} from 'react-native-reanimated';
 import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
@@ -103,12 +106,78 @@ const ch = StyleSheet.create({
   hpMax:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#606080', lineHeight: 9 },
 });
 
+// ── Defeat animation — card falls and fades ───────────────────────────────────
+function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absolute?: boolean }) {
+  const translateY = useSharedValue(0);
+  const opacity    = useSharedValue(1);
+  useEffect(() => {
+    translateY.value = withTiming(70, { duration: 500, easing: Easing.in(Easing.cubic) });
+    opacity.value    = withTiming(0,  { duration: 420, easing: Easing.in(Easing.quad) });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+  return (
+    <ReAnimated.View
+      style={[absolute && da.absolute, animStyle]}
+      pointerEvents="none"
+    >
+      <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+    </ReAnimated.View>
+  );
+}
+const da = StyleSheet.create({
+  absolute: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
+});
+
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, onCardMeasure }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, onCardMeasure }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
-  targeted: boolean; onCardMeasure: (b: Bounds) => void;
+  targeted: boolean; hitKey: number; defeatingCard: BattleCard | null;
+  onCardMeasure: (b: Bounds) => void;
 }) {
   const cardRef = useRef<View>(null);
+
+  // ── Shake + flash on hit ─────────────────────────────────────────────────────
+  const shakeX   = useSharedValue(0);
+  const flashOp  = useSharedValue(0);
+  useEffect(() => {
+    if (hitKey === 0) return;
+    shakeX.value = withSequence(
+      withTiming( 6, { duration: 40 }), withTiming(-6, { duration: 40 }),
+      withTiming( 4, { duration: 35 }), withTiming(-4, { duration: 35 }),
+      withTiming( 0, { duration: 30 }),
+    );
+    flashOp.value = withSequence(withTiming(0.45, { duration: 50 }), withTiming(0, { duration: 260 }));
+  }, [hitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }));
+
+  // ── Card entrance on new card ────────────────────────────────────────────────
+  const entryScale = useSharedValue(1);
+  const prevCardIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (card && card.id !== prevCardIdRef.current) {
+      prevCardIdRef.current = card.id;
+      entryScale.value = 0.7;
+      entryScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    }
+  }, [card?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const entryStyle = useAnimatedStyle(() => ({ transform: [{ scale: entryScale.value }] }));
+
+  // ── Defeat overlay ───────────────────────────────────────────────────────────
+  const [showDefeat, setShowDefeat] = useState(false);
+  const lastDefeatRef = useRef<BattleCard | null>(null);
+  useEffect(() => {
+    if (defeatingCard && defeatingCard !== lastDefeatRef.current) {
+      lastDefeatRef.current = defeatingCard;
+      setShowDefeat(true);
+      const t = setTimeout(() => setShowDefeat(false), 620);
+      return () => clearTimeout(t);
+    }
+  }, [defeatingCard]);
+
   if (!card) {
     return <View style={[aas.row, { height: ACTIVE_H, justifyContent: 'center' }]}><Text style={aas.empty}>—</Text></View>;
   }
@@ -117,14 +186,20 @@ function AIActiveSection({ card, revealed, deckCount, targeted, onCardMeasure }:
       <CircleHp hp={card.hp} maxHp={card.maxHp} />
       <View style={{ width: HP_GAP }} />
       {/* Measure only the card itself — this is the precise attack drop-zone */}
-      <View
-        ref={cardRef}
-        style={{ position: 'relative' }}
-        onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
-      >
-        <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
-        {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
-      </View>
+      <ReAnimated.View style={shakeStyle}>
+        <View
+          ref={cardRef}
+          style={{ position: 'relative' }}
+          onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
+        >
+          <ReAnimated.View style={entryStyle}>
+            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+          </ReAnimated.View>
+          {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
+          <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
+          {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
+        </View>
+      </ReAnimated.View>
       <View style={{ width: HP_GAP }} />
       <View style={aas.deckCol}>
         {deckCount > 0 ? (
@@ -152,16 +227,19 @@ const aas = StyleSheet.create({
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
   cardGlow:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, borderWidth: 2, borderColor: '#ff5722dd', backgroundColor: '#ff572220' },
+  flashOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#ef5350' },
 });
 
 // ── Player active section (drag onto AI card = attack; deck beside, tap to draw)
 function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw,
-  aiActiveBoundsRef, onAttackHover, swapTargeted, onCardMeasure }: {
+  aiActiveBoundsRef, onAttackHover, swapTargeted, hitKey, defeatingCard, onCardMeasure }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase; onAttack: () => void;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   aiActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onAttackHover: (h: boolean) => void;
   swapTargeted: boolean;
+  hitKey: number;
+  defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
 }) {
   const dragX            = useRef(new Animated.Value(0)).current;
@@ -180,6 +258,45 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
   const cardSlotRef      = useRef<View>(null);
   const onCardMeasureRef = useRef(onCardMeasure);
   onCardMeasureRef.current = onCardMeasure;
+
+  // ── Shake + flash on hit ─────────────────────────────────────────────────────
+  const shakeX   = useSharedValue(0);
+  const flashOp  = useSharedValue(0);
+  useEffect(() => {
+    if (hitKey === 0) return;
+    shakeX.value = withSequence(
+      withTiming( 6, { duration: 40 }), withTiming(-6, { duration: 40 }),
+      withTiming( 4, { duration: 35 }), withTiming(-4, { duration: 35 }),
+      withTiming( 0, { duration: 30 }),
+    );
+    flashOp.value = withSequence(withTiming(0.45, { duration: 50 }), withTiming(0, { duration: 260 }));
+  }, [hitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }));
+
+  // ── Card entrance on new card ────────────────────────────────────────────────
+  const entryScale = useSharedValue(1);
+  const prevCardIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (card && card.id !== prevCardIdRef.current) {
+      prevCardIdRef.current = card.id;
+      entryScale.value = 0.7;
+      entryScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    }
+  }, [card?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const entryStyle = useAnimatedStyle(() => ({ transform: [{ scale: entryScale.value }] }));
+
+  // ── Defeat overlay ───────────────────────────────────────────────────────────
+  const [showDefeat, setShowDefeat] = useState(false);
+  const lastDefeatRef = useRef<BattleCard | null>(null);
+  useEffect(() => {
+    if (defeatingCard && defeatingCard !== lastDefeatRef.current) {
+      lastDefeatRef.current = defeatingCard;
+      setShowDefeat(true);
+      const t = setTimeout(() => setShowDefeat(false), 620);
+      return () => clearTimeout(t);
+    }
+  }, [defeatingCard]);
 
   const rotate = dragX.interpolate({ inputRange: [-80, 80], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
@@ -239,7 +356,10 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
           style={[pas.emptyActive, { width: ACTIVE_W, height: ACTIVE_H }, swapTargeted && pas.emptyActiveTargeted]}
           onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
         >
-          <Text style={pas.emptyActiveHint}>drag card{'\n'}here</Text>
+          {showDefeat && defeatingCard
+            ? <DefeatingCardAnim card={defeatingCard} />
+            : <Text style={pas.emptyActiveHint}>drag card{'\n'}here</Text>
+          }
         </View>
         <View style={{ width: HP_GAP }} />
         {deckSection}
@@ -258,11 +378,16 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
         style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted]}
         onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
       >
-        <View {...pan.panHandlers}>
-          <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
-            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
-          </Animated.View>
-        </View>
+        <ReAnimated.View style={shakeStyle}>
+          <ReAnimated.View style={entryStyle}>
+            <View {...pan.panHandlers}>
+              <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
+                <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+              </Animated.View>
+            </View>
+          </ReAnimated.View>
+          <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
+        </ReAnimated.View>
       </View>
 
       <View style={{ width: HP_GAP }} />
@@ -279,6 +404,7 @@ const pas = StyleSheet.create({
   emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: '#4fc3f744', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   emptyActiveTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f718' },
   emptyActiveHint:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f766', letterSpacing: 0.5, textAlign: 'center', lineHeight: 11 },
+  flashOverlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#ef5350' },
 });
 
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
@@ -302,12 +428,13 @@ const az = StyleSheet.create({
 
 // ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
 function HandCard({ card, phase, onSelect, onSwap, index, total,
-  playerActiveBoundsRef, onSwapHover }: {
+  playerActiveBoundsRef, onSwapHover, isReturned }: {
   card: BattleCard; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   index: number; total: number;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onSwapHover: (h: boolean) => void;
+  isReturned: boolean;
 }) {
   const dragX          = useRef(new Animated.Value(0)).current;
   const dragY          = useRef(new Animated.Value(0)).current;
@@ -325,6 +452,17 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   onSwapHoverRef.current  = onSwapHover;
   cardIdRef.current       = card.id;
   playerBoundsRef.current = playerActiveBoundsRef;
+
+  // ── Entrance animation on mount ──────────────────────────────────────────────
+  const entryScale = useSharedValue(0.6);
+  const entryY     = useSharedValue(isReturned ? -30 : 0);
+  useEffect(() => {
+    entryScale.value = withSpring(1, { damping: 14, stiffness: 200 });
+    if (isReturned) entryY.value = withSpring(0, { damping: 14, stiffness: 200 });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const entryStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: entryScale.value }, { translateY: entryY.value }],
+  }));
 
   const rotate = dragX.interpolate({ inputRange: [-60, 60], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
@@ -361,14 +499,16 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   const color = RC[card.rarity]?.color ?? '#808898';
 
   return (
-    <Animated.View
-      style={{ marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index, transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
-      {...pan.panHandlers}
-    >
-      <View style={[hc.frame, { borderColor: color + '33' }]}>
-        <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
-      </View>
-    </Animated.View>
+    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index }]}>
+      <Animated.View
+        style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
+        {...pan.panHandlers}
+      >
+        <View style={[hc.frame, { borderColor: color + '33' }]}>
+          <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
+        </View>
+      </Animated.View>
+    </ReAnimated.View>
   );
 }
 const hc = StyleSheet.create({
@@ -376,11 +516,12 @@ const hc = StyleSheet.create({
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
-function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover }: {
+function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId }: {
   hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onSwapHover: (h: boolean) => void;
+  swapOutCardId: number | null;
 }) {
   return (
     <View style={pz.container}>
@@ -393,6 +534,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
             index={i} total={MAX_HAND}
             playerActiveBoundsRef={playerActiveBoundsRef}
             onSwapHover={onSwapHover}
+            isReturned={card.id === swapOutCardId}
           />
         ) : (
           <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: 0 }}>
@@ -541,6 +683,8 @@ export default function BattleScreen({ navigation, route }: Props) {
           <AIActiveSection
             card={battle.aiActive} revealed={battle.typeRevealed}
             deckCount={battle.aiDeckCount} targeted={attackTargeted}
+            hitKey={battle.aiHitKey}
+            defeatingCard={battle.lastDefeatedAiCard}
             onCardMeasure={onAiCardMeasure}
           />
         </View>
@@ -569,6 +713,8 @@ export default function BattleScreen({ navigation, route }: Props) {
             aiActiveBoundsRef={aiActiveBounds}
             onAttackHover={onAttackHover}
             swapTargeted={swapTargeted}
+            hitKey={battle.playerHitKey}
+            defeatingCard={battle.lastDefeatedPlayerCard}
             onCardMeasure={onPlayerCardMeasure}
           />
         </View>
@@ -582,6 +728,7 @@ export default function BattleScreen({ navigation, route }: Props) {
         onSwap={battle.swapCard}
         playerActiveBoundsRef={playerActiveBounds}
         onSwapHover={onSwapHover}
+        swapOutCardId={battle.swapOutCardId}
       />
 
 
