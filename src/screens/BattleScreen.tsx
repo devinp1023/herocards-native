@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
 const ACTIVE_SCALE = 0.36;
 const HAND_SCALE   = 0.22;
-const DECK_SCALE   = 0.26;
+const DECK_SCALE   = 0.22;
 const HAND_OVERLAP = 10;
 
 const ACTIVE_W = Math.round(CARD_W * ACTIVE_SCALE);
@@ -42,6 +42,8 @@ const HP_GAP  = 12;
 const ATTACK_THRESHOLD = -60;
 const SWAP_THRESHOLD   = -40;
 
+const MAX_HAND = 5;
+
 // ── Face-down card back ────────────────────────────────────────────────────────
 function CardBack({ w, h }: { w: number; h: number }) {
   const inner = Math.round(Math.min(w, h) * 0.35);
@@ -51,6 +53,14 @@ function CardBack({ w, h }: { w: number; h: number }) {
     </View>
   );
 }
+// ── Empty hand slot ────────────────────────────────────────────────────────────
+function EmptySlot({ w, h }: { w: number; h: number }) {
+  return <View style={[es.slot, { width: w, height: h, borderRadius: w * 0.08 }]} />;
+}
+const es = StyleSheet.create({
+  slot: { borderWidth: 1, borderColor: '#1a1a30', borderStyle: 'dashed' },
+});
+
 const cb = StyleSheet.create({
   card:    { borderRadius: 6, backgroundColor: '#0e0e22', borderWidth: 1, borderColor: '#2a2a48', alignItems: 'center', justifyContent: 'center' },
   diamond: { borderWidth: 1, borderColor: '#3a3a5a', transform: [{ rotate: '45deg' }] },
@@ -91,7 +101,7 @@ const ch = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed }: { card: BattleCard | null; revealed: boolean }) {
+function AIActiveSection({ card, revealed, deckCount }: { card: BattleCard | null; revealed: boolean; deckCount: number }) {
   if (!card) {
     return <View style={[aas.row, { height: ACTIVE_H, justifyContent: 'center' }]}><Text style={aas.empty}>—</Text></View>;
   }
@@ -101,7 +111,16 @@ function AIActiveSection({ card, revealed }: { card: BattleCard | null; revealed
       <View style={{ width: HP_GAP }} />
       <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
       <View style={{ width: HP_GAP }} />
-      <View style={{ width: CH_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Deck sits beside the active card, like Pokémon TCG Pocket */}
+      <View style={aas.deckCol}>
+        {deckCount > 0 ? (
+          <View style={aas.deckWrap}>
+            <CardBack w={DECK_W} h={DECK_H} />
+            <View style={aas.badge}><Text style={aas.badgeText}>{deckCount}</Text></View>
+          </View>
+        ) : (
+          <View style={{ width: DECK_W, height: DECK_H }} />
+        )}
         {card.ability && revealed && (
           <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
         )}
@@ -112,32 +131,43 @@ function AIActiveSection({ card, revealed }: { card: BattleCard | null; revealed
 const aas = StyleSheet.create({
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
   empty:        { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
+  deckCol:      { alignItems: 'center', gap: 4 },
+  deckWrap:     { position: 'relative' },
+  badge:        { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#12122e', borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
+  badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#9966ff', lineHeight: 14 },
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
 });
 
-// ── Player active section (drag up = attack) ──────────────────────────────────
-function PlayerActiveSection({ card, revealed, phase, onAttack }: {
+// ── Player active section (drag up = attack; deck beside card, tap to draw) ───
+function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase; onAttack: () => void;
+  deckCount: number; onDraw: () => void; canDraw: boolean;
 }) {
+  const dragX       = useRef(new Animated.Value(0)).current;
   const dragY       = useRef(new Animated.Value(0)).current;
   const phaseRef    = useRef(phase);
   const onAttackRef = useRef(onAttack);
   phaseRef.current    = phase;
   onAttackRef.current = onAttack;
 
+  const rotate = dragX.interpolate({ inputRange: [-80, 80], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
+
+  const springBack = () => Animated.parallel([
+    Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+    Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+  ]).start();
+
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder:  (_, gs) => phaseRef.current === 'ready' && gs.dy < -6,
-    onPanResponderMove:   (_, gs) => { if (gs.dy < 0) dragY.setValue(gs.dy * 0.35); },
+    onMoveShouldSetPanResponder:  (_, gs) => phaseRef.current === 'ready' && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
+    onPanResponderMove:   (_, gs) => { dragX.setValue(gs.dx * 0.7); dragY.setValue(gs.dy * 0.7); },
     onPanResponderRelease: (_, gs) => {
       const fired = phaseRef.current === 'ready' && gs.dy < ATTACK_THRESHOLD;
-      Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }).start();
+      springBack();
       if (fired) setTimeout(() => onAttackRef.current(), 80);
     },
-    onPanResponderTerminate: () => {
-      Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
-    },
+    onPanResponderTerminate: () => springBack(),
   })).current;
 
   if (!card) {
@@ -154,13 +184,26 @@ function PlayerActiveSection({ card, revealed, phase, onAttack }: {
       <View style={{ width: HP_GAP }} />
 
       <View {...pan.panHandlers}>
-        <Animated.View style={{ transform: [{ translateY: dragY }] }}>
+        <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
           <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
         </Animated.View>
       </View>
 
       <View style={{ width: HP_GAP }} />
-      <View style={{ width: CH_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Deck beside active card — tap to draw */}
+      <View style={aas.deckCol}>
+        {deckCount > 0 ? (
+          <TouchableOpacity onPress={onDraw} disabled={!canDraw} activeOpacity={canDraw ? 0.7 : 1}>
+            <View style={aas.deckWrap}>
+              <CardBack w={DECK_W} h={DECK_H} />
+              <View style={[aas.badge, canDraw && pas.deckBadgeActive]}>
+                <Text style={[aas.badgeText, canDraw && pas.deckCountActive]}>{deckCount}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: DECK_W, height: DECK_H }} />
+        )}
         {card.ability && revealed && (
           <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
         )}
@@ -169,40 +212,28 @@ function PlayerActiveSection({ card, revealed, phase, onAttack }: {
   );
 }
 const pas = StyleSheet.create({
-  row:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  empty:    { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
+  row:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  empty:          { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
+  deckBadgeActive:{ borderColor: '#4fc3f755' },
+  deckCountActive:{ color: '#4fc3f7' },
 });
 
-// ── Top zone — AI face-down hand + deck ───────────────────────────────────────
-function AIZone({ handCount, deckCount }: { handCount: number; deckCount: number }) {
+// ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
+function AIZone({ handCount }: { handCount: number }) {
   return (
     <View style={az.container}>
-      <View style={az.handRow}>
-        {Array.from({ length: handCount }).map((_, i) => (
-          <View key={i} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP }}>
-            <CardBack w={HAND_W} h={HAND_H} />
-          </View>
-        ))}
-        {handCount === 0 && <Text style={az.empty}>No hand</Text>}
-      </View>
-      {deckCount > 0 ? (
-        <View style={az.deckWrap}>
-          <CardBack w={DECK_W} h={DECK_H} />
-          <View style={az.badge}><Text style={az.badgeText}>{deckCount}</Text></View>
+      {Array.from({ length: MAX_HAND }).map((_, i) => (
+        <View key={i} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP, zIndex: i < handCount ? 1 : 0 }}>
+          {i < handCount
+            ? <CardBack w={HAND_W} h={HAND_H} />
+            : <EmptySlot w={HAND_W} h={HAND_H} />}
         </View>
-      ) : (
-        <View style={{ width: DECK_W }} />
-      )}
+      ))}
     </View>
   );
 }
 const az = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 14, paddingVertical: 8, gap: 10, backgroundColor: '#080818', borderBottomWidth: 1, borderBottomColor: '#0f0f24' },
-  handRow:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  empty:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#303050' },
-  deckWrap:  { position: 'relative' },
-  badge:     { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#12122e', borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
-  badgeText: { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#9966ff', lineHeight: 14 },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderBottomWidth: 1, borderBottomColor: '#0f0f24' },
 });
 
 // ── Hand card — drag up to swap (or tap to play when selecting) ───────────────
@@ -211,6 +242,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total }: {
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   index: number; total: number;
 }) {
+  const dragX       = useRef(new Animated.Value(0)).current;
   const dragY       = useRef(new Animated.Value(0)).current;
   const phaseRef    = useRef(phase);
   const onSelectRef = useRef(onSelect);
@@ -221,23 +253,27 @@ function HandCard({ card, phase, onSelect, onSwap, index, total }: {
   onSwapRef.current   = onSwap;
   cardIdRef.current   = card.id;
 
+  const rotate = dragX.interpolate({ inputRange: [-60, 60], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
+
+  const springBack = () => Animated.parallel([
+    Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+    Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+  ]).start();
+
   const pan = useRef(PanResponder.create({
-    // Capture all touches when forced-selecting; only upward drags otherwise
     onStartShouldSetPanResponder: () => phaseRef.current === 'selecting',
-    onMoveShouldSetPanResponder:  (_, gs) => gs.dy < -8,
-    onPanResponderMove:   (_, gs) => { if (gs.dy < 0) dragY.setValue(gs.dy * 0.35); },
+    onMoveShouldSetPanResponder:  (_, gs) => Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3,
+    onPanResponderMove:   (_, gs) => { dragX.setValue(gs.dx * 0.7); dragY.setValue(gs.dy * 0.7); },
     onPanResponderRelease: (_, gs) => {
       const p  = phaseRef.current;
       const id = cardIdRef.current;
       const firedSwap   = p === 'ready' && gs.dy < SWAP_THRESHOLD;
       const firedSelect = p === 'selecting';
-      Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }).start();
+      springBack();
       if (firedSelect)    setTimeout(() => onSelectRef.current(id), 50);
       else if (firedSwap) setTimeout(() => onSwapRef.current(id),   80);
     },
-    onPanResponderTerminate: () => {
-      Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
-    },
+    onPanResponderTerminate: () => springBack(),
   })).current;
 
   const color = RC[card.rarity]?.color ?? '#808898';
@@ -245,7 +281,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total }: {
 
   return (
     <Animated.View
-      style={{ marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index, transform: [{ translateY: dragY }] }}
+      style={{ marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index, transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
       {...pan.panHandlers}
     >
       <View style={[hc.frame, { borderColor: selecting ? color : color + '33' }, selecting && hc.frameActive]}>
@@ -271,57 +307,32 @@ const hc = StyleSheet.create({
   swapHintText:{ fontFamily: 'Orbitron_700Bold', fontSize: 6, letterSpacing: 0.5 },
 });
 
-// ── Bottom zone — player hand + tappable deck ────────────────────────────────
-function PlayerZone({ hand, deckCount, phase, onSelect, onSwap, onDraw, canDraw }: {
-  hand: BattleCard[]; deckCount: number; phase: BattlePhase;
+// ── Bottom zone — player hand only (deck moved beside active card) ────────────
+function PlayerZone({ hand, phase, onSelect, onSwap }: {
+  hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
-  onDraw: () => void; canDraw: boolean;
 }) {
   return (
     <View style={pz.container}>
-      {/* Hand cards */}
-      <View style={pz.handRow}>
-        {hand.map((card, i) => (
+      {Array.from({ length: MAX_HAND }).map((_, i) => {
+        const card = hand[i];
+        return card ? (
           <HandCard
             key={card.id} card={card} phase={phase}
             onSelect={onSelect} onSwap={onSwap}
-            index={i} total={hand.length}
+            index={i} total={MAX_HAND}
           />
-        ))}
-        {hand.length === 0 && <Text style={pz.empty}>No cards in hand</Text>}
-      </View>
-
-      {/* Player deck — tap to draw */}
-      {deckCount > 0 ? (
-        <TouchableOpacity
-          onPress={onDraw}
-          disabled={!canDraw}
-          activeOpacity={canDraw ? 0.7 : 1}
-          style={pz.deckWrap}
-        >
-          <CardBack w={DECK_W} h={DECK_H} />
-          <View style={[az.badge, canDraw && pz.deckBadgeActive]}>
-            <Text style={[az.badgeText, canDraw && pz.deckCountActive]}>{deckCount}</Text>
+        ) : (
+          <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : -HAND_OVERLAP, zIndex: 0 }}>
+            <EmptySlot w={HAND_W} h={HAND_H} />
           </View>
-          {canDraw && (
-            <View style={pz.drawHint}><Text style={pz.drawHintText}>tap</Text></View>
-          )}
-        </TouchableOpacity>
-      ) : (
-        <View style={{ width: DECK_W }} />
-      )}
+        );
+      })}
     </View>
   );
 }
 const pz = StyleSheet.create({
-  container:      { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 14, paddingVertical: 8, gap: 10, backgroundColor: '#080818', borderTopWidth: 1, borderTopColor: '#0f0f24' },
-  handRow:        { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' },
-  empty:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#303050' },
-  deckWrap:       { position: 'relative' },
-  deckBadgeActive:{ borderColor: '#4fc3f755' },
-  deckCountActive:{ color: '#4fc3f7' },
-  drawHint:       { position: 'absolute', top: -14, left: 0, right: 0, alignItems: 'center' },
-  drawHintText:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f799', letterSpacing: 1 },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderTopWidth: 1, borderTopColor: '#0f0f24' },
 });
 
 // ── Event log (compact) ───────────────────────────────────────────────────────
@@ -434,13 +445,13 @@ export default function BattleScreen({ navigation, route }: Props) {
         <View style={{ width: 48 }} />
       </View>
 
-      {/* AI zone — face-down hand + deck */}
-      <AIZone handCount={battle.aiHandCount} deckCount={battle.aiDeckCount} />
+      {/* AI zone — face-down hand only */}
+      <AIZone handCount={battle.aiHandCount} />
 
       {/* Combat zone */}
       <View style={s.combatZone}>
         <View style={s.cardSection}>
-          <AIActiveSection card={battle.aiActive} revealed={battle.typeRevealed} />
+          <AIActiveSection card={battle.aiActive} revealed={battle.typeRevealed} deckCount={battle.aiDeckCount} />
         </View>
 
         <View style={s.vsRow}>
@@ -461,19 +472,19 @@ export default function BattleScreen({ navigation, route }: Props) {
             revealed={battle.typeRevealed}
             phase={battle.phase}
             onAttack={battle.attack}
+            deckCount={battle.playerDeckCount}
+            onDraw={battle.draw}
+            canDraw={battle.canDraw}
           />
         </View>
       </View>
 
-      {/* Player zone — face-up hand + tappable deck */}
+      {/* Player zone — face-up hand only */}
       <PlayerZone
         hand={battle.playerHand}
-        deckCount={battle.playerDeckCount}
         phase={battle.phase}
         onSelect={battle.selectCard}
         onSwap={battle.swapCard}
-        onDraw={battle.draw}
-        canDraw={battle.canDraw}
       />
 
       {/* Footer — NEXT ROUND / hints only */}
