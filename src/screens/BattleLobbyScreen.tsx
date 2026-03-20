@@ -214,7 +214,7 @@ interface CellProps {
   onToggle: () => void;
 }
 
-function DeckCardCell({ card, inDeck, canAdd, cooldowns, onToggle }: CellProps) {
+const DeckCardCell = React.memo(function DeckCardCell({ card, inDeck, canAdd, cooldowns, onToggle }: CellProps) {
   const onCd = isCardOnCooldown(card.id, cooldowns);
   const cdMs = cooldownRemaining(card.id, cooldowns);
   const dimmed = (!inDeck && !canAdd) || onCd;
@@ -257,7 +257,7 @@ function DeckCardCell({ card, inDeck, canAdd, cooldowns, onToggle }: CellProps) 
       )}
     </TouchableOpacity>
   );
-}
+});
 
 const grid = StyleSheet.create({
   cell:         { width: CARD_DISPLAY_W, alignItems: 'center' },
@@ -272,7 +272,7 @@ const grid = StyleSheet.create({
 });
 
 // ── OpponentCard ──────────────────────────────────────────────────────────────
-function OpponentCard({ tier, onPress }: { tier: typeof TIER_INFO[0]; onPress: () => void }) {
+const OpponentCard = React.memo(function OpponentCard({ tier, onPress }: { tier: typeof TIER_INFO[0]; onPress: () => void }) {
   const rewards = BATTLE_REWARDS[tier.tier];
   return (
     <TouchableOpacity style={[opp.card, { borderColor: tier.color + '44' }]} onPress={onPress} activeOpacity={0.8}>
@@ -300,7 +300,7 @@ function OpponentCard({ tier, onPress }: { tier: typeof TIER_INFO[0]; onPress: (
       </TouchableOpacity>
     </TouchableOpacity>
   );
-}
+});
 
 const opp = StyleSheet.create({
   card:      { flexDirection:'row', alignItems:'center', backgroundColor:'#0a0a1e', borderRadius:14, borderWidth:1, padding:14, marginBottom:10, gap:12 },
