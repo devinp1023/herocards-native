@@ -29,8 +29,8 @@ This repo is the native iOS app, built session by session per the tech spec.
 | 11 | Battle UI — core state machine port | ✅ Complete |
 | 12 | Battle UI — animations (Reanimated) | ✅ Complete |
 | 13 | Firebase Persistence — full Firestore save/load | ✅ Complete |
-| 14 | Ability Assignment + God Mode | ⏳ Next |
-| 15 | Polish + Edge Cases | |
+| 14 | Ability Assignment + God Mode | ✅ Complete |
+| 15 | Polish + Edge Cases | ⏳ Next |
 | 16 | App Store Prep | |
 
 ## Architecture
