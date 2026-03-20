@@ -10,7 +10,6 @@
 //   both non-attack        → no combat this round
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ALL_CARDS } from '../data/cards';
 import { TIER_INFO } from '../data/constants';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
@@ -129,8 +128,9 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const playerCards = playerDeckIds.map(id => ALL_CARDS.find(c => c.id === id)!).filter(Boolean);
-    const aiCards     = buildAiDeck(tier);
+    const { cardRoster } = gs;
+    const playerCards = playerDeckIds.map(id => cardRoster.find(c => c.id === id)!).filter(Boolean);
+    const aiCards     = buildAiDeck(tier, cardRoster);
     const p = initSideState(playerCards, 'player');
     const a = initSideState(aiCards,     'ai');
     const initEvents: BattleEvent[] = [];

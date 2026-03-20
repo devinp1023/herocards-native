@@ -48,7 +48,6 @@ const SORT_OPTIONS = [
 ] as const;
 type SortKey = typeof SORT_OPTIONS[number]['key'];
 
-const ALL_TYPES = ['All', ...Array.from(new Set(ALL_CARDS.map(c => c.type))).sort()];
 
 // ── FilterSidebar ─────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -57,6 +56,7 @@ interface SidebarProps {
   typeFilter: string;
   packFilter: number;
   sortBy: SortKey;
+  types: string[];
   onRarity: (v: string) => void;
   onType: (v: string) => void;
   onPack: (v: number) => void;
@@ -65,7 +65,7 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, onRarity, onType, onPack, onSort, onClear, onClose }: SidebarProps) {
+function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types, onRarity, onType, onPack, onSort, onClear, onClose }: SidebarProps) {
   const translateX = useSharedValue(SIDEBAR_W);
   const [rendered, setRendered] = useState(false);
 
@@ -110,7 +110,7 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, onRari
 
           <View style={sb.divider} />
           <Text style={sb.sectionLabel}>TYPE</Text>
-          {ALL_TYPES.map(t => {
+          {types.map(t => {
             const active = typeFilter === t;
             return (
               <TouchableOpacity key={t} style={sb.radioRow} onPress={() => onType(t)}>
@@ -322,6 +322,7 @@ const opp = StyleSheet.create({
 // ── BattleLobbyScreen ─────────────────────────────────────────────────────────
 export default function BattleLobbyScreen({ navigation }: Props) {
   const gs = useGameStateContext();
+  const ALL_TYPES = useMemo(() => ['All', ...Array.from(new Set(gs.cardRoster.map(c => c.type))).sort()], [gs.cardRoster]);
 
   const [phase, setPhase]               = useState<Phase>('deck');
   const [battleDeck, setBattleDeck]     = useState<number[]>([]);
@@ -603,6 +604,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         typeFilter={typeFilter}
         packFilter={packFilter}
         sortBy={sortBy}
+        types={ALL_TYPES}
         onRarity={setRarity}
         onType={setTypeFilter}
         onPack={setPackFilter}

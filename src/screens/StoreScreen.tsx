@@ -191,9 +191,9 @@ export default function StoreScreen() {
   const featuredTc   = AVATAR_TIER_COLORS[featured.tier];
 
   // Daily card offers
-  const legendaries  = ALL_CARDS.filter(c => c.rarity === 'Legendary');
-  const epics        = ALL_CARDS.filter(c => c.rarity === 'Epic');
-  const rares        = ALL_CARDS.filter(c => c.rarity === 'Rare');
+  const legendaries  = gs.cardRoster.filter(c => c.rarity === 'Legendary');
+  const epics        = gs.cardRoster.filter(c => c.rarity === 'Epic');
+  const rares        = gs.cardRoster.filter(c => c.rarity === 'Rare');
   const dailyLeg     = legendaries[((seed * 1234567) >>> 0) % legendaries.length];
   const dailyEpic    = epics[((seed * 3141592) >>> 0) % epics.length];
   const dailyRare    = rares[((seed * 7654321) >>> 0) % rares.length];

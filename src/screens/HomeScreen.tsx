@@ -55,9 +55,9 @@ const xpStyles = StyleSheet.create({
 });
 
 // ── PackStatCard ──────────────────────────────────────────────────────────────
-function PackStatCard({ packId, collection }: { packId: number; collection: Record<number, number> }) {
+function PackStatCard({ packId, collection, cardRoster }: { packId: number; collection: Record<number, number>; cardRoster: import('../data/cards').Card[] }) {
   const pack      = PACKS[packId];
-  const packCards = ALL_CARDS.filter(c => c.pack === packId);
+  const packCards = cardRoster.filter(c => c.pack === packId);
   const owned     = packCards.filter(c => isOwned(collection, c.id));
   const pct       = packCards.length > 0 ? Math.round(owned.length / packCards.length * 100) : 0;
 
@@ -190,8 +190,8 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* ── Pack completion stats ── */}
         <Text style={styles.sectionTitle}>PACK PROGRESS</Text>
-        <PackStatCard packId={1} collection={gs.collection} />
-        <PackStatCard packId={2} collection={gs.collection} />
+        <PackStatCard packId={1} collection={gs.collection} cardRoster={gs.cardRoster} />
+        <PackStatCard packId={2} collection={gs.collection} cardRoster={gs.cardRoster} />
 
       </ScrollView>
     </View>

@@ -44,8 +44,8 @@ interface DrawnCard {
   isDupe: boolean;
 }
 
-function drawPack(packId: number, collection: Record<number, number>): DrawnCard[] {
-  const packCards = ALL_CARDS.filter(c => c.pack === packId);
+function drawPack(packId: number, collection: Record<number, number>, cardRoster: Card[]): DrawnCard[] {
+  const packCards = cardRoster.filter(c => c.pack === packId);
   const drawn: DrawnCard[] = [];
 
   for (let i = 0; i < 5; i++) {
@@ -279,7 +279,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const openPack = (id: number) => {
     const ok = gs.spendCoins(PACK_COST);
     if (!ok) return; // not enough credits — button is disabled anyway
-    const cards = drawPack(id, gs.collection);
+    const cards = drawPack(id, gs.collection, gs.cardRoster);
     setDrawn(cards);
     setPackId(id);
     setCurrentCard(0);

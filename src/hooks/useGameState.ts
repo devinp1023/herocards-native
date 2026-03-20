@@ -53,19 +53,20 @@ function computeNewAchievements(
   totalTrades: number,
   ownedAvatars: string[],
   alreadyEarned: string[],
+  roster: Card[],
 ): Achievement[] {
   const earned = new Set(alreadyEarned);
   const newlyEarned: Achievement[] = [];
 
   // Pre-compute collection stats
   const uniqueOwned = Object.keys(collection).map(Number);
-  const ownedCards  = ALL_CARDS.filter(c => (collection[c.id] ?? 0) > 0);
+  const ownedCards  = roster.filter(c => (collection[c.id] ?? 0) > 0);
 
   const rarityCount  = (r: string)  => ownedCards.filter(c => c.rarity === r).length;
   const allianceCount= (a: string)  => ownedCards.filter(c => c.alliance === a).length;
   const uniqueTypes  = new Set(ownedCards.map(c => c.type)).size;
   const packCount    = (p: number)  => ownedCards.filter(c => c.pack === p).length;
-  const packTotal    = (p: number)  => ALL_CARDS.filter(c => c.pack === p).length;
+  const packTotal    = (p: number)  => roster.filter(c => c.pack === p).length;
   // Purchased avatars = all except the default 'a1'
   const purchasedAvatars = ownedAvatars.filter(id => id !== 'a1').length;
 
@@ -209,7 +210,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   useEffect(() => {
     if (isGod) return; // god mode already has all achievements
     const newlyEarned = computeNewAchievements(
-      collection, packsOpened, level, totalTrades, ownedAvatars, earnedRef.current,
+      collection, packsOpened, level, totalTrades, ownedAvatars, earnedRef.current, cardRoster,
     );
     if (newlyEarned.length === 0) return;
     const newIds = newlyEarned.map(a => a.id);
@@ -331,7 +332,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     setBattleCooldowns(prev => {
       const next = { ...prev };
       for (const id of cardIds) {
-        const card = ALL_CARDS.find(c => c.id === id);
+        const card = cardRoster.find(c => c.id === id);
         if (card && hasBattleCooldown(card.rarity)) next[id] = now;
       }
       return next;

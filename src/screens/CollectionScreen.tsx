@@ -53,7 +53,6 @@ const SORT_OPTIONS = [
 ] as const;
 type SortKey = typeof SORT_OPTIONS[number]['key'];
 
-const ALL_TYPES = ['All', ...Array.from(new Set(ALL_CARDS.map(c => c.type))).sort()];
 
 const SCALE      = 0.38;
 const NUM_COLS   = 3;
@@ -67,6 +66,7 @@ interface SidebarProps {
   typeFilter: string;
   packFilter: number;
   sortBy: SortKey;
+  types: string[];
   onRarity: (v: string) => void;
   onType: (v: string) => void;
   onPack: (v: number) => void;
@@ -76,7 +76,7 @@ interface SidebarProps {
 }
 
 function FilterSidebar({
-  visible, rarity, typeFilter, packFilter, sortBy,
+  visible, rarity, typeFilter, packFilter, sortBy, types,
   onRarity, onType, onPack, onSort, onClear, onClose,
 }: SidebarProps) {
   const translateX = useSharedValue(SIDEBAR_W);
@@ -140,7 +140,7 @@ function FilterSidebar({
 
           {/* ── Type ── */}
           <Text style={styles.sectionLabel}>TYPE</Text>
-          {ALL_TYPES.map(t => {
+          {types.map(t => {
             const active = typeFilter === t;
             return (
               <TouchableOpacity key={t} style={styles.radioRow} onPress={() => onType(t)}>
@@ -200,6 +200,7 @@ function FilterSidebar({
 // ── CollectionScreen ──────────────────────────────────────────────────────────
 export default function CollectionScreen({ navigation }: Props) {
   const gs = useGameStateContext();
+  const ALL_TYPES = useMemo(() => ['All', ...Array.from(new Set(gs.cardRoster.map(c => c.type))).sort()], [gs.cardRoster]);
 
   const [search,      setSearch]      = useState('');
   const [rarity,      setRarity]      = useState<string>('All');
@@ -381,6 +382,7 @@ export default function CollectionScreen({ navigation }: Props) {
         typeFilter={typeFilter}
         packFilter={packFilter}
         sortBy={sortBy}
+        types={ALL_TYPES}
         onRarity={setRarity}
         onType={setTypeFilter}
         onPack={setPackFilter}
