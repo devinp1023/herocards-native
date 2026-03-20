@@ -13,7 +13,8 @@ import { useFont } from '@shopify/react-native-skia';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
-import { loadGameData, PersistedGameData } from './src/hooks/useFirebase';
+import { loadGameData, loadCardRoster, PersistedGameData } from './src/hooks/useFirebase';
+import { ALL_CARDS, Card } from './src/data/cards';
 
 import AuthScreen            from './src/screens/AuthScreen';
 import HomeScreen            from './src/screens/HomeScreen';
@@ -220,16 +221,17 @@ function AchievementOverlay() {
 // Placed above NavigationContainer so all screens share one instance.
 // key={uid} causes a clean remount (and re-init of useState) when uid changes,
 // which correctly handles switching between god mode and regular accounts.
-function GameStateProvider({ uid, initialData, children }: { uid: string; initialData: PersistedGameData | null; children: React.ReactNode }) {
-  const gs = useGameState(uid, initialData);
+function GameStateProvider({ uid, initialData, cardRoster, children }: { uid: string; initialData: PersistedGameData | null; cardRoster: Card[]; children: React.ReactNode }) {
+  const gs = useGameState(uid, initialData, cardRoster);
   return <GameStateContext.Provider value={gs}>{children}</GameStateContext.Provider>;
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [authReady, setAuthReady] = useState(false);
-  const [session, setSession]     = useState<{ uid: string; username: string } | null>(null);
-  const [gameData, setGameData]   = useState<PersistedGameData | null>(null);
+  const [authReady, setAuthReady]   = useState(false);
+  const [session, setSession]       = useState<{ uid: string; username: string } | null>(null);
+  const [gameData, setGameData]     = useState<PersistedGameData | null>(null);
+  const [cardRoster, setCardRoster] = useState<Card[]>(ALL_CARDS);
 
   const [fontsLoaded] = useFonts({ Orbitron_700Bold, Orbitron_900Black, Rajdhani_600SemiBold });
 
@@ -241,6 +243,11 @@ export default function App() {
   const fontSmall     = useFont(rajdhaniSemiTtf,  11);
   const fontCardTitle = useFont(orbitronBoldTtf,  13);
   const fontCardSub   = useFont(orbitronBoldTtf,  10);
+
+  // Load card roster once at startup (Firestore with ALL_CARDS fallback)
+  useEffect(() => {
+    loadCardRoster().then(setCardRoster);
+  }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -286,7 +293,7 @@ export default function App() {
         fontTotal, fontSmall, fontCardTitle, fontCardSub,
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
-          <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData}>
+          <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData} cardRoster={cardRoster}>
           <NavigationContainer>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (

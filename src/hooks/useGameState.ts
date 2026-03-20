@@ -5,7 +5,7 @@
 // It will call useFirebase().saveData() once Session 13 wires persistence.
 
 import { useState, useEffect, useRef } from 'react';
-import { ALL_CARDS } from '../data/cards';
+import { ALL_CARDS, Card } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
@@ -102,6 +102,7 @@ function computeNewAchievements(
 }
 
 export interface GameState {
+  cardRoster: Card[];                       // live card list from Firestore (falls back to ALL_CARDS)
   battleCooldowns: Record<number, number>;  // card id → cooldown start timestamp (ms)
   coins: number;
   xp: number;
@@ -131,7 +132,7 @@ export interface GameState {
   addBattleCooldowns: (cardIds: number[]) => void;
 }
 
-export function useGameState(uid: string, initialData?: PersistedGameData | null): GameState {
+export function useGameState(uid: string, initialData?: PersistedGameData | null, cardRoster: Card[] = ALL_CARDS): GameState {
   const isGod = uid === '__god__';
 
   // ── Core state ────────────────────────────────────────────────────────────
@@ -338,6 +339,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   };
 
   return {
+    cardRoster,
     battleCooldowns,
     coins, xp, level, xpInLevel, xpNeeded,
     collection, activeAvatar, ownedAvatars,
