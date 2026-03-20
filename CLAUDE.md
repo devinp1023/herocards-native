@@ -118,8 +118,8 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - 200 cards — `id, name, type, rarity, power, defense, speed, emoji, desc, pack, alliance, imageUrl?, ability?`
 - Firestore is the live source; `src/data/cards.ts` is the offline fallback
 - To update a card: edit in CMS → click Save — saves that card individually to Firestore → app picks up on next launch
-- "Re-seed All Cards" button: overwrites ALL 200 Firestore cards with DEFAULT_CARDS — use when abilities/bulk data need to be pushed fresh
-- To sync Firestore → cards.ts: `npm run sync-cards`
+- "Re-seed All Cards" button: overwrites ALL 200 Firestore cards with the `DEFAULT_CARDS` array embedded in the CMS HTML — use when bulk data (e.g. abilities) was changed in code and needs to be pushed to Firestore
+- `DEFAULT_CARDS` in the CMS HTML is a snapshot — it goes stale when cards are edited individually in the CMS. To bring it back in sync: run `npm run sync-cards` (from `herocards-native`) to pull Firestore → `cards.ts`, then rebuild and redeploy the CMS so `DEFAULT_CARDS` reflects the latest data
 - 17 cards have `imageUrl` (Firebase Storage `card-images/card_XXX.png`)
 - All 200 cards have `ability` assigned (25 abilities across 5 rarity tiers)
 
