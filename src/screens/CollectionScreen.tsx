@@ -234,7 +234,7 @@ export default function CollectionScreen({ navigation }: Props) {
   }, [navigation, clearFilters]);
 
   const cards = useMemo(() => {
-    let list = ALL_CARDS as Card[];
+    let list = gs.cardRoster;
     if (packFilter !== 0)     list = list.filter(c => c.pack === packFilter);
     if (rarity !== 'All')     list = list.filter(c => c.rarity === rarity);
     if (typeFilter !== 'All') list = list.filter(c => c.type === typeFilter);
@@ -295,7 +295,7 @@ export default function CollectionScreen({ navigation }: Props) {
       {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>COLLECTION</Text>
-        <Text style={styles.headerSub}>{totalOwned} / {ALL_CARDS.length} owned</Text>
+        <Text style={styles.headerSub}>{totalOwned} / {gs.cardRoster.length} owned</Text>
       </View>
 
       {/* ── Search + filter ── */}

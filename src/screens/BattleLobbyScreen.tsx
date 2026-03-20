@@ -340,8 +340,8 @@ export default function BattleLobbyScreen({ navigation }: Props) {
 
   // Owned cards
   const ownedCards = useMemo(() =>
-    ALL_CARDS.filter(c => isOwned(gs.collection, c.id)),
-    [gs.collection],
+    gs.cardRoster.filter(c => isOwned(gs.collection, c.id)),
+    [gs.collection, gs.cardRoster],
   );
 
   const notEnoughCards = ownedCards.length < DECK_SIZE;
@@ -375,7 +375,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
   const rarityCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const id of battleDeck) {
-      const card = ALL_CARDS.find(c => c.id === id);
+      const card = gs.cardRoster.find(c => c.id === id);
       if (card) counts[card.rarity] = (counts[card.rarity] ?? 0) + 1;
     }
     return counts;
@@ -401,8 +401,8 @@ export default function BattleLobbyScreen({ navigation }: Props) {
   const canStartBattle = deckFull && !anyOnCooldown;
 
   const deckCards = useMemo(() =>
-    battleDeck.map(id => ALL_CARDS.find(c => c.id === id)),
-    [battleDeck],
+    battleDeck.map(id => gs.cardRoster.find(c => c.id === id)),
+    [battleDeck, gs.cardRoster],
   );
 
   const renderCard = useCallback(({ item }: ListRenderItemInfo<Card | null>) => {

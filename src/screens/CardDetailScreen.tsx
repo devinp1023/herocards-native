@@ -22,8 +22,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CollectionStackParamList } from '../../App';
-import { ALL_CARDS } from '../data/cards';
 import { RC, TYPE_COLORS, RO } from '../data/constants';
+import { useGameStateContext } from '../context/GameStateContext';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MissingCard } from '../components/MissingCard';
@@ -72,7 +72,8 @@ function AnimatedBar({ value, color, delay }: { value: number; color: string; de
 // ── CardDetailScreen ──────────────────────────────────────────────────────────
 export default function CardDetailScreen({ route, navigation }: Props) {
   const { cardId, owned, ownedCount } = route.params;
-  const card = ALL_CARDS.find(c => c.id === cardId);
+  const { cardRoster } = useGameStateContext();
+  const card = cardRoster.find(c => c.id === cardId);
   const [descExpanded, setDescExpanded] = useState(false);
 
   if (!card) return null;
