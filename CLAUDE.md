@@ -32,8 +32,31 @@ All 14 build sessions complete. The app has:
 ## Workflow
 - Describe what you want fixed or improved — no need for formal session structure
 - Run `npx tsc --noEmit` before committing (must be zero errors)
-- Run `npx expo start` or `npx expo start --clear` to test
+- Run `npx expo start` or `npx expo start --clear` to test (use `--clear` after hook/persistence changes)
 - Always ask before pushing to GitHub
+
+## Critical Rules — Read Before Touching Any Screen
+- **Never import `ALL_CARDS` directly in screens or hooks.** Always use `gs.cardRoster` from `useGameStateContext()`. `ALL_CARDS` is only for fallback in `useFirebase.ts` and `useGameState.ts`.
+- **Never put computed values that depend on `cardRoster` at module level.** They must be `useMemo` inside the component (e.g. `ALL_TYPES` filters).
+- **`React.memo`** should be applied to any list item component rendered inside a `FlatList` — prevents expensive re-renders when unrelated state changes.
+- **`useCallback`** should wrap all event handlers passed as props to memoized components.
+
+## Auth
+- Email/password only (no Google Sign-In in the native app)
+- Users create an account or log in on `AuthScreen`
+- God Mode: toggle on the login screen — bypasses Firebase auth entirely
+
+## Screens Overview
+All quests and achievements UI lives inside **ProfileScreen** — there is no separate QuestsScreen or AchievementsScreen. There is no SettingsScreen.
+
+## Scripts
+| Script | What it does |
+|--------|-------------|
+| `npm run sync-cards` | Pulls all 200 cards from Firestore → regenerates `src/data/cards.ts` |
+| `node scripts/assign-abilities.js` | One-time script — patches `cards.ts` with ability assignments (already run) |
+
+## Haptics
+`expo-haptics` is used in `PackOpeningScreen` for card reveals. No audio — sound effects were not implemented.
 
 ## Architecture
 
