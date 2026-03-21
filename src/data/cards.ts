@@ -18,7 +18,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 1,
     "name": "Cosmara",
-    "type": "Cosmic",
+    "type": "Tech",
     "rarity": "Legendary",
     "power": 99,
     "defense": 92,
@@ -32,7 +32,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 2,
     "name": "Voidlord Kael",
-    "type": "Stealth",
+    "type": "Tech",
     "rarity": "Legendary",
     "power": 97,
     "defense": 88,
@@ -46,7 +46,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 3,
     "name": "Solarius",
-    "type": "Blaster",
+    "type": "Tank",
     "rarity": "Legendary",
     "power": 98,
     "defense": 85,
@@ -60,7 +60,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 4,
     "name": "Eternix",
-    "type": "Mystic",
+    "type": "Tank",
     "rarity": "Legendary",
     "power": 94,
     "defense": 97,
@@ -74,7 +74,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 5,
     "name": "Omegastrike",
-    "type": "Brawler",
+    "type": "Magic",
     "rarity": "Legendary",
     "power": 100,
     "defense": 90,
@@ -88,7 +88,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 6,
     "name": "Psyrena",
-    "type": "Brainiac",
+    "type": "Magic",
     "rarity": "Epic",
     "power": 88,
     "defense": 72,
@@ -102,7 +102,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 7,
     "name": "Ironveil",
-    "type": "Tank",
+    "type": "Cosmic",
     "rarity": "Epic",
     "power": 74,
     "defense": 95,
@@ -116,7 +116,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 8,
     "name": "Blazeclaw",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Epic",
     "power": 91,
     "defense": 68,
@@ -130,7 +130,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 9,
     "name": "Tyranneous",
-    "type": "Elemental",
+    "type": "Shadow",
     "rarity": "Epic",
     "power": 87,
     "defense": 75,
@@ -145,7 +145,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 10,
     "name": "Nullblade",
-    "type": "Stealth",
+    "type": "Psychic",
     "rarity": "Epic",
     "power": 85,
     "defense": 78,
@@ -159,7 +159,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 11,
     "name": "Audio",
-    "type": "Tech",
+    "type": "Psychic",
     "rarity": "Epic",
     "power": 82,
     "defense": 80,
@@ -174,7 +174,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 12,
     "name": "Skyhook",
-    "type": "Flier",
+    "type": "Nature",
     "rarity": "Epic",
     "power": 79,
     "defense": 73,
@@ -189,7 +189,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 13,
     "name": "Dr. Jimmy",
-    "type": "Healer",
+    "type": "Speedster",
     "rarity": "Epic",
     "power": 71,
     "defense": 88,
@@ -204,7 +204,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 14,
     "name": "Seismara",
-    "type": "Elemental",
+    "type": "Speedster",
     "rarity": "Epic",
     "power": 90,
     "defense": 82,
@@ -218,7 +218,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 15,
     "name": "Multi Back",
-    "type": "Shapeshifter",
+    "type": "Shadow",
     "rarity": "Epic",
     "power": 83,
     "defense": 76,
@@ -233,7 +233,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 16,
     "name": "Cryonix",
-    "type": "Elemental",
+    "type": "Cosmic",
     "rarity": "Rare",
     "power": 72,
     "defense": 68,
@@ -247,7 +247,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 17,
     "name": "Thunderjack",
-    "type": "Speedster",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 68,
     "defense": 58,
@@ -261,7 +261,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 18,
     "name": "Railman",
-    "type": "Gadgets",
+    "type": "Speedster",
     "rarity": "Rare",
     "power": 65,
     "defense": 70,
@@ -276,7 +276,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 19,
     "name": "Ved",
-    "type": "Mystic",
+    "type": "Speedster",
     "rarity": "Rare",
     "power": 74,
     "defense": 63,
@@ -291,7 +291,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 20,
     "name": "Bonecaller",
-    "type": "Alien",
+    "type": "Magic",
     "rarity": "Rare",
     "power": 70,
     "defense": 65,
@@ -305,7 +305,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 21,
     "name": "Burst",
-    "type": "Speedster",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 64,
     "defense": 55,
@@ -320,7 +320,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 22,
     "name": "Stonewall Dex",
-    "type": "Tank",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 60,
     "defense": 88,
@@ -334,7 +334,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 23,
     "name": "Luminos",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Rare",
     "power": 73,
     "defense": 60,
@@ -348,7 +348,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 24,
     "name": "Mireclaw",
-    "type": "Shapeshifter",
+    "type": "Magic",
     "rarity": "Rare",
     "power": 67,
     "defense": 62,
@@ -362,7 +362,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 25,
     "name": "Slipstream",
-    "type": "Flier",
+    "type": "Psychic",
     "rarity": "Rare",
     "power": 69,
     "defense": 64,
@@ -377,7 +377,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 26,
     "name": "Rho Patel",
-    "type": "Tech",
+    "type": "Speedster",
     "rarity": "Rare",
     "power": 66,
     "defense": 72,
@@ -391,7 +391,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 27,
     "name": "Thornwall",
-    "type": "Healer",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 58,
     "defense": 78,
@@ -405,7 +405,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 28,
     "name": "Shadowmeld",
-    "type": "Stealth",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 71,
     "defense": 60,
@@ -419,7 +419,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 29,
     "name": "Warpulse",
-    "type": "Brainiac",
+    "type": "Psychic",
     "rarity": "Rare",
     "power": 69,
     "defense": 59,
@@ -433,7 +433,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 30,
     "name": "Cinderax",
-    "type": "Blaster",
+    "type": "Cosmic",
     "rarity": "Rare",
     "power": 75,
     "defense": 57,
@@ -447,7 +447,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 31,
     "name": "Wind Waver",
-    "type": "Elemental",
+    "type": "Shadow",
     "rarity": "Rare",
     "power": 68,
     "defense": 71,
@@ -462,7 +462,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 32,
     "name": "Ironclad Reva",
-    "type": "Tank",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 62,
     "defense": 85,
@@ -476,7 +476,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 33,
     "name": "Sirocco",
-    "type": "Elemental",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 70,
     "defense": 62,
@@ -490,7 +490,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 34,
     "name": "Neurostrike",
-    "type": "Brainiac",
+    "type": "Shadow",
     "rarity": "Rare",
     "power": 72,
     "defense": 61,
@@ -504,7 +504,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 35,
     "name": "Cobalt Wing",
-    "type": "Flier",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 65,
     "defense": 67,
@@ -518,7 +518,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 36,
     "name": "Trailblazer",
-    "type": "Speedster",
+    "type": "Tech",
     "rarity": "Rare",
     "power": 67,
     "defense": 56,
@@ -533,7 +533,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 37,
     "name": "Gravitas",
-    "type": "Cosmic",
+    "type": "Tech",
     "rarity": "Rare",
     "power": 74,
     "defense": 69,
@@ -547,7 +547,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 38,
     "name": "Blue Shift",
-    "type": "Mystic",
+    "type": "Shadow",
     "rarity": "Rare",
     "power": 71,
     "defense": 64,
@@ -562,7 +562,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 39,
     "name": "Brugge",
-    "type": "Brawler",
+    "type": "Speedster",
     "rarity": "Rare",
     "power": 78,
     "defense": 73,
@@ -577,7 +577,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 40,
     "name": "The Supplier",
-    "type": "Gadgets",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 63,
     "defense": 65,
@@ -592,7 +592,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 41,
     "name": "Darkmantle",
-    "type": "Stealth",
+    "type": "Magic",
     "rarity": "Rare",
     "power": 69,
     "defense": 63,
@@ -606,7 +606,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 42,
     "name": "Lyra Steele",
-    "type": "Tech",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 64,
     "defense": 74,
@@ -620,7 +620,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 43,
     "name": "Ashwarden",
-    "type": "Alien",
+    "type": "Blaster",
     "rarity": "Rare",
     "power": 68,
     "defense": 66,
@@ -634,7 +634,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 44,
     "name": "Pulsara",
-    "type": "Blaster",
+    "type": "Tech",
     "rarity": "Rare",
     "power": 73,
     "defense": 59,
@@ -648,7 +648,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 45,
     "name": "Verdant Fist",
-    "type": "Brawler",
+    "type": "Nature",
     "rarity": "Rare",
     "power": 76,
     "defense": 70,
@@ -676,7 +676,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 47,
     "name": "Blockade",
-    "type": "Tank",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 48,
     "defense": 76,
@@ -690,7 +690,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 48,
     "name": "Spark Reyes",
-    "type": "Blaster",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 57,
     "defense": 46,
@@ -704,7 +704,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 49,
     "name": "Mosskin",
-    "type": "Healer",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 42,
     "defense": 60,
@@ -718,7 +718,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 50,
     "name": "Driftshadow",
-    "type": "Stealth",
+    "type": "Cosmic",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 50,
@@ -732,7 +732,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 51,
     "name": "Ironpulse",
-    "type": "Tech",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 52,
     "defense": 58,
@@ -746,7 +746,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 52,
     "name": "Razorwing",
-    "type": "Flier",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 48,
@@ -760,7 +760,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 53,
     "name": "Zephyra",
-    "type": "Elemental",
+    "type": "Shadow",
     "rarity": "Uncommon",
     "power": 53,
     "defense": 52,
@@ -774,7 +774,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 54,
     "name": "Mentara",
-    "type": "Brainiac",
+    "type": "Tank",
     "rarity": "Uncommon",
     "power": 58,
     "defense": 49,
@@ -788,7 +788,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 55,
     "name": "Graveshift",
-    "type": "Alien",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 54,
@@ -802,7 +802,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 56,
     "name": "Ferrix",
-    "type": "Shapeshifter",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 51,
     "defense": 53,
@@ -816,7 +816,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 57,
     "name": "Comet Dash",
-    "type": "Speedster",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 43,
@@ -830,7 +830,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 58,
     "name": "Ironhide",
-    "type": "Tank",
+    "type": "Nature",
     "rarity": "Uncommon",
     "power": 46,
     "defense": 78,
@@ -845,7 +845,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 59,
     "name": "Nova Kwan",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 59,
     "defense": 47,
@@ -859,7 +859,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 60,
     "name": "Patchwork",
-    "type": "Healer",
+    "type": "Tank",
     "rarity": "Uncommon",
     "power": 44,
     "defense": 62,
@@ -874,7 +874,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 61,
     "name": "Umbrix",
-    "type": "Stealth",
+    "type": "Nature",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 51,
@@ -888,7 +888,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 62,
     "name": "Gadgetrix",
-    "type": "Gadgets",
+    "type": "Shadow",
     "rarity": "Uncommon",
     "power": 50,
     "defense": 56,
@@ -902,7 +902,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 63,
     "name": "Miss Skywalker",
-    "type": "Flier",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 50,
@@ -917,7 +917,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 64,
     "name": "Tidecaller",
-    "type": "Elemental",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 55,
@@ -931,7 +931,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 65,
     "name": "Mindveil",
-    "type": "Brainiac",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 57,
     "defense": 48,
@@ -945,7 +945,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 66,
     "name": "Rattlebone",
-    "type": "Alien",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 53,
     "defense": 52,
@@ -959,7 +959,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 67,
     "name": "Prismara",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Uncommon",
     "power": 58,
     "defense": 45,
@@ -987,7 +987,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 69,
     "name": "Fennix",
-    "type": "Shapeshifter",
+    "type": "Cosmic",
     "rarity": "Uncommon",
     "power": 52,
     "defense": 54,
@@ -1001,7 +1001,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 70,
     "name": "Voltara",
-    "type": "Speedster",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 44,
@@ -1015,7 +1015,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 71,
     "name": "Gravitas",
-    "type": "Tech",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 53,
     "defense": 60,
@@ -1030,7 +1030,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 72,
     "name": "Sunlance",
-    "type": "Blaster",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 60,
     "defense": 46,
@@ -1044,7 +1044,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 73,
     "name": "Lichen",
-    "type": "Healer",
+    "type": "Shadow",
     "rarity": "Uncommon",
     "power": 43,
     "defense": 61,
@@ -1058,7 +1058,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 74,
     "name": "Smokeshift",
-    "type": "Stealth",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 50,
@@ -1072,7 +1072,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 75,
     "name": "Quakefist",
-    "type": "Brawler",
+    "type": "Tank",
     "rarity": "Uncommon",
     "power": 59,
     "defense": 56,
@@ -1086,7 +1086,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 76,
     "name": "Arachnova",
-    "type": "Gadgets",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 51,
     "defense": 57,
@@ -1100,7 +1100,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 77,
     "name": "The Cartographer",
-    "type": "Elemental",
+    "type": "Tank",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 53,
@@ -1115,7 +1115,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 78,
     "name": "Crystalback",
-    "type": "Tank",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 48,
     "defense": 74,
@@ -1129,7 +1129,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 79,
     "name": "Psi Ramirez",
-    "type": "Brainiac",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 57,
     "defense": 50,
@@ -1143,7 +1143,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 80,
     "name": "Ashen Rook",
-    "type": "Alien",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 53,
@@ -1157,7 +1157,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 81,
     "name": "Wyvera",
-    "type": "Flier",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 51,
@@ -1171,7 +1171,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 82,
     "name": "Lumos",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Uncommon",
     "power": 57,
     "defense": 47,
@@ -1185,7 +1185,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 83,
     "name": "Hacktivist",
-    "type": "Tech",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 52,
     "defense": 59,
@@ -1200,7 +1200,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 84,
     "name": "Hollowfang",
-    "type": "Stealth",
+    "type": "Cosmic",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 52,
@@ -1214,7 +1214,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 85,
     "name": "Terrashift",
-    "type": "Elemental",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 57,
@@ -1228,7 +1228,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 86,
     "name": "Blazefur",
-    "type": "Brawler",
+    "type": "Tank",
     "rarity": "Uncommon",
     "power": 60,
     "defense": 54,
@@ -1242,7 +1242,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 87,
     "name": "Quicksplit",
-    "type": "Shapeshifter",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 53,
     "defense": 55,
@@ -1256,7 +1256,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 88,
     "name": "Crestwave",
-    "type": "Elemental",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 56,
@@ -1284,7 +1284,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 90,
     "name": "Ironmoth",
-    "type": "Flier",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 54,
     "defense": 52,
@@ -1298,7 +1298,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 91,
     "name": "Aurora",
-    "type": "Elemental",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 57,
     "defense": 53,
@@ -1313,7 +1313,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 92,
     "name": "Nocturna",
-    "type": "Stealth",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 51,
@@ -1327,7 +1327,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 93,
     "name": "Agent 25",
-    "type": "Mystic",
+    "type": "Blaster",
     "rarity": "Uncommon",
     "power": 56,
     "defense": 60,
@@ -1342,7 +1342,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 94,
     "name": "Bombardier",
-    "type": "Gadgets",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 50,
     "defense": 58,
@@ -1357,7 +1357,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 95,
     "name": "Surgewolf",
-    "type": "Brawler",
+    "type": "Cosmic",
     "rarity": "Uncommon",
     "power": 58,
     "defense": 55,
@@ -1371,7 +1371,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 96,
     "name": "The Alchemist",
-    "type": "Healer",
+    "type": "Cosmic",
     "rarity": "Uncommon",
     "power": 43,
     "defense": 63,
@@ -1386,7 +1386,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 97,
     "name": "Vexshot",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Uncommon",
     "power": 59,
     "defense": 46,
@@ -1400,7 +1400,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 98,
     "name": "Slipstream",
-    "type": "Speedster",
+    "type": "Magic",
     "rarity": "Uncommon",
     "power": 55,
     "defense": 45,
@@ -1414,7 +1414,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 99,
     "name": "Manticore",
-    "type": "Brawler",
+    "type": "Tech",
     "rarity": "Uncommon",
     "power": 60,
     "defense": 57,
@@ -1428,7 +1428,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 100,
     "name": "Relay",
-    "type": "Tech",
+    "type": "Psychic",
     "rarity": "Uncommon",
     "power": 53,
     "defense": 60,
@@ -1443,7 +1443,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 101,
     "name": "Sir Kravis",
-    "type": "Tank",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 30,
     "defense": 55,
@@ -1458,7 +1458,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 102,
     "name": "Arcanian",
-    "type": "Speedster",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 28,
     "defense": 30,
@@ -1473,7 +1473,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 103,
     "name": "Sparks",
-    "type": "Blaster",
+    "type": "Nature",
     "rarity": "Common",
     "power": 34,
     "defense": 28,
@@ -1487,7 +1487,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 104,
     "name": "Balm",
-    "type": "Healer",
+    "type": "Magic",
     "rarity": "Common",
     "power": 22,
     "defense": 40,
@@ -1501,7 +1501,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 105,
     "name": "Shade",
-    "type": "Stealth",
+    "type": "Nature",
     "rarity": "Common",
     "power": 32,
     "defense": 32,
@@ -1515,7 +1515,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 106,
     "name": "Tinker",
-    "type": "Gadgets",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 28,
     "defense": 35,
@@ -1529,7 +1529,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 107,
     "name": "Glide",
-    "type": "Flier",
+    "type": "Nature",
     "rarity": "Common",
     "power": 26,
     "defense": 30,
@@ -1543,7 +1543,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 108,
     "name": "Ripple",
-    "type": "Elemental",
+    "type": "Nature",
     "rarity": "Common",
     "power": 30,
     "defense": 33,
@@ -1557,7 +1557,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 109,
     "name": "Archivist",
-    "type": "Brainiac",
+    "type": "Tank",
     "rarity": "Common",
     "power": 29,
     "defense": 31,
@@ -1572,7 +1572,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 110,
     "name": "Splinter",
-    "type": "Brawler",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 35,
     "defense": 34,
@@ -1586,7 +1586,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 111,
     "name": "Mira Locke",
-    "type": "Tech",
+    "type": "Tank",
     "rarity": "Common",
     "power": 27,
     "defense": 36,
@@ -1600,7 +1600,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 112,
     "name": "Dustmoth",
-    "type": "Flier",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 25,
     "defense": 29,
@@ -1614,7 +1614,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 113,
     "name": "Knuckle Ray",
-    "type": "Brawler",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 36,
     "defense": 32,
@@ -1628,7 +1628,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 114,
     "name": "Brine",
-    "type": "Elemental",
+    "type": "Tech",
     "rarity": "Common",
     "power": 29,
     "defense": 34,
@@ -1656,7 +1656,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 116,
     "name": "Stubborn",
-    "type": "Tank",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 28,
     "defense": 57,
@@ -1670,7 +1670,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 117,
     "name": "Char",
-    "type": "Blaster",
+    "type": "Tech",
     "rarity": "Common",
     "power": 33,
     "defense": 27,
@@ -1684,7 +1684,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 118,
     "name": "Foghorn",
-    "type": "Blaster",
+    "type": "Tech",
     "rarity": "Common",
     "power": 31,
     "defense": 30,
@@ -1698,7 +1698,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 119,
     "name": "Patchface",
-    "type": "Shapeshifter",
+    "type": "Nature",
     "rarity": "Common",
     "power": 28,
     "defense": 31,
@@ -1712,7 +1712,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 120,
     "name": "Spindle",
-    "type": "Gadgets",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 27,
     "defense": 34,
@@ -1726,7 +1726,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 121,
     "name": "Murk",
-    "type": "Stealth",
+    "type": "Tank",
     "rarity": "Common",
     "power": 30,
     "defense": 31,
@@ -1740,7 +1740,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 122,
     "name": "Wren Okafor",
-    "type": "Healer",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 21,
     "defense": 39,
@@ -1754,7 +1754,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 123,
     "name": "Piston",
-    "type": "Brawler",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 37,
     "defense": 35,
@@ -1768,7 +1768,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 124,
     "name": "Drift",
-    "type": "Elemental",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 28,
     "defense": 32,
@@ -1782,7 +1782,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 125,
     "name": "Waspshot",
-    "type": "Gadgets",
+    "type": "Nature",
     "rarity": "Common",
     "power": 30,
     "defense": 33,
@@ -1796,7 +1796,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 126,
     "name": "Coldsnap",
-    "type": "Elemental",
+    "type": "Magic",
     "rarity": "Common",
     "power": 31,
     "defense": 33,
@@ -1810,7 +1810,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 127,
     "name": "Lumen",
-    "type": "Blaster",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 32,
     "defense": 29,
@@ -1824,7 +1824,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 128,
     "name": "Creep",
-    "type": "Stealth",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 31,
     "defense": 32,
@@ -1838,7 +1838,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 129,
     "name": "Harrow",
-    "type": "Alien",
+    "type": "Tech",
     "rarity": "Common",
     "power": 30,
     "defense": 31,
@@ -1852,7 +1852,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 130,
     "name": "Bash",
-    "type": "Brawler",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 36,
     "defense": 36,
@@ -1866,7 +1866,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 131,
     "name": "Reedwhisper",
-    "type": "Healer",
+    "type": "Tank",
     "rarity": "Common",
     "power": 22,
     "defense": 38,
@@ -1880,7 +1880,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 132,
     "name": "Kolt",
-    "type": "Speedster",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 28,
     "defense": 31,
@@ -1908,7 +1908,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 134,
     "name": "Gust",
-    "type": "Elemental",
+    "type": "Magic",
     "rarity": "Common",
     "power": 29,
     "defense": 30,
@@ -1922,7 +1922,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 135,
     "name": "Probability Master",
-    "type": "Brainiac",
+    "type": "Magic",
     "rarity": "Common",
     "power": 28,
     "defense": 30,
@@ -1937,7 +1937,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 136,
     "name": "Plume",
-    "type": "Flier",
+    "type": "Tank",
     "rarity": "Common",
     "power": 24,
     "defense": 28,
@@ -1951,7 +1951,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 137,
     "name": "Sketch",
-    "type": "Mystic",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 30,
     "defense": 29,
@@ -1966,7 +1966,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 138,
     "name": "Cobble",
-    "type": "Tank",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 29,
     "defense": 54,
@@ -1980,7 +1980,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 139,
     "name": "Singe",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 32,
     "defense": 28,
@@ -1994,7 +1994,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 140,
     "name": "Trapper",
-    "type": "Gadgets",
+    "type": "Magic",
     "rarity": "Common",
     "power": 28,
     "defense": 35,
@@ -2008,7 +2008,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 141,
     "name": "Clatter",
-    "type": "Alien",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 29,
     "defense": 30,
@@ -2022,7 +2022,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 142,
     "name": "Smudge",
-    "type": "Stealth",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 30,
     "defense": 31,
@@ -2036,7 +2036,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 143,
     "name": "Thorn",
-    "type": "Healer",
+    "type": "Magic",
     "rarity": "Common",
     "power": 24,
     "defense": 37,
@@ -2050,7 +2050,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 144,
     "name": "Amp",
-    "type": "Tech",
+    "type": "Tank",
     "rarity": "Common",
     "power": 31,
     "defense": 33,
@@ -2064,7 +2064,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 145,
     "name": "Bully",
-    "type": "Brawler",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 35,
     "defense": 35,
@@ -2079,7 +2079,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 146,
     "name": "Zipline",
-    "type": "Gadgets",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 27,
     "defense": 32,
@@ -2093,7 +2093,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 147,
     "name": "Silt",
-    "type": "Elemental",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 28,
     "defense": 33,
@@ -2107,7 +2107,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 148,
     "name": "Frostfoot",
-    "type": "Elemental",
+    "type": "Tech",
     "rarity": "Common",
     "power": 30,
     "defense": 32,
@@ -2121,7 +2121,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 149,
     "name": "Glint",
-    "type": "Blaster",
+    "type": "Nature",
     "rarity": "Common",
     "power": 31,
     "defense": 27,
@@ -2135,7 +2135,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 150,
     "name": "Burrow",
-    "type": "Elemental",
+    "type": "Nature",
     "rarity": "Common",
     "power": 29,
     "defense": 36,
@@ -2149,7 +2149,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 151,
     "name": "Natter",
-    "type": "Brainiac",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 27,
     "defense": 29,
@@ -2163,7 +2163,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 152,
     "name": "Dusk",
-    "type": "Stealth",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 30,
     "defense": 30,
@@ -2177,7 +2177,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 153,
     "name": "Wallop",
-    "type": "Brawler",
+    "type": "Tank",
     "rarity": "Common",
     "power": 37,
     "defense": 34,
@@ -2191,7 +2191,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 154,
     "name": "Haze",
-    "type": "Elemental",
+    "type": "Tech",
     "rarity": "Common",
     "power": 28,
     "defense": 31,
@@ -2205,7 +2205,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 155,
     "name": "Spool",
-    "type": "Gadgets",
+    "type": "Magic",
     "rarity": "Common",
     "power": 26,
     "defense": 34,
@@ -2219,7 +2219,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 156,
     "name": "Dazzle",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 30,
     "defense": 28,
@@ -2233,7 +2233,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 157,
     "name": "Perch",
-    "type": "Flier",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 25,
     "defense": 30,
@@ -2247,7 +2247,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 158,
     "name": "Grasp",
-    "type": "Brawler",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 34,
     "defense": 35,
@@ -2261,7 +2261,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 159,
     "name": "Crackle",
-    "type": "Blaster",
+    "type": "Tech",
     "rarity": "Common",
     "power": 32,
     "defense": 29,
@@ -2275,7 +2275,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 160,
     "name": "Wend",
-    "type": "Speedster",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 27,
     "defense": 30,
@@ -2289,7 +2289,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 161,
     "name": "Chip",
-    "type": "Tech",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 28,
     "defense": 34,
@@ -2303,7 +2303,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 162,
     "name": "Briar",
-    "type": "Healer",
+    "type": "Nature",
     "rarity": "Common",
     "power": 23,
     "defense": 38,
@@ -2317,7 +2317,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 163,
     "name": "Clunk",
-    "type": "Tank",
+    "type": "Magic",
     "rarity": "Common",
     "power": 30,
     "defense": 55,
@@ -2331,7 +2331,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 164,
     "name": "Swoop",
-    "type": "Flier",
+    "type": "Tech",
     "rarity": "Common",
     "power": 26,
     "defense": 29,
@@ -2345,7 +2345,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 165,
     "name": "Hex",
-    "type": "Mystic",
+    "type": "Tech",
     "rarity": "Common",
     "power": 29,
     "defense": 30,
@@ -2359,7 +2359,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 166,
     "name": "Mote",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 31,
     "defense": 28,
@@ -2373,7 +2373,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 167,
     "name": "Craw",
-    "type": "Brawler",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 34,
     "defense": 33,
@@ -2387,7 +2387,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 168,
     "name": "Rill",
-    "type": "Elemental",
+    "type": "Tank",
     "rarity": "Common",
     "power": 28,
     "defense": 33,
@@ -2401,7 +2401,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 169,
     "name": "Stitch",
-    "type": "Healer",
+    "type": "Tank",
     "rarity": "Common",
     "power": 22,
     "defense": 40,
@@ -2415,7 +2415,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 170,
     "name": "Tusk",
-    "type": "Tank",
+    "type": "Nature",
     "rarity": "Common",
     "power": 31,
     "defense": 56,
@@ -2429,7 +2429,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 171,
     "name": "Smoky",
-    "type": "Stealth",
+    "type": "Magic",
     "rarity": "Common",
     "power": 29,
     "defense": 31,
@@ -2443,7 +2443,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 172,
     "name": "Flint",
-    "type": "Brawler",
+    "type": "Magic",
     "rarity": "Common",
     "power": 35,
     "defense": 34,
@@ -2457,7 +2457,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 173,
     "name": "Bolt",
-    "type": "Speedster",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 28,
     "defense": 30,
@@ -2471,7 +2471,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 174,
     "name": "Wraith",
-    "type": "Stealth",
+    "type": "Tank",
     "rarity": "Common",
     "power": 31,
     "defense": 32,
@@ -2485,7 +2485,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 175,
     "name": "Pebblethrow",
-    "type": "Blaster",
+    "type": "Nature",
     "rarity": "Common",
     "power": 29,
     "defense": 29,
@@ -2499,7 +2499,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 176,
     "name": "Mend",
-    "type": "Healer",
+    "type": "Tank",
     "rarity": "Common",
     "power": 21,
     "defense": 41,
@@ -2513,7 +2513,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 177,
     "name": "Clink",
-    "type": "Tech",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 28,
     "defense": 35,
@@ -2527,7 +2527,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 178,
     "name": "Grim",
-    "type": "Alien",
+    "type": "Tech",
     "rarity": "Common",
     "power": 30,
     "defense": 30,
@@ -2541,7 +2541,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 179,
     "name": "Sable",
-    "type": "Stealth",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 30,
     "defense": 31,
@@ -2555,7 +2555,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 180,
     "name": "Flare",
-    "type": "Blaster",
+    "type": "Nature",
     "rarity": "Common",
     "power": 33,
     "defense": 27,
@@ -2569,7 +2569,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 181,
     "name": "Brisk",
-    "type": "Speedster",
+    "type": "Tank",
     "rarity": "Common",
     "power": 27,
     "defense": 30,
@@ -2583,7 +2583,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 182,
     "name": "Cob",
-    "type": "Tank",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 29,
     "defense": 54,
@@ -2597,7 +2597,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 183,
     "name": "Snap",
-    "type": "Brawler",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 34,
     "defense": 33,
@@ -2611,7 +2611,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 184,
     "name": "Fern",
-    "type": "Healer",
+    "type": "Magic",
     "rarity": "Common",
     "power": 22,
     "defense": 39,
@@ -2639,7 +2639,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 186,
     "name": "Latch",
-    "type": "Gadgets",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 26,
     "defense": 35,
@@ -2653,7 +2653,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 187,
     "name": "Morph",
-    "type": "Shapeshifter",
+    "type": "Tech",
     "rarity": "Common",
     "power": 28,
     "defense": 31,
@@ -2667,7 +2667,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 188,
     "name": "Zap",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 33,
     "defense": 28,
@@ -2681,7 +2681,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 189,
     "name": "Dip",
-    "type": "Stealth",
+    "type": "Magic",
     "rarity": "Common",
     "power": 29,
     "defense": 31,
@@ -2695,7 +2695,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 190,
     "name": "Canopy",
-    "type": "Flier",
+    "type": "Psychic",
     "rarity": "Common",
     "power": 25,
     "defense": 30,
@@ -2709,7 +2709,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 191,
     "name": "Watt",
-    "type": "Tech",
+    "type": "Blaster",
     "rarity": "Common",
     "power": 30,
     "defense": 34,
@@ -2723,7 +2723,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 192,
     "name": "Grub",
-    "type": "Healer",
+    "type": "Nature",
     "rarity": "Common",
     "power": 22,
     "defense": 38,
@@ -2737,7 +2737,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 193,
     "name": "Snare",
-    "type": "Gadgets",
+    "type": "Tank",
     "rarity": "Common",
     "power": 27,
     "defense": 34,
@@ -2751,7 +2751,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 194,
     "name": "Trickle",
-    "type": "Elemental",
+    "type": "Tank",
     "rarity": "Common",
     "power": 28,
     "defense": 32,
@@ -2765,7 +2765,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 195,
     "name": "Bristle",
-    "type": "Brawler",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 34,
     "defense": 34,
@@ -2779,7 +2779,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 196,
     "name": "Spook",
-    "type": "Mystic",
+    "type": "Tank",
     "rarity": "Common",
     "power": 29,
     "defense": 30,
@@ -2793,7 +2793,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 197,
     "name": "Clamp",
-    "type": "Tank",
+    "type": "Cosmic",
     "rarity": "Common",
     "power": 30,
     "defense": 56,
@@ -2808,7 +2808,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 198,
     "name": "Dash",
-    "type": "Speedster",
+    "type": "Nature",
     "rarity": "Common",
     "power": 28,
     "defense": 30,
@@ -2822,7 +2822,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 199,
     "name": "Smolder",
-    "type": "Blaster",
+    "type": "Shadow",
     "rarity": "Common",
     "power": 31,
     "defense": 28,
@@ -2836,7 +2836,7 @@ export const ALL_CARDS: Card[] = [
   {
     "id": 200,
     "name": "Ember",
-    "type": "Blaster",
+    "type": "Speedster",
     "rarity": "Common",
     "power": 32,
     "defense": 29,

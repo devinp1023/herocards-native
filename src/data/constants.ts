@@ -32,23 +32,17 @@ export const XP_AWARDS: Record<string, number> = {
   pack:100, rare_card:25, daily:50, trade:10,
 };
 
-// ── Type colours ────────────────────────────────────────────────────
+// ── Type colours (v2 — 9 types) ─────────────────────────────────────
 export const TYPE_COLORS: Record<string, string> = {
-  Speedster:   '#ffe600',
-  Brainiac:    '#ff007f',
-  Blaster:     '#ff3300',
-  Tank:        '#546e7a',
-  Healer:      '#00e676',
-  Stealth:     '#311b92',
-  Elemental:   '#00b0ff',
-  Tech:        '#00e5ff',
-  Mystic:      '#ea80fc',
-  Brawler:     '#ff6d00',
-  Flier:       '#2979ff',
-  Shapeshifter:'#76ff03',
-  Cosmic:      '#ffd740',
-  Alien:       '#69f0ae',
-  Gadgets:     '#ff4081',
+  Blaster:   '#FF5722',  // deep orange
+  Magic:     '#9C27B0',  // purple
+  Psychic:   '#E91E63',  // pink
+  Shadow:    '#546E7A',  // blue-grey
+  Tank:      '#78909C',  // steel grey
+  Speedster: '#FFC107',  // amber
+  Nature:    '#4CAF50',  // green
+  Tech:      '#00BCD4',  // cyan
+  Cosmic:    '#5C35CC',  // deep violet (rare)
 };
 
 // ── Battle deck limits ──────────────────────────────────────────────
@@ -100,7 +94,7 @@ export const AI_DECK_COMP: Record<number, Record<string, number>> = {
   2: { Common:6,  Uncommon:4,  Rare:0, Epic:0, Legendary:0 },
   3: { Common:3,  Uncommon:4,  Rare:3, Epic:0, Legendary:0 },
   4: { Common:2,  Uncommon:3,  Rare:3, Epic:2, Legendary:0 },
-  5: { Common:1,  Uncommon:1,  Rare:2, Epic:3, Legendary:3 },
+  5: { Common:0,  Uncommon:1,  Rare:3, Epic:4, Legendary:2 },
 };
 
 // ── Opponent tier info (symbols instead of emoji for Hermes) ─────────

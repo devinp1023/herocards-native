@@ -9,21 +9,15 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
 
 const TYPE_ICONS: Record<string, string> = {
-  Speedster:    'lightning-bolt',
-  Brainiac:     'brain',
-  Blaster:      'pistol',
-  Tank:         'shield-half-full',
-  Healer:       'heart-pulse',
-  Stealth:      'eye-off',
-  Elemental:    'leaf',
-  Tech:         'robot',
-  Mystic:       'star-four-points',
-  Brawler:      'boxing-glove',
-  Flier:        'bird',
-  Shapeshifter: 'swap-horizontal',
-  Cosmic:       'creation',
-  Alien:        'alien',
-  Gadgets:      'toolbox',
+  Blaster:   'pistol',
+  Magic:     'star-four-points',
+  Psychic:   'brain',
+  Shadow:    'eye-off',
+  Tank:      'shield-half-full',
+  Speedster: 'lightning-bolt',
+  Nature:    'leaf',
+  Tech:      'robot',
+  Cosmic:    'creation',
 };
 import { RC, TYPE_COLORS } from '../data/constants';
 import { ABILITY_DESC } from '../data/abilities';

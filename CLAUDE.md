@@ -7,7 +7,7 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 
 ## Key References
 - **Tech spec**: `PRDs/HeroCards_ReactNative_TechSpec.docx` — original session plan and architecture decisions
-- **Battle PRD**: `PRDs/HeroCards_BattleSystem_PRD_v1.3.docx` — battle engine rules, abilities, AI logic
+- **Battle PRD**: `PRDs/HeroCards_BattleSystem_v2_PRD.md` — battle engine rules, abilities, AI logic (v2)
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -24,7 +24,11 @@ All 14 build sessions complete. The app has:
 - Firestore as live card data source — falls back to `cards.ts`
 - CMS for managing card data and images — `Re-seed All Cards` to push to Firestore
 
-**Next milestone: App Store submission (Session 16)**
+**Current milestone: Battle System v2 rewrite**
+- 7-sprint rewrite of the battle engine (see `PRDs/HeroCards_BattleSystem_v2_PRD.md`)
+- New type system (9 types), stamina system, Amp mechanic, 50 abilities, Legendary Lock
+
+**Next milestone after v2: App Store submission**
 - Switch Expo Go → EAS custom build
 - App icons, splash screen, bundle ID, signing
 - App Store Connect listing, TestFlight, submission
@@ -53,7 +57,7 @@ All quests and achievements UI lives inside **ProfileScreen** — there is no se
 | Script | What it does |
 |--------|-------------|
 | `npm run sync-cards` | Pulls all 200 cards from Firestore → regenerates `src/data/cards.ts` |
-| `node scripts/assign-abilities.js` | One-time script — patches `cards.ts` with ability assignments (already run) |
+| `node scripts/assign-v2-types-stamina.js` | One-time v2 script — randomly assigns battle type, stamina, and ability to all 200 cards (run once during Sprint 1/4a) |
 
 ## Haptics
 `expo-haptics` is used in `PackOpeningScreen` for card reveals. No audio — sound effects were not implemented.
@@ -83,7 +87,7 @@ herocards-native/
 └── src/
     ├── battle/
     │   ├── aiDeck.ts                ← buildAiDeck() — randomised AI deck per tier
-    │   └── battleEngine.ts          ← Pure battle logic (HP, damage, free-hit, type multipliers, all 25 abilities)
+    │   └── battleEngine.ts          ← Pure battle logic (HP, damage, stamina, type multipliers, Amp, all 50 abilities)
     ├── components/
     │   ├── CardWrapper.tsx          ← Scale container for HeroCard/MiniCard
     │   ├── FaceDownCard.tsx         ← Skia face-down card
@@ -139,13 +143,16 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - Game state saved to Firestore `users/{uid}` — debounced 500ms, also saves on unmount
 
 ### Card Data
-- 200 cards — `id, name, type, rarity, power, defense, speed, emoji, desc, pack, alliance, imageUrl?, ability?`
+- 200 cards — `id, name, type, rarity, power, defense, speed, stamina, emoji, desc, pack, alliance, imageUrl?, ability?`
+- `type` = one of 9 battle types (Blaster, Magic, Psychic, Shadow, Tank, Speedster, Nature, Tech, Cosmic) — NOT the old 15-subtype system
+- `stamina` = fixed stat per card, assigned within type range (Tank 12–16 … Speedster 6–9)
+- `ability` = one of 50 v2 abilities (10 per rarity tier), randomly assigned per card
 - Firestore is the live source; `src/data/cards.ts` is the offline fallback
 - To update a card: edit in CMS → click Save — saves that card individually to Firestore → app picks up on next launch
 - "Re-seed All Cards" button: overwrites ALL 200 Firestore cards with the `DEFAULT_CARDS` array embedded in the CMS HTML — use when bulk data (e.g. abilities) was changed in code and needs to be pushed to Firestore
 - `DEFAULT_CARDS` in the CMS HTML is a snapshot — it goes stale when cards are edited individually in the CMS. To bring it back in sync: run `npm run sync-cards` (from `herocards-native`) to pull Firestore → `cards.ts`, then rebuild and redeploy the CMS so `DEFAULT_CARDS` reflects the latest data
 - 17 cards have `imageUrl` (Firebase Storage `card-images/card_XXX.png`)
-- All 200 cards have `ability` assigned (25 abilities across 5 rarity tiers)
+- All 200 cards have `ability` assigned (50 v2 abilities across 5 rarity tiers)
 
 ### Fonts
 - Loaded in `App.tsx` via `useFonts()` for native Text components
@@ -163,17 +170,21 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - `MiniCard` (pure RN, no Skia) used in collection grid + battle hand for performance
 
 ## Battle System
-See `PRDs/HeroCards_BattleSystem_PRD_v1.3.docx` for full rules.
+See `PRDs/HeroCards_BattleSystem_v2_PRD.md` for full rules.
 
 Key rules:
 - 10-card decks, rarity limits: max 1 Legendary / 2 Epic / 4 Rare / 10 Uncommon / 10 Common
-- HP = `100 + (defense × 0.5)`, Damage = `max(1, round(power × typeMultiplier − defense × 0.5))`
-- Free-hit rule: attack vs non-attack → attacker gets free unreciprocated hit; both non-attack → no combat
-- AI proactively swaps when active HP < 35% and a better card exists in hand
-- 5 combat types (Melee/Agility/Energy/Intelligence/Magic) mapped from 15 card subtypes
-- Type advantage: ×1.5 | Type disadvantage: ×0.75 | Same type: ×0.75 | Neutral: ×1.0
+- HP = `100 + (defense × 0.5)`, Damage = `max(5, round(power × 0.4 × typeMultiplier × staminaModifier − defense × 0.15))`
+- Attack types: Light (cost 1, ×0.8) / Medium (cost 3, ×1.0) / Heavy (cost 5, ×1.5) / Rest (no attack, +5 stamina)
+- Heavy attacker always goes second; if both choose Heavy, normal speed check applies
+- Stamina is per-card, independent — cards retain stamina when swapped; hand cards regen +1/round
+- Legendary Lock: must defeat 3 opponent cards before playing a Legendary; no Legendary as opening card
+- 9 battle types (Blaster, Magic, Psychic, Shadow, Tank, Speedster, Nature, Tech, Cosmic) — main cycle + Nature↔Tech rival pair + Cosmic
+- Type advantage: ×2.0 | Resisted: ×0.5 | Neutral: ×1.0
+- Amp meter (0–100): both sides build independently, shared effect pool of 6 effects, trigger at 100 or spend 50 to switch
 - 5 AI tiers: Rookie (1), Scrapper (2), Fighter (3), Elite (4), Champion (5)
-- All 25 abilities fully implemented in `battleEngine.ts`
+- All 50 v2 abilities implemented in `battleEngine.ts`
+- AI follows the same rules as the player — no free draws, subject to Legendary Lock, manages stamina and Amp
 
 ### Battle UI Architecture
 - `useBattle` uses **DisplaySnapshot** pattern — ref state snapshotted into React state atomically on each `refresh()` call

@@ -57,31 +57,30 @@ export type BattleEvent =
   | { type: 'PLAYER_SWAP';   card: string; prev: string }
   | { type: 'BATTLE_END';     winner: 'player' | 'ai'; reason?: string };
 
-// ── 1. Type system ────────────────────────────────────────────────────────────
+// ── 1. Type system (v2 — 9 standalone types) ─────────────────────────────────
+//
+// Main cycle: Blaster → Magic → Psychic → Shadow → Tank → Speedster → Blaster
+//   Each type is ×2.0 against the next and ×0.5 against the previous.
+// Rival pair: Nature ↔ Tech (both ×2.0 against each other).
+// Cosmic: resists Blaster, Shadow, Nature, Tech (×0.5 incoming);
+//         neutral vs Magic, Psychic, Tank, Speedster;
+//         ×2.0 only vs other Cosmic.
+// All unlisted matchups are ×1.0 (neutral).
 
-const BATTLE_TYPE_MAP: Record<string, string> = {
-  Brawler:'Melee',    Tank:'Melee',          Alien:'Melee',
-  Speedster:'Agility',Flier:'Agility',       Stealth:'Agility',
-  Blaster:'Energy',   Elemental:'Energy',    Cosmic:'Energy',
-  Tech:'Intelligence',Gadgets:'Intelligence',Brainiac:'Intelligence',
-  Healer:'Magic',     Mystic:'Magic',        Shapeshifter:'Magic',
+const TYPE_CHART: Record<string, Record<string, number>> = {
+  Blaster:   { Magic:2.0,     Speedster:0.5, Cosmic:0.5 },
+  Magic:     { Psychic:2.0,   Blaster:0.5 },
+  Psychic:   { Shadow:2.0,    Magic:0.5 },
+  Shadow:    { Tank:2.0,      Psychic:0.5,   Cosmic:0.5 },
+  Tank:      { Speedster:2.0, Shadow:0.5 },
+  Speedster: { Blaster:2.0,   Tank:0.5 },
+  Nature:    { Tech:2.0,      Cosmic:0.5 },
+  Tech:      { Nature:2.0,    Cosmic:0.5 },
+  Cosmic:    { Cosmic:2.0 },
 };
 
-const BATTLE_CYCLE = ['Melee', 'Agility', 'Energy', 'Intelligence', 'Magic'];
-
-export function battleCategory(type: string): string | null {
-  return BATTLE_TYPE_MAP[type] ?? null;
-}
-
 export function getTypeMultiplier(atkType: string, defType: string): number {
-  const a = BATTLE_CYCLE.indexOf(battleCategory(atkType) ?? '');
-  const d = BATTLE_CYCLE.indexOf(battleCategory(defType) ?? '');
-  if (a < 0 || d < 0) return 1.0;
-  const next = (a + 1) % 5;
-  const prev = (a + 4) % 5;
-  if (d === next) return 1.5;           // strong against
-  if (d === prev || d === a) return 0.75; // weak against or same
-  return 1.0;                            // neutral
+  return TYPE_CHART[atkType]?.[defType] ?? 1.0;
 }
 
 // ── 2. HP & effective stats ───────────────────────────────────────────────────
@@ -132,8 +131,7 @@ function initBattleCard(card: Card, fullDeck: Card[]): BattleCard {
     _reboundBonus:     false,
   };
   if (bc.ability === 'Pack Tactics' && fullDeck) {
-    const ownCat = battleCategory(bc.type);
-    bc._packTactics = fullDeck.some(c => c.id !== bc.id && battleCategory(c.type) === ownCat);
+    bc._packTactics = fullDeck.some(c => c.id !== bc.id && c.type === bc.type);
   }
   return bc;
 }
@@ -197,9 +195,9 @@ export function drawCard(side: SideState): boolean {
 export function aiSelectCard(hand: BattleCard[], opponentActiveType: string): BattleCard | null {
   if (!hand.length) return null;
   const totalStat = (c: BattleCard) => c.power + c.defense + c.speed;
-  const adv = hand.filter(c => getTypeMultiplier(c.type, opponentActiveType) === 1.5);
+  const adv = hand.filter(c => getTypeMultiplier(c.type, opponentActiveType) === 2.0);
   if (adv.length) return adv.reduce((b, c) => totalStat(c) > totalStat(b) ? c : b);
-  const notWeak = hand.filter(c => getTypeMultiplier(c.type, opponentActiveType) !== 0.75);
+  const notWeak = hand.filter(c => getTypeMultiplier(c.type, opponentActiveType) !== 0.5);
   if (notWeak.length) return notWeak.reduce((b, c) => totalStat(c) > totalStat(b) ? c : b);
   return hand.reduce((b, c) => totalStat(c) > totalStat(b) ? c : b);
 }
@@ -210,29 +208,26 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   let mult = getTypeMultiplier(atk.type, def.type);
 
   // Adaptable (defender)
-  if (def.ability === 'Adaptable' && !def._adaptableUsed && mult === 1.5) {
+  if (def.ability === 'Adaptable' && !def._adaptableUsed && mult === 2.0) {
     def._adaptableUsed = true;
     mult = 1.0;
     log.push({ type: 'ABILITY', ability: 'Adaptable', card: def.name, effect: 'Type advantage reduced to neutral' });
   }
   // Unstoppable (attacker)
-  if (atk.ability === 'Unstoppable' && atk._unstoppableLeft > 0 && mult === 0.75) {
+  if (atk.ability === 'Unstoppable' && atk._unstoppableLeft > 0 && mult === 0.5) {
     atk._unstoppableLeft--;
     mult = 1.0;
     log.push({ type: 'ABILITY', ability: 'Unstoppable', card: atk.name, effect: `Type disadvantage ignored (${atk._unstoppableLeft} left)` });
   }
-  // Overwhelm (attacker)
-  if (atk.ability === 'Overwhelm' && mult === 1.5) {
-    mult = 2.0;
-    log.push({ type: 'ABILITY', ability: 'Overwhelm', card: atk.name, effect: 'Type advantage ×2.0' });
-  }
+  // Overwhelm (attacker) — already at ×2.0 in v2; ability no longer applies
+  // (Overwhelm is a v1 ability; Sprint 4 will replace it)
 
   let atkPow = effPower(atk);
   atkPow = Math.round(atkPow * atkSide.attackMult);
   if (atk._dominateDebuff && !isImmune(atk)) atkPow = Math.round(atkPow * 0.75);
 
-  const defVal = effDefense(def) * 0.5;
-  let dmg = Math.max(1, Math.round(atkPow * mult - defVal));
+  // v2 damage formula: max(5, round(power × 0.4 × typeMultiplier − defense × 0.15))
+  let dmg = Math.max(5, Math.round(atkPow * 0.4 * mult - effDefense(def) * 0.15));
 
   if (atk.ability === 'Adrenaline'  && atk.hp < atk.maxHp * 0.3)   dmg = Math.ceil(dmg * 1.2);
   if (atk.ability === 'Momentum'    && atk._momentumStacks > 0)      dmg = Math.ceil(dmg * (1 + atk._momentumStacks * 0.1));
