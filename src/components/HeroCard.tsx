@@ -1,13 +1,9 @@
 // HeroCard — fixed 300×433px Skia canvas card.
+// Redesigned layout: type icon + name | HP badge | image | ability | stat pills.
 // Always rendered at full size; CardWrapper scales it externally.
-//
-// Session 3 additions:
-//   - Rarity glow: animated pulsing border (Reanimated opacity on Skia Group)
-//   - Shine sweep: LinearGradient animated left→right (Reanimated + Skia)
-//   - Tilt on touch: GestureDetector Pan → 3D transform on Animated.View
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Image as RNImage, View } from 'react-native';
+import { StyleSheet, Image as RNImage, View, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -28,39 +24,53 @@ import {
   RadialGradient,
   vec,
   Circle,
-  Line,
   Text as SkText,
   Paint,
-  Rect,
+  Path,
+  Skia,
 } from '@shopify/react-native-skia';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
 import { RC, TYPE_COLORS } from '../data/constants';
+import { ABILITY_DESC } from '../data/abilities';
 import { useFontContext } from '../context/FontContext';
 import { CARD_W, CARD_H } from './CardWrapper';
 
 // ── Layout constants (all in canvas units) ──────────────────────────────────
 const PAD       = 10;
 const INNER_W   = CARD_W - PAD * 2;   // 280
-const HEADER_H  = 60;
-const IMG_Y     = HEADER_H + PAD;     // 70
-const IMG_H     = 180;
-const IMG_BOTTOM = IMG_Y + IMG_H;     // 250
-const STATS_Y   = IMG_BOTTOM + 6;     // 256
-const STATS_H   = 136;
-const STATS_BOTTOM = STATS_Y + STATS_H; // 392
-const FOOTER_Y  = STATS_BOTTOM + 4;   // 396
-const STAT_LABEL_X = PAD + 8;
-const STAT_BAR_X   = 58;
-const STAT_BAR_W   = 192;
-const STAT_BAR_H   = 7;
-const STAT_ROW_H   = 30;
-const STAT_START_Y = STATS_Y + 18;
 const CORNER_R  = 14;
-const BADGE_CX  = CARD_W - PAD - 14;
-const BADGE_CY  = 28;
-const BADGE_R   = 14;
 
-// Shimmer colours per rarity (matching web version)
+// Header
+const TYPE_R    = 15;
+const TYPE_CX   = PAD + TYPE_R + 2;    // 27
+const TYPE_CY   = 24;
+const NAME_X    = TYPE_CX + TYPE_R + 8; // 50
+const NAME_Y    = 8;
+
+// HP badge (top-right pill)
+const HP_W      = 68;
+const HP_H      = 28;
+const HP_R      = 14;
+const HP_X      = CARD_W - PAD - HP_W;  // 222
+const HP_Y      = 10;
+
+// Stat pills (anchored to bottom)
+const PILL_H    = 40;
+const PILL_Y    = CARD_H - 12 - PILL_H; // 381
+const PILL_W    = 82;
+const PILL_GAP  = (INNER_W - 3 * PILL_W) / 2; // 17
+const PILL_R    = 20;
+
+// Ability bar (above pills)
+const ABL_H     = 54;
+const ABL_Y     = PILL_Y - 4 - ABL_H;   // 343
+
+// Image window (between header and ability)
+const IMG_Y     = 50;
+const IMG_H     = ABL_Y - 4 - IMG_Y;    // 289
+
+// Shimmer colours per rarity
 const SHIMMER_COLOR: Record<string, string> = {
   Legendary: 'rgba(255,200,50,0.45)',
   Epic:      'rgba(200,100,255,0.45)',
@@ -70,10 +80,29 @@ const SHIMMER_DURATION: Record<string, number> = {
   Legendary: 1800, Epic: 2200, Rare: 3000,
 };
 
+// Pre-built shield placeholder path (centred in image window)
+const SHIELD_CX = CARD_W / 2;
+const SHIELD_CY = IMG_Y + IMG_H / 2;
+function buildShield(cx: number, cy: number, r: number) {
+  const p = Skia.Path.Make();
+  p.moveTo(cx, cy - r);
+  p.lineTo(cx + r, cy - r * 0.45);
+  p.lineTo(cx + r * 0.85, cy + r * 0.35);
+  p.lineTo(cx, cy + r);
+  p.lineTo(cx - r * 0.85, cy + r * 0.35);
+  p.lineTo(cx - r, cy - r * 0.45);
+  p.close();
+  return p;
+}
+const shieldPath = buildShield(SHIELD_CX, SHIELD_CY, 40);
+
+// Stat pill icon config
+const PILL_ICONS = ['sword', 'shield', 'run-fast'] as const;
+
 
 interface HeroCardProps {
   card: Card;
-  showShine?: boolean;   // shimmer sweep — default false (off in collection grid)
+  showShine?: boolean;   // shimmer sweep — default false
   enableTilt?: boolean;  // 3D tilt on touch — default false
 }
 
@@ -85,28 +114,24 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
   const rarityColor = cfg.color;
   const borderColor = cfg.border;
 
-  const totalPwr = card.power + card.defense + card.speed;
+  const hp = Math.round(100 + card.defense * 0.5);
+  const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
 
-  const statRows = [
-    { label: 'ATK', value: card.power,   color: '#ff6b40' },
-    { label: 'DEF', value: card.defense, color: '#4db8ff' },
-    { label: 'SPD', value: card.speed,   color: '#ffe040' },
+  const statPills = [
+    { label: 'A', value: card.power,   bg: '#e8445a', bgDark: '#b8283a' },
+    { label: 'D', value: card.defense, bg: '#3aadad', bgDark: '#2a8888' },
+    { label: 'S', value: card.speed,   bg: '#4caf6a', bgDark: '#3a8a52' },
   ];
 
-  const gradColors = [
-    typeColor + 'b0', typeColor + '70', typeColor + '28', '#1a1a2880', '#0a0a1400',
-  ];
+  const gradColors = [typeColor + '40', typeColor + '18', '#0f152800'];
 
   // ── Shimmer sweep ─────────────────────────────────────────────────────────
-  // A diagonal gradient strip sweeps left→right across Rare+ cards.
   const shimmerX = useSharedValue(-CARD_W * 0.6);
   const hasShimmer = showShine && !!SHIMMER_COLOR[card.rarity];
 
   useEffect(() => {
     if (!hasShimmer) { cancelAnimation(shimmerX); return; }
     const sweepMs  = SHIMMER_DURATION[card.rarity] ?? 3000;
-    // Pause off-screen right before snapping back — makes the loop feel
-    // like a deliberate flash rather than a hard restart.
     const pauseMs  = sweepMs * 0.6;
     shimmerX.value = -CARD_W * 0.6;
     shimmerX.value = withRepeat(
@@ -120,7 +145,6 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
     return () => cancelAnimation(shimmerX);
   }, [hasShimmer, card.rarity]);
 
-  // Bridge Reanimated value → plain {x,y} objects (vec() is not worklet-safe)
   const shimmerStart = useDerivedValue(() => ({ x: shimmerX.value - 90, y: 0 }));
   const shimmerEnd   = useDerivedValue(() => ({ x: shimmerX.value + 90, y: CARD_H }));
 
@@ -129,9 +153,9 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
   const rotateY = useSharedValue(0);
 
   const panGesture = Gesture.Pan()
-    .minDistance(0)          // start immediately on touch, no drag threshold
+    .minDistance(0)
     .onUpdate((e) => {
-      rotateY.value = ((e.x / CARD_W) - 0.5) * 22;   // −11° … +11°
+      rotateY.value = ((e.x / CARD_W) - 0.5) * 22;
       rotateX.value = -((e.y / CARD_H) - 0.5) * 22;
     })
     .onFinalize(() => {
@@ -150,117 +174,69 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
   // ── Render ────────────────────────────────────────────────────────────────
   const card3d = (
     <Animated.View style={enableTilt ? tiltStyle : undefined}>
-      {/* pointerEvents="none" → Canvas doesn't swallow touches; parent TouchableOpacity/GestureDetector receives them */}
       <Canvas style={{ width: CARD_W, height: CARD_H }} pointerEvents="none">
 
         {/* 1. Dark base */}
-        <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R} color="#0a0a14" />
+        <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}
+          color="#0f1528" />
 
         {/* 2. Type colour gradient wash */}
         <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
           <LinearGradient
-            start={vec(CARD_W / 2, 0)} end={vec(CARD_W / 2, CARD_H)}
-            colors={gradColors} positions={[0, 0.25, 0.55, 0.80, 1.0]}
+            start={vec(CARD_W / 2, 0)}
+            end={vec(CARD_W / 2, CARD_H * 0.6)}
+            colors={gradColors}
           />
         </RoundedRect>
 
-        {/* 3. Static rarity border */}
-        <RoundedRect x={1} y={1} width={CARD_W - 2} height={CARD_H - 2} r={CORNER_R - 1}>
+        {/* 3. Rarity border */}
+        <RoundedRect x={2} y={2} width={CARD_W - 4} height={CARD_H - 4} r={CORNER_R - 1}>
+          <Paint style="stroke" strokeWidth={3} color={borderColor} />
+        </RoundedRect>
+
+        {/* 4. Type icon circle */}
+        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R} color={typeColor + '25'} />
+        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R}>
+          <Paint style="stroke" strokeWidth={1.5} color={typeColor} />
+        </Circle>
+        {fonts.fontCardTitle && (
+          <SkText
+            x={TYPE_CX - 4.5} y={TYPE_CY + 5}
+            text={card.type[0]}
+            font={fonts.fontCardTitle} color={typeColor}
+          />
+        )}
+
+        {/* 5. HP badge pill — background rendered in RN overlay below */}
+
+        {/* 6. Image window */}
+        <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={8}
+          color="#000000" />
+        {!card.imageUrl && (
+          <>
+            <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={8}>
+              <RadialGradient
+                c={vec(SHIELD_CX, SHIELD_CY)} r={IMG_H * 0.45}
+                colors={[typeColor + '30', typeColor + '08', '#00000000']}
+              />
+            </RoundedRect>
+            <Path path={shieldPath} color={typeColor + '40'} />
+            <Path path={shieldPath}>
+              <Paint style="stroke" strokeWidth={2} color={typeColor + '80'} />
+            </Path>
+          </>
+        )}
+        <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={8}>
           <Paint style="stroke" strokeWidth={2.5} color={borderColor} />
         </RoundedRect>
 
-        {/* 4. Card number */}
-        {fonts.fontNumber && (
-          <SkText x={PAD + 2} y={18}
-            text={`#${String(card.id).padStart(3, '0')}`}
-            font={fonts.fontNumber} color={rarityColor + 'aa'} />
-        )}
+        {/* 7. Ability bar background */}
+        <RoundedRect x={PAD} y={ABL_Y} width={INNER_W} height={ABL_H} r={6}
+          color="rgba(0,0,0,0.50)" />
 
-        {/* 5. Card name */}
-        {fonts.fontName && (
-          <SkText x={PAD + 2} y={44}
-            text={card.name.toUpperCase()}
-            font={fonts.fontName} color="#ffffff" />
-        )}
+        {/* 8. Stat pills — backgrounds rendered in RN overlay below */}
 
-        {/* 6. Type badge */}
-        <Circle cx={BADGE_CX} cy={BADGE_CY} r={BADGE_R} color={typeColor + '30'} />
-        <Circle cx={BADGE_CX} cy={BADGE_CY} r={BADGE_R}>
-          <Paint style="stroke" strokeWidth={1.5} color={typeColor} />
-        </Circle>
-
-        {/* 7. Image window background (shows while loading or for cards without imageUrl) */}
-        <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6} color="#000000" />
-        {!card.imageUrl && (
-          <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6}>
-            <RadialGradient
-              c={vec(CARD_W / 2, IMG_Y + IMG_H / 2)} r={IMG_H * 0.65}
-              colors={[typeColor + '55', typeColor + '18', '#00000000']}
-            />
-          </RoundedRect>
-        )}
-        {!card.imageUrl && (
-          <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={6}>
-            <Paint style="stroke" strokeWidth={2} color={rarityColor + 'cc'} />
-          </RoundedRect>
-        )}
-
-        {/* 8. Stats section */}
-        <RoundedRect x={PAD} y={STATS_Y} width={INNER_W} height={STATS_H} r={6} color="rgba(0,0,0,0.65)" />
-        <RoundedRect x={PAD} y={STATS_Y} width={INNER_W} height={STATS_H} r={6}>
-          <Paint style="stroke" strokeWidth={1} color="rgba(255,255,255,0.18)" />
-        </RoundedRect>
-        <Rect x={PAD + 1} y={STATS_Y} width={INNER_W - 2} height={2} color={rarityColor + '66'} />
-
-        {/* 9. Stat rows */}
-        {statRows.map(({ label, value, color }, i) => {
-          const rowY = STAT_START_Y + i * STAT_ROW_H;
-          const barFillW = Math.round((value / 100) * STAT_BAR_W);
-          return (
-            <React.Fragment key={label}>
-              {fonts.fontStatLabel && (
-                <SkText x={STAT_LABEL_X} y={rowY} text={label} font={fonts.fontStatLabel} color={color} />
-              )}
-              <RoundedRect x={STAT_BAR_X} y={rowY - STAT_BAR_H - 1} width={STAT_BAR_W} height={STAT_BAR_H} r={2} color="rgba(0,0,0,0.5)" />
-              {barFillW > 0 && (
-                <RoundedRect x={STAT_BAR_X} y={rowY - STAT_BAR_H - 1} width={barFillW} height={STAT_BAR_H} r={2}>
-                  <LinearGradient start={vec(STAT_BAR_X, 0)} end={vec(STAT_BAR_X + STAT_BAR_W, 0)} colors={[color + '88', color]} />
-                </RoundedRect>
-              )}
-              {fonts.fontStatValue && (
-                <SkText x={STAT_VAL_X - 22} y={rowY} text={String(value)} font={fonts.fontStatValue} color="#ffffff" />
-              )}
-            </React.Fragment>
-          );
-        })}
-
-        {/* 10. Divider */}
-        <Line
-          p1={vec(PAD + 8, STAT_START_Y + 3 * STAT_ROW_H - 8)}
-          p2={vec(CARD_W - PAD - 8, STAT_START_Y + 3 * STAT_ROW_H - 8)}
-          color="rgba(255,255,255,0.10)" strokeWidth={1}
-        />
-
-        {/* 11. Total power */}
-        {(() => {
-          const divY = STAT_START_Y + 3 * STAT_ROW_H;
-          return (<>
-            {fonts.fontStatLabel && (
-              <SkText x={STAT_LABEL_X} y={divY + 14} text="TOTAL PWR" font={fonts.fontStatLabel} color={rarityColor + '88'} />
-            )}
-            {fonts.fontTotal && (
-              <SkText x={CARD_W - PAD - 48} y={divY + 16} text={String(totalPwr)} font={fonts.fontTotal} color={rarityColor} />
-            )}
-          </>);
-        })()}
-
-        {/* 12. Footer */}
-        {fonts.fontSmall && (<>
-          <SkText x={PAD + 2} y={FOOTER_Y + 14} text={card.alliance.toUpperCase()} font={fonts.fontSmall} color={rarityColor + 'aa'} />
-          <SkText x={CARD_W - PAD - 90} y={FOOTER_Y + 14} text={card.type.toUpperCase()} font={fonts.fontSmall} color={typeColor + 'cc'} />
-        </>)}
-
-        {/* 13. Shimmer sweep (Rare+ only, when showShine=true) */}
+        {/* 9. Shimmer sweep (Rare+ only, when showShine=true) */}
         {hasShimmer && (
           <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
             <LinearGradient
@@ -273,31 +249,57 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
 
       </Canvas>
 
-      {/* RN Image overlay — Skia's Image component can't render JSI host objects via
-          the static PictureRecorder path in Expo Go. RN Image renders remote URLs
-          natively and is positioned to match the image window coordinates exactly. */}
+      {/* ── RN overlays ────────────────────────────────────────────────────── */}
+
+      {/* Card image */}
       {card.imageUrl && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: PAD,
-            top: IMG_Y,
-            width: INNER_W,
-            height: IMG_H,
-            borderRadius: 6,
-            overflow: 'hidden',
-            borderWidth: 2,
-            borderColor: rarityColor + 'cc',
-          }}
-        >
+        <View pointerEvents="none"
+          style={[styles.imageOverlay, { borderColor }]}>
           <RNImage
             source={{ uri: card.imageUrl }}
-            style={{ width: INNER_W, height: IMG_H }}
+            style={styles.image}
             resizeMode="cover"
           />
         </View>
       )}
+
+      {/* Card name + subtitle */}
+      <View pointerEvents="none" style={styles.headerOverlay}>
+        <Text style={styles.cardName} numberOfLines={1}>{card.name}</Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')} {'\u2022'} {card.rarity.toUpperCase()}
+        </Text>
+      </View>
+
+      {/* HP badge icon + value */}
+      <View pointerEvents="none" style={styles.hpOverlay}>
+        <View style={styles.hpIconWrap}>
+          <MaterialCommunityIcons name="heart" size={12} color="#7c3aed" />
+        </View>
+        <Text style={styles.hpText}>{hp}</Text>
+      </View>
+
+      {/* Stat pill icons + values (backgrounds here too) */}
+      <View pointerEvents="none" style={styles.pillOverlay}>
+        {statPills.map(({ value, bg }, i) => (
+          <View key={i} style={[styles.pillContent, { backgroundColor: bg }]}>
+            <View style={styles.pillIconWrap}>
+              <MaterialCommunityIcons name={PILL_ICONS[i]} size={20} color="#7c3aed" />
+            </View>
+            <Text style={styles.pillValue}>{value}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Ability text */}
+      {abilityDesc && (
+        <View pointerEvents="none" style={styles.abilityOverlay}>
+          <Text style={styles.abilityText} numberOfLines={2}>
+            {abilityDesc}
+          </Text>
+        </View>
+      )}
+
     </Animated.View>
   );
 
@@ -310,7 +312,116 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
   );
 }
 
-// STAT_VAL_X used in stat rows (right-aligned)
-const STAT_VAL_X = CARD_W - PAD - 6;
-
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  imageOverlay: {
+    position: 'absolute',
+    left: PAD,
+    top: IMG_Y,
+    width: INNER_W,
+    height: IMG_H,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2.5,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  headerOverlay: {
+    position: 'absolute',
+    left: NAME_X,
+    top: NAME_Y,
+    width: HP_X - NAME_X - 4,
+    height: 38,
+    justifyContent: 'center',
+  },
+  cardName: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: 14,
+    color: '#ffffff',
+  },
+  subtitle: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 10,
+    color: '#ffffff',
+    marginTop: 1,
+  },
+  hpOverlay: {
+    position: 'absolute',
+    left: HP_X,
+    top: HP_Y,
+    width: HP_W,
+    height: HP_H,
+    borderRadius: HP_R,
+    backgroundColor: '#7c3aed',
+    borderWidth: 2,
+    borderColor: '#ffffffcc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  hpIconWrap: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#ffffffcc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hpText: {
+    fontFamily: 'Orbitron_900Black',
+    fontSize: 14,
+    color: '#ffffff',
+  },
+  pillOverlay: {
+    position: 'absolute',
+    left: PAD,
+    top: PILL_Y,
+    width: INNER_W,
+    height: PILL_H,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  pillContent: {
+    width: PILL_W,
+    height: PILL_H,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#ffffffcc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 5,
+  },
+  pillIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#ffffffcc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillValue: {
+    fontFamily: 'Orbitron_900Black',
+    fontSize: 14,
+    color: '#ffffff',
+    marginLeft: 6,
+  },
+  abilityOverlay: {
+    position: 'absolute',
+    left: PAD + 8,
+    top: ABL_Y + 2,
+    width: INNER_W - 16,
+    height: ABL_H - 4,
+    justifyContent: 'center',
+  },
+  abilityText: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 16,
+    color: '#cccccc',
+  },
+});
