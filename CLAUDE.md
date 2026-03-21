@@ -71,6 +71,7 @@ All quests and achievements UI lives inside **ProfileScreen** — there is no se
 - **@react-native-async-storage/async-storage** — local persistence
 - **react-native-get-random-values** — Metro shim for Firebase crypto (MUST be first import in App.tsx)
 - **expo-font + @expo-google-fonts/orbitron + @expo-google-fonts/rajdhani** — fonts
+- **@expo/vector-icons (MaterialCommunityIcons)** — type icons and stat pill icons on cards
 
 ### File Structure
 ```
@@ -157,6 +158,8 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - Scale targets: collection 45%, detail 90%, battle active 85%, battle hand 40%, pack reveal 100%
 - `useFont()` hook required for all text inside canvas — CSS font-family does not apply
 - Emoji do not render in Skia canvas — use a separate RN `Text` overlay for emoji
+- **RN overlay pattern**: Skia handles backgrounds, gradient washes, borders, image windows. RN `View`/`Text` overlays (with `pointerEvents="none"`) handle all icons, text, and colored badges — placing colored backgrounds in Skia causes them to be obscured by RN overlay Views
+- `HeroCard` uses `MaterialCommunityIcons` RN overlays for type icon and stat pill icons
 - `MiniCard` (pure RN, no Skia) used in collection grid + battle hand for performance
 
 ## Battle System
