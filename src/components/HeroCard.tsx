@@ -99,6 +99,24 @@ const shieldPath = buildShield(SHIELD_CX, SHIELD_CY, 40);
 // Stat pill icon config
 const PILL_ICONS = ['sword', 'shield', 'run-fast'] as const;
 
+const TYPE_ICONS: Record<string, string> = {
+  Speedster:    'lightning-bolt',
+  Brainiac:     'brain',
+  Blaster:      'pistol',
+  Tank:         'shield-half-full',
+  Healer:       'heart-pulse',
+  Stealth:      'eye-off',
+  Elemental:    'leaf',
+  Tech:         'robot',
+  Mystic:       'star-four-points',
+  Brawler:      'boxing-glove',
+  Flier:        'bird',
+  Shapeshifter: 'swap-horizontal',
+  Cosmic:       'creation',
+  Alien:        'alien',
+  Gadgets:      'toolbox',
+};
+
 
 interface HeroCardProps {
   card: Card;
@@ -194,18 +212,11 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
           <Paint style="stroke" strokeWidth={3} color={borderColor} />
         </RoundedRect>
 
-        {/* 4. Type icon circle */}
-        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R} color={typeColor + '25'} />
+        {/* 4. Type icon circle — icon rendered via RN overlay below */}
+        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R} color={typeColor + '35'} />
         <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R}>
-          <Paint style="stroke" strokeWidth={1.5} color={typeColor} />
+          <Paint style="stroke" strokeWidth={1.5} color="#ffffffcc" />
         </Circle>
-        {fonts.fontCardTitle && (
-          <SkText
-            x={TYPE_CX - 4.5} y={TYPE_CY + 5}
-            text={card.type[0]}
-            font={fonts.fontCardTitle} color={typeColor}
-          />
-        )}
 
         {/* 5. HP badge pill — background rendered in RN overlay below */}
 
@@ -269,6 +280,15 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
         <Text style={styles.subtitle} numberOfLines={1}>
           {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')} {'\u2022'} {card.rarity.toUpperCase()}
         </Text>
+      </View>
+
+      {/* Type icon */}
+      <View pointerEvents="none" style={styles.typeIconOverlay}>
+        <MaterialCommunityIcons
+          name={(TYPE_ICONS[card.type] ?? 'help-circle-outline') as any}
+          size={18}
+          color="#ffffff"
+        />
       </View>
 
       {/* HP badge icon + value */}
@@ -345,6 +365,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#ffffff',
     marginTop: 1,
+  },
+  typeIconOverlay: {
+    position: 'absolute',
+    left: TYPE_CX - TYPE_R,
+    top: TYPE_CY - TYPE_R,
+    width: TYPE_R * 2,
+    height: TYPE_R * 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   hpOverlay: {
     position: 'absolute',

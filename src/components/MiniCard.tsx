@@ -7,6 +7,24 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
+
+const TYPE_ICONS: Record<string, string> = {
+  Speedster:    'lightning-bolt',
+  Brainiac:     'brain',
+  Blaster:      'pistol',
+  Tank:         'shield-half-full',
+  Healer:       'heart-pulse',
+  Stealth:      'eye-off',
+  Elemental:    'leaf',
+  Tech:         'robot',
+  Mystic:       'star-four-points',
+  Brawler:      'boxing-glove',
+  Flier:        'bird',
+  Shapeshifter: 'swap-horizontal',
+  Cosmic:       'creation',
+  Alien:        'alien',
+  Gadgets:      'toolbox',
+};
 import { RC, TYPE_COLORS } from '../data/constants';
 import { ABILITY_DESC } from '../data/abilities';
 import { CARD_W, CARD_H } from './CardWrapper';
@@ -66,15 +84,21 @@ export function MiniCard({ card }: MiniCardProps) {
   return (
     <View style={[s.card, { borderColor }]}>
 
-      {/* Type colour wash */}
-      <View style={[s.tintTop, { backgroundColor: typeColor + '30' }]} />
+      {/* Type colour wash — three layers approximate HeroCard's LinearGradient fade */}
+      <View style={[s.tint1, { backgroundColor: typeColor + '20' }]} />
+      <View style={[s.tint2, { backgroundColor: typeColor + '15' }]} />
+      <View style={[s.tint3, { backgroundColor: typeColor + '10' }]} />
 
       {/* ── Type icon ── */}
       <View style={[s.typeIcon, {
-        borderColor: typeColor,
-        backgroundColor: typeColor + '25',
+        borderColor: '#ffffffcc',
+        backgroundColor: typeColor + '35',
       }]}>
-        <Text style={[s.typeLetter, { color: typeColor }]}>{card.type[0]}</Text>
+        <MaterialCommunityIcons
+          name={(TYPE_ICONS[card.type] ?? 'help-circle-outline') as any}
+          size={18}
+          color="#ffffff"
+        />
       </View>
 
       {/* ── Name + subtitle ── */}
@@ -148,14 +172,10 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Type tint
-  tintTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: CARD_H * 0.3,
-  },
+  // Type tint — stacked layers approximating a top-to-transparent gradient over 60% of card
+  tint1: { position: 'absolute', top: 0, left: 0, right: 0, height: CARD_H * 0.6 },
+  tint2: { position: 'absolute', top: 0, left: 0, right: 0, height: CARD_H * 0.3 },
+  tint3: { position: 'absolute', top: 0, left: 0, right: 0, height: CARD_H * 0.1 },
 
   // Type icon
   typeIcon: {
@@ -168,10 +188,6 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  typeLetter: {
-    fontFamily: 'Orbitron_700Bold',
-    fontSize: 13,
   },
 
   // Name block
