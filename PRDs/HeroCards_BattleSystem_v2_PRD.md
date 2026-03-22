@@ -545,17 +545,16 @@ The range defines the bounds for assignment, not a per-battle re-roll.
   Swap                            +3              Tactical move, small
                                                   reward
 
-  Taking damage                   +round(damage × Scales with damage
-                                  0.3)            received --- a
-                                                  20-damage hit gives
-                                                  +6, a 50-damage hit
+  Taking damage                   +round(damage × Goes to the
+                                  0.3)            DEFENDER (you gain
+                                                  Amp when you are
+                                                  hit). A 20-damage
+                                                  hit gives +6, a
+                                                  50-damage hit
                                                   gives +15
 
   Defeating an opponent\'s card   +15             Major combat
                                                   milestone
-
-  Ability activation              +4              Active engagement
-                                                  bonus
   ---------------------------------------------------------------------
 
   ------------ ----------------------------------------------------------------
@@ -627,19 +626,21 @@ moment to trigger depends entirely on the current battle state.
 
   🩹 Field      Instant        Restores 40% of your    Your card is    Your card
   Medic                        active card\'s max HP   critically low  is healthy
-                               immediately             HP              --- wasted
+                               immediately. Amp meter  HP              --- wasted
+                               resets to 0 after
+                               trigger (same as all
+                               other effects).
 
   🎯 Lock On    3 rounds       Opponent cannot Swap or Opponent is     Opponent is
-                               Draw for 3 rounds ---   rotating to     not
-                               locked into their       exploit type    swapping
-                               active card             advantages      
+                               Draw for 3 rounds.      rotating to     not
+                               Blocked attempts are    exploit type    swapping
+                               shown in the event log. advantages
 
-  ⚖️ Equaliser  2 rounds       Both cards\' Attack and Facing a        You have
-                               Defense are set to the  significantly   the
-                               average of the two       stronger card   stronger
-                               (using current buffed                   card --- it
-                               values, not base stats)                 hurts you
-                               for 2 rounds. Speed is
+  ⚖️ Equaliser  2 rounds       Both cards\' Power and  Facing a        You have
+                               Defense are set to      significantly   the
+                               round((p+a)/2) of       stronger card   stronger
+                               current buffed values   (using current  card --- it
+                               for 2 rounds. Speed is  buffed values)  hurts you
                                unaffected.
   --------------------------------------------------------------------------------
 
@@ -1797,8 +1798,8 @@ on each other and can be paused between sessions.
   Add independent Amp meters (0--100) for player and AI
 
   Implement all Amp gain events: Light (+3), Medium (+6), Heavy
-  (+10), Rest (+2), Draw (+2), Swap (+3), taking damage (×0.3),
-  defeating a card (+15), ability activation (+4)
+  (+10), Rest (+2), Draw (+2), Swap (+3), taking damage
+  (+round(damage×0.3) to the defender), defeating a card (+15)
 
   Implement all 6 Amp effects: Overcharge, Type Flip, Exhaustion,
   Field Medic, Lock On, Equaliser

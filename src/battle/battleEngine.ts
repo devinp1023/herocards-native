@@ -12,6 +12,22 @@ export type AttackWeight = 'light' | 'medium' | 'heavy';
 const WEIGHT_MODIFIER: Record<AttackWeight, number> = { light: 0.8, medium: 1.0, heavy: 1.5 };
 const WEIGHT_COST:     Record<AttackWeight, number> = { light: 1,   medium: 3,   heavy: 5   };
 
+// ── Amp constants ──────────────────────────────────────────────────────────────
+export const WEIGHT_AMP: Record<AttackWeight, number> = { light: 3, medium: 6, heavy: 10 };
+
+export type AmpEffectName = 'Overcharge' | 'TypeFlip' | 'Exhaustion' | 'FieldMedic' | 'LockOn' | 'Equaliser';
+const ALL_AMP_EFFECTS: AmpEffectName[] = ['Overcharge','TypeFlip','Exhaustion','FieldMedic','LockOn','Equaliser'];
+const EFFECT_DURATION: Record<AmpEffectName, number> = {
+  Overcharge: 2, TypeFlip: 2, Exhaustion: 2, FieldMedic: 0, LockOn: 3, Equaliser: 2,
+};
+
+export interface AmpField {
+  poolEffect:       AmpEffectName;        // current effect in the shared pool
+  activeEffect:     AmpEffectName | null; // currently running triggered effect
+  effectRoundsLeft: number;               // rounds remaining (0 = not active)
+  triggeredBy:      'player' | 'ai' | null; // who triggered the active effect
+}
+
 export interface BattleCard extends Card {
   hp: number;
   maxHp: number;
@@ -48,6 +64,7 @@ export interface SideState {
   intimidated:     boolean;
   pendingRebound:  boolean;
   pendingDominate: boolean;
+  amp:             number;   // 0–100 Amp meter
   _label:          'player' | 'ai';
 }
 
@@ -63,7 +80,11 @@ export type BattleEvent =
   | { type: 'AI_SWAP';        card: string; prev: string }
   | { type: 'PLAYER_DRAW';   card: string }
   | { type: 'PLAYER_SWAP';   card: string; prev: string }
-  | { type: 'BATTLE_END';     winner: 'player' | 'ai'; reason?: string };
+  | { type: 'BATTLE_END';     winner: 'player' | 'ai'; reason?: string }
+  | { type: 'AMP_TRIGGER';    side: 'player' | 'ai'; effect: AmpEffectName; newEffect: AmpEffectName; healAmount?: number }
+  | { type: 'AMP_SPEND';      side: 'player' | 'ai'; newEffect: AmpEffectName }
+  | { type: 'AMP_EFFECT_END'; effect: AmpEffectName }
+  | { type: 'AMP_BLOCKED';    side: 'player' | 'ai'; action: 'swap' | 'draw' };
 
 // ── 1. Type system (v2 — 9 standalone types) ─────────────────────────────────
 //
@@ -164,6 +185,7 @@ export function initSideState(deck: Card[], label: 'player' | 'ai'): SideState {
     intimidated:     false,
     pendingRebound:  false,
     pendingDominate: false,
+    amp:             0,
     _label:          label,
   };
 }
@@ -215,11 +237,20 @@ export function aiSelectCard(hand: BattleCard[], opponentActiveType: string): Ba
 
 // ── 9. Execute one attack ─────────────────────────────────────────────────────
 
-export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[], weight: AttackWeight = 'medium'): { damage: number; killed: boolean } {
-  // Deduct stamina cost (can't go below 0)
-  atk.stamina = Math.max(0, atk.stamina - WEIGHT_COST[weight]);
+export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[], weight: AttackWeight = 'medium', amp?: AmpField): { damage: number; killed: boolean } {
+  // Stamina cost — doubled if Exhaustion is active against this attacker
+  let staminaCost = WEIGHT_COST[weight];
+  if (amp?.activeEffect === 'Exhaustion' && amp.effectRoundsLeft > 0 && amp.triggeredBy !== atkSide._label) {
+    staminaCost = staminaCost * 2;
+  }
+  atk.stamina = Math.max(0, atk.stamina - staminaCost);
 
   let mult = getTypeMultiplier(atk.type, def.type);
+
+  // TypeFlip: ×0.5 disadvantage → ×2.0 advantage for the triggering side
+  if (amp?.activeEffect === 'TypeFlip' && amp.effectRoundsLeft > 0 && amp.triggeredBy === atkSide._label) {
+    if (mult === 0.5) mult = 2.0;
+  }
 
   // Adaptable (defender)
   if (def.ability === 'Adaptable' && !def._adaptableUsed && mult === 2.0) {
@@ -236,13 +267,22 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   // Overwhelm (attacker) — already at ×2.0 in v2; ability no longer applies
   // (Overwhelm is a v1 ability; Sprint 4 will replace it)
 
-  let atkPow = effPower(atk);
+  // Equaliser: both cards use round((atk+def)/2) of buffed Power and Defense
+  let atkPow: number;
+  let defDef: number;
+  if (amp?.activeEffect === 'Equaliser' && amp.effectRoundsLeft > 0) {
+    atkPow = Math.round((effPower(atk) + effPower(def)) / 2);
+    defDef = Math.round((effDefense(atk) + effDefense(def)) / 2);
+  } else {
+    atkPow = effPower(atk);
+    defDef = effDefense(def);
+  }
   atkPow = Math.round(atkPow * atkSide.attackMult);
   if (atk._dominateDebuff && !isImmune(atk)) atkPow = Math.round(atkPow * 0.75);
 
   // v2 damage formula: max(5, round(power × 0.4 × typeMultiplier × staminaModifier − defense × 0.15))
   const staminaMod = WEIGHT_MODIFIER[weight];
-  let dmg = Math.max(5, Math.round(atkPow * 0.4 * mult * staminaMod - effDefense(def) * 0.15));
+  let dmg = Math.max(5, Math.round(atkPow * 0.4 * mult * staminaMod - defDef * 0.15));
 
   if (atk.ability === 'Adrenaline'  && atk.hp < atk.maxHp * 0.3)   dmg = Math.ceil(dmg * 1.2);
   if (atk.ability === 'Momentum'    && atk._momentumStacks > 0)      dmg = Math.ceil(dmg * (1 + atk._momentumStacks * 0.1));
@@ -251,6 +291,11 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   if (atk._lastStandActive)                                           dmg = Math.ceil(dmg * 1.5);
   if (atk.ability === 'Execute'     && def.hp < def.maxHp * 0.25)    dmg = dmg * 2;
   if (atk.ability === 'Opportunist' && def.hp < def.maxHp * 0.4)     dmg = Math.ceil(dmg * 1.2);
+
+  // Overcharge: double final damage for the triggering side (after all other multipliers)
+  if (amp?.activeEffect === 'Overcharge' && amp.effectRoundsLeft > 0 && amp.triggeredBy === atkSide._label) {
+    dmg = dmg * 2;
+  }
 
   if (def.ability === 'Grit'      && def.hp < def.maxHp * 0.5 && !isImmune(def)) dmg = Math.ceil(dmg * 0.85);
   if (def.ability === 'Shield Up' && !def._shieldUsed) {
@@ -276,6 +321,9 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   def.hp = Math.max(0, def.hp - dmg);
 
   log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: dmg, bonusDamage: bonus || undefined, typeMultiplier: mult, attackWeight: weight, hpBefore, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: false });
+
+  // Amp gain: defender gains Amp from taking damage
+  if (amp && dmg > 0) gainAmp(defSide, Math.round(dmg * 0.3));
 
   // On-damage triggers
   if (def.ability === 'Counterstrike' && Math.random() < 0.25) {
@@ -351,7 +399,7 @@ export function resolveDefeat(bc: BattleCard, side: SideState, log: BattleEvent[
 
 // ── 12. Post-round triggers ───────────────────────────────────────────────────
 
-export function resolvePostRound(playerSide: SideState, aiSide: SideState, log: BattleEvent[]): void {
+export function resolvePostRound(playerSide: SideState, aiSide: SideState, log: BattleEvent[], amp?: AmpField): void {
   for (const side of [playerSide, aiSide]) {
     const bc = side.active;
     if (!bc) continue;
@@ -371,6 +419,16 @@ export function resolvePostRound(playerSide: SideState, aiSide: SideState, log: 
     // Hand stamina regen: each card in hand gains +1 stamina per round
     for (const c of side.hand) {
       c.stamina = Math.min(c.maxStamina, c.stamina + 1);
+    }
+  }
+
+  // Decrement active Amp effect
+  if (amp && amp.activeEffect && amp.effectRoundsLeft > 0) {
+    amp.effectRoundsLeft--;
+    if (amp.effectRoundsLeft === 0) {
+      log.push({ type: 'AMP_EFFECT_END', effect: amp.activeEffect });
+      amp.activeEffect = null;
+      amp.triggeredBy  = null;
     }
   }
 }
@@ -415,12 +473,17 @@ export function executeAIProactiveSwap(aSide: SideState, pSide: SideState, log: 
 // Called once per round, independently of what the player chose.
 // Priority: swap (critical HP) > draw (empty hand) > attack.
 
-export function aiDecide(aSide: SideState, pSide: SideState): 'attack' | 'draw' | 'swap' | 'rest' {
+export function aiDecide(aSide: SideState, pSide: SideState, amp?: AmpField, log?: BattleEvent[]): 'attack' | 'draw' | 'swap' | 'rest' {
   // Must rest if stamina is 0 — no attack option available
   if (aSide.active.stamina === 0) return 'rest';
-  if (aiSwapTarget(aSide, pSide)) return 'swap';
-  // Draw as an action (costs turn) when hand is empty — same rule as player
-  if (aSide.hand.length === 0 && aSide.deck.length > 0) return 'draw';
+  const locked = amp ? isLockOnActive(amp, 'ai') : false;
+  const wantsSwap = !!aiSwapTarget(aSide, pSide);
+  const wantsDraw = aSide.hand.length === 0 && aSide.deck.length > 0;
+  if (locked && (wantsSwap || wantsDraw) && log) {
+    log.push({ type: 'AMP_BLOCKED', side: 'ai', action: wantsSwap ? 'swap' : 'draw' });
+  }
+  if (!locked && wantsSwap) return 'swap';
+  if (!locked && wantsDraw) return 'draw';
   return 'attack';
 }
 
@@ -428,10 +491,14 @@ export function aiDecide(aSide: SideState, pSide: SideState): 'attack' | 'draw' 
 // Called after aiDecide returns 'attack'. Picks the best weight given stamina,
 // type advantage, and HP.
 
-export function aiChooseAttackWeight(aSide: SideState, pSide: SideState): AttackWeight {
+export function aiChooseAttackWeight(aSide: SideState, pSide: SideState, amp?: AmpField): AttackWeight {
   const stamina = aSide.active.stamina;
   const mult    = getTypeMultiplier(aSide.active.type, pSide.active?.type ?? '');
   const hpPct   = aSide.active.hp / aSide.active.maxHp;
+
+  // Exhaustion doubles costs — AI prefers Light to conserve stamina
+  const exhausted = amp?.activeEffect === 'Exhaustion' && amp.effectRoundsLeft > 0 && amp.triggeredBy !== aSide._label;
+  if (exhausted) return stamina >= 2 ? 'light' : 'light';
 
   // Heavy: type advantage, full stamina available, healthy HP
   if (stamina >= 5 && mult >= 2.0 && hpPct > 0.3) return 'heavy';
@@ -442,7 +509,85 @@ export function aiChooseAttackWeight(aSide: SideState, pSide: SideState): Attack
   return 'light';
 }
 
-// ── 15. Battle reward calculation ─────────────────────────────────────────────
+// ── 15. Amp system functions ──────────────────────────────────────────────────
+
+export function initAmpField(): AmpField {
+  return {
+    poolEffect:       ALL_AMP_EFFECTS[Math.floor(Math.random() * ALL_AMP_EFFECTS.length)],
+    activeEffect:     null,
+    effectRoundsLeft: 0,
+    triggeredBy:      null,
+  };
+}
+
+export function gainAmp(side: SideState, amount: number): void {
+  side.amp = Math.min(100, side.amp + amount);
+}
+
+function selectNextEffect(exclude: AmpEffectName): AmpEffectName {
+  const pool = ALL_AMP_EFFECTS.filter(e => e !== exclude);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+export function isLockOnActive(field: AmpField, sideLabel: 'player' | 'ai'): boolean {
+  if (field.activeEffect !== 'LockOn' || field.effectRoundsLeft <= 0) return false;
+  // Lock On restricts the OPPONENT of the triggering side
+  return field.triggeredBy !== sideLabel;
+}
+
+export function triggerAmp(side: SideState, oppSide: SideState, field: AmpField, log: BattleEvent[]): void {
+  const effect  = field.poolEffect;
+  side.amp      = 0;
+  const newPool = selectNextEffect(effect);
+
+  if (effect === 'FieldMedic') {
+    // Instant: heal 40% of active card max HP, no duration
+    const heal = Math.round(side.active.maxHp * 0.4);
+    side.active.hp = Math.min(side.active.maxHp, side.active.hp + heal);
+    log.push({ type: 'AMP_TRIGGER', side: side._label, effect, newEffect: newPool, healAmount: heal });
+  } else {
+    field.activeEffect     = effect;
+    field.effectRoundsLeft = EFFECT_DURATION[effect];
+    field.triggeredBy      = side._label;
+    log.push({ type: 'AMP_TRIGGER', side: side._label, effect, newEffect: newPool });
+  }
+
+  field.poolEffect = newPool;
+}
+
+export function spendAmp(side: SideState, field: AmpField, log: BattleEvent[]): void {
+  side.amp      = Math.max(0, side.amp - 50);
+  const newPool = selectNextEffect(field.poolEffect);
+  field.poolEffect = newPool;
+  log.push({ type: 'AMP_SPEND', side: side._label, newEffect: newPool });
+}
+
+export function aiDecideAmp(aSide: SideState, pSide: SideState, field: AmpField): 'trigger' | 'spend' | 'pass' {
+  if (aSide.amp >= 100) {
+    const effect = field.poolEffect;
+    // Don't trigger Equaliser if AI's card is stronger
+    if (effect === 'Equaliser') {
+      const aiTotal = effPower(aSide.active) + effDefense(aSide.active);
+      const pTotal  = effPower(pSide.active) + effDefense(pSide.active);
+      if (aiTotal > pTotal) return 'spend';
+    }
+    // Don't waste Field Medic if healthy
+    if (effect === 'FieldMedic' && aSide.active.hp > aSide.active.maxHp * 0.6) return 'spend';
+    return 'trigger';
+  }
+  if (aSide.amp >= 50) {
+    const effect = field.poolEffect;
+    // Spend to switch an unfavorable effect
+    const unfavorable = (
+      (effect === 'Equaliser' && effPower(aSide.active) + effDefense(aSide.active) > effPower(pSide.active) + effDefense(pSide.active)) ||
+      (effect === 'FieldMedic' && aSide.active.hp > aSide.active.maxHp * 0.85)
+    );
+    if (unfavorable) return 'spend';
+  }
+  return 'pass';
+}
+
+// ── 16. Battle reward calculation ─────────────────────────────────────────────
 
 export function calcBattleRewards(tier: number, winner: 'player' | 'ai', streak: number): { credits: number; xp: number; streakBonus: boolean } {
   const t = BATTLE_REWARDS[tier] ?? BATTLE_REWARDS[1];

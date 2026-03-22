@@ -13,12 +13,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { TIER_INFO } from '../data/constants';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
-  BattleCard, SideState, BattleEvent, AttackWeight,
+  BattleCard, SideState, BattleEvent, AttackWeight, AmpField, AmpEffectName,
   initSideState, applyEntryEffects, effSpeed,
   executeAttack, resolveKill, resolveDefeat,
   drawCard, aiSelectCard, aiDecide, aiChooseAttackWeight, applyRestAction,
   executeAIProactiveSwap, resolvePostRound,
   calcBattleRewards,
+  initAmpField, gainAmp, triggerAmp as triggerAmpFn, spendAmp as spendAmpFn,
+  aiDecideAmp, isLockOnActive, WEIGHT_AMP,
 } from '../battle/battleEngine';
 import { buildAiDeck } from '../battle/aiDeck';
 
@@ -42,6 +44,14 @@ export interface UseBattleResult {
   tierName:        string;
   canDraw:         boolean;
   canSwap:         boolean;
+  playerAmp:       number;
+  aiAmp:           number;
+  ampPoolEffect:   AmpEffectName;
+  ampActiveEffect: AmpEffectName | null;
+  ampRoundsLeft:   number;
+  ampTriggeredBy:  'player' | 'ai' | null;
+  canTrigger:      boolean;
+  canSpend:        boolean;
   // ── Session 12 animation signals ─────────────────────────────────────────
   playerHitKey:            number;              // increments each time player's card is hit
   aiHitKey:                number;              // increments each time AI's card is hit
@@ -52,6 +62,8 @@ export interface UseBattleResult {
   attack:          (weight: AttackWeight) => void;
   rest:            () => void;
   draw:            () => void;
+  triggerAmp:      () => void;
+  spendAmp:        () => void;
   enterSwapMode:   () => void;
   cancelSwapMode:  () => void;
   swapCard:        (id: number) => void;
@@ -68,6 +80,12 @@ interface DisplaySnapshot {
   aiHandCount:     number;
   playerDeckCount: number;
   aiDeckCount:     number;
+  playerAmp:       number;
+  aiAmp:           number;
+  ampPoolEffect:   AmpEffectName;
+  ampActiveEffect: AmpEffectName | null;
+  ampRoundsLeft:   number;
+  ampTriggeredBy:  'player' | 'ai' | null;
 }
 
 export function useBattle(playerDeckIds: number[], tier: number): UseBattleResult {
@@ -76,11 +94,15 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   const pRef      = useRef<SideState | null>(null);
   const aRef      = useRef<SideState | null>(null);
   const eventsRef = useRef<BattleEvent[]>([]);
+  const ampRef    = useRef<AmpField>(initAmpField());
 
   const [phase,        setPhase]        = useState<BattlePhase>('init');
   const [snap,         setSnap]         = useState<DisplaySnapshot>({
     playerActive: null, aiActive: null, playerHand: [],
     aiHandCount: 0, playerDeckCount: 0, aiDeckCount: 0,
+    playerAmp: 0, aiAmp: 0,
+    ampPoolEffect: ampRef.current.poolEffect,
+    ampActiveEffect: null, ampRoundsLeft: 0, ampTriggeredBy: null,
   });
   const [round,        setRound]        = useState(1);
   const [winner,       setWinner]       = useState<'player' | 'ai' | null>(null);
@@ -106,6 +128,12 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       aiHandCount:     aRef.current?.hand.length ?? 0,
       playerDeckCount: pRef.current?.deck.length ?? 0,
       aiDeckCount:     aRef.current?.deck.length ?? 0,
+      playerAmp:       pRef.current?.amp ?? 0,
+      aiAmp:           aRef.current?.amp ?? 0,
+      ampPoolEffect:   ampRef.current.poolEffect,
+      ampActiveEffect: ampRef.current.activeEffect,
+      ampRoundsLeft:   ampRef.current.effectRoundsLeft,
+      ampTriggeredBy:  ampRef.current.triggeredBy,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -166,7 +194,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   const finishRound = useCallback((events: BattleEvent[]) => {
     const p = pRef.current!;
     const a = aRef.current!;
-    resolvePostRound(p, a, events);
+    resolvePostRound(p, a, events, ampRef.current);
     if (p.active && p.active.hp <= 0) {
       events.push({ type: 'DEFEAT', card: p.active.name, byCard: 'Bleed' });
       resolveDefeat(p.active, p, events);
@@ -254,17 +282,30 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
   // ── Execute AI's chosen action (non-combat part) ──────────────────────────
   const executeAiAction = useCallback((aiAction: RoundAction, events: BattleEvent[]) => {
-    const a = aRef.current!;
-    const p = pRef.current!;
+    const a   = aRef.current!;
+    const p   = pRef.current!;
     if (aiAction === 'draw') {
       drawCard(a);
+      gainAmp(a, 2);
     } else if (aiAction === 'swap') {
       executeAIProactiveSwap(a, p, events);
+      gainAmp(a, 3);
     } else if (aiAction === 'rest') {
       applyRestAction(a.active, a, events);
+      gainAmp(a, 2);
     }
     // 'attack' has no pre-combat side effect
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── AI Amp decision (trigger/spend at start of each round) ────────────────
+  const processAiAmp = useCallback((events: BattleEvent[]) => {
+    const a   = aRef.current!;
+    const p   = pRef.current!;
+    const amp = ampRef.current;
+    const decision = aiDecideAmp(a, p, amp);
+    if (decision === 'trigger') triggerAmpFn(a, p, amp, events);
+    else if (decision === 'spend') spendAmpFn(a, amp, events);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ATTACK — sequential steps ──────────────────────────────────────────────
   //
@@ -287,7 +328,10 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     setTypeRevealed(false);
     setPhase('animating');
 
-    const aiAction = aiDecide(a, p);
+    // AI Amp decision happens at round start, before actions resolve
+    processAiAmp(events);
+
+    const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
       // ── Player attacks, AI did non-combat action ────────────────────────
@@ -296,7 +340,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       refresh();
       // Step 2 (t=STEP_MS): player's free hit
       setTimeout(() => {
-        const r = executeAttack(p.active, a.active, p, a, events, weight);
+        const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
+        gainAmp(p, WEIGHT_AMP[weight]);
         setTypeRevealed(true);
         setAiHitKey(k => k + 1);
         const aKilled = r.killed || a.active.hp <= 0;
@@ -304,6 +349,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         setTimeout(() => {
           if (aKilled) {
             setLastDefeatedAiCard(a.active);
+            gainAmp(p, 15); // +15 for kill
             resolveKill(p.active, p, a, events);
             resolveDefeat(a.active, a, events);
             (a as any).active = null;
@@ -319,7 +365,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     } else {
       // ── Both attack: determine turn order ───────────────────────────────
       // Heavy attacker always goes second. Exception: both Heavy → speed check.
-      const aiWeight    = aiChooseAttackWeight(a, p);
+      const aiWeight    = aiChooseAttackWeight(a, p, ampRef.current);
       const pSpd        = effSpeed(p.active);
       const aSpd        = effSpeed(a.active);
       const bothHeavy   = weight === 'heavy' && aiWeight === 'heavy';
@@ -340,7 +386,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         : [p, a, weight]    as const;
 
       // Step 1 (t=0): first hit
-      const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight);
+      const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
+      gainAmp(fSide, WEIGHT_AMP[fWeight]);
       setTypeRevealed(true);
       if (fSide === p) { setAiHitKey(k => k + 1); }
       else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
@@ -350,19 +397,20 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       if (firstKilled) {
         const aKilled = fOpp === a;
         const pKilled = fOpp === p;
-        if (aKilled) setLastDefeatedAiCard(a.active);
-        if (pKilled) setLastDefeatedPlayerCard(p.active);
+        if (aKilled) { setLastDefeatedAiCard(a.active); gainAmp(fSide, 15); }
+        if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(fSide, 15); }
         setTimeout(() => handleCombatDeaths(pKilled, aKilled, events), STEP_MS);
       } else {
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
-          const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight);
+          const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
+          gainAmp(sSide, WEIGHT_AMP[sWeight]);
           if (sSide === p) { setAiHitKey(k => k + 1); }
           else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
           const pKilled = p.active.hp <= 0;
           const aKilled = a.active.hp <= 0;
-          if (aKilled) setLastDefeatedAiCard(a.active);
-          if (pKilled) setLastDefeatedPlayerCard(p.active);
+          if (aKilled) { setLastDefeatedAiCard(a.active); gainAmp(sSide, 15); }
+          if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(sSide, 15); }
           refresh();
           setTimeout(() => {
             if (pKilled || aKilled) handleCombatDeaths(pKilled, aKilled, events);
@@ -371,7 +419,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }
     }
-  }, [phase, round, executeAiAction, endBattle, doAiReplace, finishRound, handleCombatDeaths]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, doAiReplace, finishRound, handleCombatDeaths]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── DRAW — sequential steps ────────────────────────────────────────────────
   //  step 1 (t=0):       player draws → card bounces into hand
@@ -382,6 +430,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     const p = pRef.current!;
     const a = aRef.current!;
     if (p.hand.length >= 5 || p.deck.length === 0) return;
+    // Lock On: player cannot draw
+    if (isLockOnActive(ampRef.current, 'player')) return;
     setLastDefeatedPlayerCard(null);
     setLastDefeatedAiCard(null);
     const events: BattleEvent[] = [];
@@ -392,10 +442,12 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
     // Step 1 (t=0): player draws
     drawCard(p);
+    gainAmp(p, 2);
     events.push({ type: 'PLAYER_DRAW', card: p.hand[p.hand.length - 1].name });
     refresh();
 
-    const aiAction = aiDecide(a, p);
+    processAiAmp(events);
+    const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
       // Step 2 (t=STEP_MS): AI non-combat action
@@ -408,11 +460,13 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     } else {
       // Step 2 (t=STEP_MS): AI free hit on player
       setTimeout(() => {
-        const r = executeAttack(a.active, p.active, a, p, events);
+        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
-        if (pKilled) setLastDefeatedPlayerCard(p.active);
+        if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
         refresh();
         setTimeout(() => {
           if (pKilled) {
@@ -428,7 +482,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── REST — sequential steps ────────────────────────────────────────────────
   //  step 1 (t=0):       player rests (+5 stamina) — no attack
@@ -448,9 +502,11 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
     // Step 1 (t=0): apply rest to player
     applyRestAction(p.active, p, events);
+    gainAmp(p, 2);
     refresh();
 
-    const aiAction = aiDecide(a, p);
+    processAiAmp(events);
+    const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
       // Step 2 (t=STEP_MS): AI non-combat action
@@ -463,8 +519,9 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     } else {
       // Step 2 (t=STEP_MS): AI free hit on resting player
       setTimeout(() => {
-        const aiWeight = aiChooseAttackWeight(a, p);
-        const r = executeAttack(a.active, p.active, a, p, events, aiWeight);
+        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
@@ -472,6 +529,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         refresh();
         setTimeout(() => {
           if (pKilled) {
+            gainAmp(a, 15); // +15 for kill
             resolveKill(a.active, a, p, events);
             resolveDefeat(p.active, p, events);
             (p as any).active = null;
@@ -484,7 +542,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SWAP MODE (kept for UI compatibility) ──────────────────────────────────
   const enterSwapMode = useCallback(() => {
@@ -507,6 +565,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     const a = aRef.current!;
     const chosen = p.hand.find(c => c.id === id);
     if (!chosen || !p.active) return;
+    // Lock On: player cannot swap
+    if (isLockOnActive(ampRef.current, 'player')) return;
     setLastDefeatedPlayerCard(null);
     setLastDefeatedAiCard(null);
     const events: BattleEvent[] = [];
@@ -521,11 +581,13 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     p.active = chosen;
     applyEntryEffects(chosen, p, a, events);
     events.push({ type: 'PLAYER_SWAP', card: chosen.name, prev: prev.name });
+    gainAmp(p, 3);
     setSwapOutCardId(prev.id);
     setPhase('animating');
     refresh();
 
-    const aiAction = aiDecide(a, p);
+    processAiAmp(events);
+    const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
       // Step 2 (t=STEP_MS): AI non-combat action
@@ -540,11 +602,13 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       // Step 2 (t=STEP_MS): AI free hit on player's new active card
       setTimeout(() => {
         setSwapOutCardId(null);
-        const r = executeAttack(a.active, p.active, a, p, events);
+        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
-        if (pKilled) setLastDefeatedPlayerCard(p.active);
+        if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
         refresh();
         setTimeout(() => {
           if (pKilled) {
@@ -560,7 +624,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Forced card replacement (active card was killed) ──────────────────────
   const selectCard = useCallback((id: number) => {
@@ -580,6 +644,25 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     refresh();
   }, [phase]);
 
+  // ── TRIGGER AMP ────────────────────────────────────────────────────────────
+  const triggerAmp = useCallback(() => {
+    if (phase !== 'ready') return;
+    const p = pRef.current!;
+    const a = aRef.current!;
+    if (p.amp < 100) return;
+    triggerAmpFn(p, a, ampRef.current, eventsRef.current);
+    refresh();
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── SPEND AMP ──────────────────────────────────────────────────────────────
+  const spendAmp = useCallback(() => {
+    if (phase !== 'ready') return;
+    const p = pRef.current!;
+    if (p.amp < 50) return;
+    spendAmpFn(p, ampRef.current, eventsRef.current);
+    refresh();
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return {
     phase,
     round,
@@ -595,8 +678,16 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     rewards,
     tierColor:       tierInfo.color,
     tierName:        tierInfo.name,
-    canDraw:         snap.playerHand.length < 5 && snap.playerDeckCount > 0,
-    canSwap:         !!snap.playerActive && snap.playerHand.length > 0,
+    canDraw:         snap.playerHand.length < 5 && snap.playerDeckCount > 0 && !isLockOnActive(ampRef.current, 'player'),
+    canSwap:         !!snap.playerActive && snap.playerHand.length > 0 && !isLockOnActive(ampRef.current, 'player'),
+    playerAmp:       snap.playerAmp,
+    aiAmp:           snap.aiAmp,
+    ampPoolEffect:   snap.ampPoolEffect,
+    ampActiveEffect: snap.ampActiveEffect,
+    ampRoundsLeft:   snap.ampRoundsLeft,
+    ampTriggeredBy:  snap.ampTriggeredBy,
+    canTrigger:      snap.playerAmp >= 100 && phase === 'ready',
+    canSpend:        snap.playerAmp >= 50 && phase === 'ready',
     playerHitKey,
     aiHitKey,
     aiAttackKey,
@@ -606,6 +697,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     attack,
     rest,
     draw,
+    triggerAmp,
+    spendAmp,
     enterSwapMode,
     cancelSwapMode,
     swapCard,

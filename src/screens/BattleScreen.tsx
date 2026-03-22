@@ -17,7 +17,7 @@ import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
-import { BattleEvent, BattleCard, AttackWeight } from '../battle/battleEngine';
+import { BattleEvent, BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
 import { RC } from '../data/constants';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
@@ -550,6 +550,16 @@ const pz = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderTopWidth: 1, borderTopColor: '#0f0f24' },
 });
 
+// ── Amp effect display constants (used by eventLine and AmpMeter) ─────────────
+const AMP_EFFECT_COLORS: Record<AmpEffectName, string> = {
+  Overcharge: '#ffa726', TypeFlip: '#9c27b0', Exhaustion: '#ef5350',
+  FieldMedic: '#4caf50', LockOn: '#ffeb3b', Equaliser: '#4fc3f7',
+};
+const AMP_EFFECT_LABELS: Record<AmpEffectName, string> = {
+  Overcharge: 'OVERCHARGE', TypeFlip: 'TYPE FLIP', Exhaustion: 'EXHAUSTION',
+  FieldMedic: 'FIELD MEDIC', LockOn: 'LOCK ON', Equaliser: 'EQUALISER',
+};
+
 // ── Event log (compact) ───────────────────────────────────────────────────────
 function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
   switch (ev.type) {
@@ -566,6 +576,15 @@ function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
     case 'PLAYER_DRAW':return <Text key={idx} style={evs.draw}>You draw {ev.card}</Text>;
     case 'FORCED_DRAW':return <Text key={idx} style={evs.draw}>{ev.side === 'player' ? 'You draw' : 'AI draws'} {ev.card}</Text>;
     case 'BATTLE_START':return <Text key={idx} style={evs.start}>{ev.playerActive.name} vs {ev.aiActive.name}</Text>;
+    case 'AMP_TRIGGER': {
+      const lbl = AMP_EFFECT_LABELS[ev.effect];
+      const who = ev.side === 'player' ? 'You' : 'AI';
+      const detail = ev.healAmount ? ` (+${ev.healAmount} HP)` : '';
+      return <Text key={idx} style={evs.amp}>{who} triggers {lbl}{detail}</Text>;
+    }
+    case 'AMP_SPEND':   return <Text key={idx} style={evs.amp}>{ev.side === 'player' ? 'You' : 'AI'} switches effect → {AMP_EFFECT_LABELS[ev.newEffect]}</Text>;
+    case 'AMP_EFFECT_END': return <Text key={idx} style={evs.ampEnd}>{AMP_EFFECT_LABELS[ev.effect]} fades</Text>;
+    case 'AMP_BLOCKED': return <Text key={idx} style={evs.ampEnd}>Lock On: {ev.side === 'player' ? 'Your' : 'AI'} {ev.action} blocked</Text>;
     default: return null;
   }
 }
@@ -578,6 +597,87 @@ const evs = StyleSheet.create({
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffeb3b', lineHeight: 16 },
   draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#8890b0', lineHeight: 15 },
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4fc3f7', lineHeight: 16 },
+  amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffa726', lineHeight: 16 },
+  ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#505070', lineHeight: 15 },
+});
+
+// ── Amp meter ─────────────────────────────────────────────────────────────────
+function AmpMeter({ playerAmp, aiAmp, poolEffect, activeEffect, roundsLeft, triggeredBy,
+  canTrigger, canSpend, onTrigger, onSpend }: {
+  playerAmp: number; aiAmp: number;
+  poolEffect: AmpEffectName; activeEffect: AmpEffectName | null;
+  roundsLeft: number; triggeredBy: 'player' | 'ai' | null;
+  canTrigger: boolean; canSpend: boolean;
+  onTrigger: () => void; onSpend: () => void;
+}) {
+  const effectColor  = AMP_EFFECT_COLORS[activeEffect ?? poolEffect];
+  const effectLabel  = AMP_EFFECT_LABELS[activeEffect ?? poolEffect];
+  const playerPct    = Math.min(1, playerAmp / 100);
+  const aiPct        = Math.min(1, aiAmp / 100);
+  const playerColor  = playerPct >= 1 ? '#ff9800' : '#4fc3f7';
+  const aiColor      = aiPct    >= 1 ? '#ff9800' : '#ef5350';
+  const effectActive = !!activeEffect && roundsLeft > 0;
+
+  return (
+    <View style={am.row}>
+      {/* AI meter (left, red) */}
+      <View style={am.meterCol}>
+        <Text style={am.meterLabel}>AI</Text>
+        <View style={am.track}>
+          <View style={[am.fill, { width: `${Math.round(aiPct * 100)}%` as any, backgroundColor: aiColor }]} />
+        </View>
+        <Text style={[am.pct, { color: aiColor }]}>{aiAmp}</Text>
+      </View>
+
+      {/* Center: effect info + buttons */}
+      <View style={am.center}>
+        <View style={[am.effectBadge, { borderColor: effectColor + '66', backgroundColor: effectColor + '18' }]}>
+          <Text style={[am.effectLabel, { color: effectColor }]}>{effectLabel}</Text>
+          {effectActive && (
+            <Text style={[am.roundsLeft, { color: effectColor }]}>{roundsLeft}r</Text>
+          )}
+        </View>
+        <View style={am.btnRow}>
+          {canSpend && !canTrigger && (
+            <TouchableOpacity style={[am.ampBtn, am.spendBtn]} onPress={onSpend} activeOpacity={0.75}>
+              <Text style={am.ampBtnText}>SPEND 50</Text>
+            </TouchableOpacity>
+          )}
+          {canTrigger && (
+            <TouchableOpacity style={[am.ampBtn, am.triggerBtn]} onPress={onTrigger} activeOpacity={0.75}>
+              <Text style={[am.ampBtnText, { color: '#ff9800' }]}>TRIGGER!</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Player meter (right, blue) */}
+      <View style={am.meterCol}>
+        <Text style={am.meterLabel}>YOU</Text>
+        <View style={am.track}>
+          <View style={[am.fill, { width: `${Math.round(playerPct * 100)}%` as any, backgroundColor: playerColor }]} />
+        </View>
+        <Text style={[am.pct, { color: playerColor }]}>{playerAmp}</Text>
+      </View>
+    </View>
+  );
+}
+const am = StyleSheet.create({
+  row:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, gap: 8, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
+  meterCol:    { flex: 1, alignItems: 'center', gap: 2 },
+  meterLabel:  { fontFamily: 'Orbitron_700Bold', fontSize: 6, color: '#40405a', letterSpacing: 1 },
+  track:       { width: '100%', height: 4, backgroundColor: '#1a1a35', borderRadius: 2, overflow: 'hidden' },
+  fill:        { position: 'absolute', top: 0, left: 0, bottom: 0, borderRadius: 2 },
+  pct:         { fontFamily: 'Orbitron_700Bold', fontSize: 7, lineHeight: 10 },
+  center:      { flex: 2, alignItems: 'center', gap: 3 },
+  effectBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
+  effectLabel: { fontFamily: 'Orbitron_900Black', fontSize: 7, letterSpacing: 0.5 },
+  roundsLeft:  { fontFamily: 'Orbitron_700Bold', fontSize: 6 },
+  btnRow:      { flexDirection: 'row', gap: 4 },
+  ampBtn:      { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1 },
+  spendBtn:    { borderColor: '#4fc3f766', backgroundColor: '#4fc3f714' },
+  triggerBtn:  { borderColor: '#ff980088', backgroundColor: '#ff980020' },
+  ampBtnText:  { fontFamily: 'Orbitron_900Black', fontSize: 7, color: '#4fc3f7', letterSpacing: 0.5 },
 });
 
 // ── Attack buttons ────────────────────────────────────────────────────────────
@@ -764,6 +864,20 @@ export default function BattleScreen({ navigation, route }: Props) {
           />
         </View>
       </View>
+
+      {/* Amp meter */}
+      <AmpMeter
+        playerAmp={battle.playerAmp}
+        aiAmp={battle.aiAmp}
+        poolEffect={battle.ampPoolEffect}
+        activeEffect={battle.ampActiveEffect}
+        roundsLeft={battle.ampRoundsLeft}
+        triggeredBy={battle.ampTriggeredBy}
+        canTrigger={battle.canTrigger}
+        canSpend={battle.canSpend}
+        onTrigger={battle.triggerAmp}
+        onSpend={battle.spendAmp}
+      />
 
       {/* Attack buttons */}
       <AttackButtons
