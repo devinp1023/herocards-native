@@ -1026,7 +1026,7 @@ export function aiDecideAmp(aSide: SideState, pSide: SideState, field: AmpField)
 export function calcBattleRewards(tier: number, winner: 'player' | 'ai' | 'tie', streak: number): { credits: number; xp: number; streakBonus: boolean } {
   const t = BATTLE_REWARDS[tier] ?? BATTLE_REWARDS[1];
   if (winner === 'player') {
-    const mult = streak >= 1 ? 2 : 1;
+    const mult = streak >= 3 ? 2 : 1;
     return { credits: t.winCredits * mult, xp: t.winXp, streakBonus: mult === 2 };
   }
   // tie: loss rewards, no streak bonus

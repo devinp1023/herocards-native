@@ -27,6 +27,7 @@ All 14 build sessions complete. The app has:
 **Current milestone: Battle System v2 rewrite**
 - 7-sprint rewrite of the battle engine (see `PRDs/HeroCards_BattleSystem_v2_PRD.md`)
 - New type system (9 types), stamina system, Amp mechanic, 50 abilities, Legendary Lock
+- Sprint 6a complete: win-streak ×2 threshold fixed (now 3+), 13 new battle daily quests added, CMS DEFAULT_CARDS synced and redeployed
 
 **Next milestone after v2: App Store submission**
 - Switch Expo Go → EAS custom build
