@@ -17,7 +17,7 @@ import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
-import { BattleEvent, BattleCard } from '../battle/battleEngine';
+import { BattleEvent, BattleCard, AttackWeight } from '../battle/battleEngine';
 import { RC } from '../data/constants';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
@@ -104,6 +104,30 @@ const ch = StyleSheet.create({
   hpNum:   { fontFamily: 'Orbitron_900Black', fontSize: 14, lineHeight: 16 },
   hpDiv:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#40405a', lineHeight: 8 },
   hpMax:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#606080', lineHeight: 9 },
+});
+
+// ── Stamina bar ───────────────────────────────────────────────────────────────
+function StaminaBar({ stamina, maxStamina, compact }: { stamina: number; maxStamina: number; compact?: boolean }) {
+  const pct   = maxStamina > 0 ? Math.max(0, Math.min(1, stamina / maxStamina)) : 0;
+  const color = pct > 0.6 ? '#4fc3f7' : pct > 0.3 ? '#ffa726' : '#ef5350';
+  return (
+    <View style={[sb.row, compact && sb.rowCompact]}>
+      <View style={[sb.track, compact ? sb.trackCompact : sb.trackFull]}>
+        <View style={[sb.fill, { width: `${Math.round(pct * 100)}%` as any, backgroundColor: color }]} />
+      </View>
+      <Text style={[sb.label, { color }, compact && sb.labelCompact]}>{stamina}</Text>
+    </View>
+  );
+}
+const sb = StyleSheet.create({
+  row:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  rowCompact:   { justifyContent: 'center', gap: 3 },
+  track:        { height: 4, backgroundColor: '#1a1a35', borderRadius: 2, overflow: 'hidden' },
+  trackFull:    { flex: 1 },
+  trackCompact: { width: 30, height: 3 },
+  fill:         { position: 'absolute', top: 0, left: 0, bottom: 0, borderRadius: 2 },
+  label:        { fontFamily: 'Orbitron_700Bold', fontSize: 7, lineHeight: 10, minWidth: 14, textAlign: 'right' },
+  labelCompact: { fontSize: 7, minWidth: 0 },
 });
 
 // ── Defeat animation — card falls and fades ───────────────────────────────────
@@ -209,10 +233,10 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
             <ReAnimated.View style={entryStyle}>
               <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
             </ReAnimated.View>
-            {targeted && <View style={aas.cardGlow} pointerEvents="none" />}
             <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
             {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
           </View>
+          <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} />
         </ReAnimated.View>
       </ReAnimated.View>
       <View style={{ width: HP_GAP }} />
@@ -245,31 +269,16 @@ const aas = StyleSheet.create({
   flashOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#ef5350' },
 });
 
-// ── Player active section (drag onto AI card = attack; deck beside, tap to draw)
-function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDraw, canDraw,
-  aiActiveBoundsRef, onAttackHover, swapTargeted, hitKey, defeatingCard, onCardMeasure }: {
-  card: BattleCard | null; revealed: boolean; phase: BattlePhase; onAttack: () => void;
+// ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
+function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
+  swapTargeted, hitKey, defeatingCard, onCardMeasure }: {
+  card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
-  aiActiveBoundsRef: React.MutableRefObject<Bounds | null>;
-  onAttackHover: (h: boolean) => void;
   swapTargeted: boolean;
   hitKey: number;
   defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
 }) {
-  const dragX            = useRef(new Animated.Value(0)).current;
-  const dragY            = useRef(new Animated.Value(0)).current;
-  const phaseRef         = useRef(phase);
-  const onAttackRef      = useRef(onAttack);
-  const onAttackHoverRef = useRef(onAttackHover);
-  // Wrap the incoming prop ref in a local ref so the PanResponder closure
-  // (created once on mount) always reads the latest value via a stable pointer.
-  const aiBoundsRef      = useRef(aiActiveBoundsRef);
-  phaseRef.current         = phase;
-  onAttackRef.current      = onAttack;
-  onAttackHoverRef.current = onAttackHover;
-  aiBoundsRef.current      = aiActiveBoundsRef;
-
   const cardSlotRef      = useRef<View>(null);
   const onCardMeasureRef = useRef(onCardMeasure);
   onCardMeasureRef.current = onCardMeasure;
@@ -312,32 +321,6 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
       return () => clearTimeout(t);
     }
   }, [defeatingCard]);
-
-  const rotate = dragX.interpolate({ inputRange: [-80, 80], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
-
-  const springBack = () => Animated.parallel([
-    Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-    Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-  ]).start();
-
-  const pan = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder:  (_, gs) => phaseRef.current === 'ready' && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
-    onPanResponderMove: (_, gs) => {
-      dragX.setValue(gs.dx * 0.7);
-      dragY.setValue(gs.dy * 0.7);
-      const bounds = aiBoundsRef.current?.current ?? null;
-      onAttackHoverRef.current(isOver(bounds, gs.moveX, gs.moveY));
-    },
-    onPanResponderRelease: (_, gs) => {
-      const bounds    = aiBoundsRef.current?.current ?? null;
-      const overTarget = isOver(bounds, gs.moveX, gs.moveY);
-      onAttackHoverRef.current(false);
-      springBack();
-      if (phaseRef.current === 'ready' && overTarget) setTimeout(() => onAttackRef.current(), 80);
-    },
-    onPanResponderTerminate: () => { onAttackHoverRef.current(false); springBack(); },
-  })).current;
 
   const deckSection = (
     <View style={aas.deckCol}>
@@ -395,14 +378,11 @@ function PlayerActiveSection({ card, revealed, phase, onAttack, deckCount, onDra
       >
         <ReAnimated.View style={shakeStyle}>
           <ReAnimated.View style={entryStyle}>
-            <View {...pan.panHandlers}>
-              <Animated.View style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}>
-                <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
-              </Animated.View>
-            </View>
+            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
           </ReAnimated.View>
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
         </ReAnimated.View>
+        <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} />
       </View>
 
       <View style={{ width: HP_GAP }} />
@@ -519,15 +499,21 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
         style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
         {...pan.panHandlers}
       >
-        <View style={[hc.frame, { borderColor: color + '33' }]}>
-          <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
+        <View style={hc.col}>
+          <View style={[hc.frame, { borderColor: color + '33' }]}>
+            <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
+          </View>
+          <View style={{ width: HAND_W, alignItems: 'center' }}>
+            <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} compact />
+          </View>
         </View>
       </Animated.View>
     </ReAnimated.View>
   );
 }
 const hc = StyleSheet.create({
-  frame: { borderWidth: 1, borderRadius: 6, overflow: 'hidden', position: 'relative' },
+  col:   { alignItems: 'flex-start' },
+  frame: { borderWidth: 1, borderRadius: 6, overflow: 'hidden' },
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
@@ -570,7 +556,7 @@ function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
     case 'ATTACK':
       if (ev.missed) return <Text key={idx} style={evs.miss}>{ev.attacker} missed!</Text>;
       const mult = ev.typeMultiplier;
-      const adv  = mult === 1.5 ? ' (adv)' : mult >= 2.0 ? ' (x2)' : mult === 0.75 ? ' (weak)' : '';
+      const adv  = mult >= 2.0 ? ' (adv)' : mult <= 0.5 ? ' (weak)' : '';
       return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? '#4fc3f7' : '#ef5350' }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
     case 'ABILITY':   return <Text key={idx} style={evs.ability}>{ev.ability}: {ev.effect}</Text>;
     case 'DEFEAT':    return <Text key={idx} style={evs.defeat}>{ev.card} defeated</Text>;
@@ -592,6 +578,57 @@ const evs = StyleSheet.create({
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffeb3b', lineHeight: 16 },
   draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#8890b0', lineHeight: 15 },
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4fc3f7', lineHeight: 16 },
+});
+
+// ── Attack buttons ────────────────────────────────────────────────────────────
+function AttackButtons({ phase, stamina, onAttack, onRest }: {
+  phase: BattlePhase; stamina: number;
+  onAttack: (weight: AttackWeight) => void; onRest: () => void;
+}) {
+  const ready = phase === 'ready';
+  return (
+    <View style={atb.row}>
+      {([
+        { weight: 'light'  as AttackWeight, label: 'LIGHT',  cost: '−1', mult: '×0.8', minSp: 1, color: '#4fc3f7' },
+        { weight: 'medium' as AttackWeight, label: 'MEDIUM', cost: '−3', mult: '×1.0', minSp: 3, color: '#ffa726' },
+        { weight: 'heavy'  as AttackWeight, label: 'HEAVY',  cost: '−5', mult: '×1.5', minSp: 5, color: '#ef5350' },
+      ]).map(({ weight, label, cost, mult, minSp, color }) => {
+        const canUse = stamina >= minSp;
+        const dis    = !ready || !canUse;
+        return (
+          <TouchableOpacity
+            key={weight}
+            style={[atb.btn, { borderColor: dis ? '#1a1a35' : color + '66' }, dis && atb.btnDis]}
+            onPress={() => onAttack(weight)}
+            disabled={dis}
+            activeOpacity={0.75}
+          >
+            <Text style={[atb.cost, { color: dis ? '#303050' : color }]}>{cost} SP</Text>
+            <Text style={[atb.label, { color: dis ? '#303050' : '#e0e0f0' }]}>{label}</Text>
+            <Text style={[atb.mult, { color: dis ? '#303050' : color + 'aa' }]}>{mult}</Text>
+          </TouchableOpacity>
+        );
+      })}
+      <TouchableOpacity
+        style={[atb.btn, { borderColor: ready ? '#4caf5066' : '#1a1a35' }, !ready && atb.btnDis]}
+        onPress={onRest}
+        disabled={!ready}
+        activeOpacity={0.75}
+      >
+        <Text style={[atb.cost, { color: ready ? '#4caf50' : '#303050' }]}>+5 SP</Text>
+        <Text style={[atb.label, { color: ready ? '#e0e0f0' : '#303050' }]}>REST</Text>
+        <Text style={[atb.mult, { color: ready ? '#4caf5088' : '#303050' }]}>skip</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+const atb = StyleSheet.create({
+  row:    { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, gap: 6, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
+  btn:    { flex: 1, borderWidth: 1, borderRadius: 8, paddingVertical: 6, alignItems: 'center', backgroundColor: '#0a0a1e' },
+  btnDis: { backgroundColor: '#060610' },
+  cost:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.5, lineHeight: 11 },
+  label:  { fontFamily: 'Orbitron_900Black', fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
+  mult:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.5, lineHeight: 11 },
 });
 
 // ── Result screen ─────────────────────────────────────────────────────────────
@@ -644,14 +681,9 @@ export default function BattleScreen({ navigation, route }: Props) {
   const onPlayerCardMeasure = useCallback((b: Bounds) => { playerActiveBounds.current = b; }, []);
 
   // ── Hover state (drives visual indicators) ────────────────────────────────
-  const [attackTargeted, setAttackTargeted] = useState(false);
   const [swapTargeted,   setSwapTargeted]   = useState(false);
-  const attackTargetedRef = useRef(false);
   const swapTargetedRef   = useRef(false);
 
-  const onAttackHover = useCallback((h: boolean) => {
-    if (h !== attackTargetedRef.current) { attackTargetedRef.current = h; setAttackTargeted(h); }
-  }, []);
   const onSwapHover = useCallback((h: boolean) => {
     if (h !== swapTargetedRef.current) { swapTargetedRef.current = h; setSwapTargeted(h); }
   }, []);
@@ -697,7 +729,7 @@ export default function BattleScreen({ navigation, route }: Props) {
         <View style={s.cardSection}>
           <AIActiveSection
             card={battle.aiActive} revealed={battle.typeRevealed}
-            deckCount={battle.aiDeckCount} targeted={attackTargeted}
+            deckCount={battle.aiDeckCount} targeted={false}
             hitKey={battle.aiHitKey}
             attackKey={battle.aiAttackKey}
             defeatingCard={battle.lastDefeatedAiCard}
@@ -722,12 +754,9 @@ export default function BattleScreen({ navigation, route }: Props) {
             card={battle.playerActive}
             revealed={battle.typeRevealed}
             phase={battle.phase}
-            onAttack={battle.attack}
             deckCount={battle.playerDeckCount}
             onDraw={battle.draw}
             canDraw={battle.canDraw}
-            aiActiveBoundsRef={aiActiveBounds}
-            onAttackHover={onAttackHover}
             swapTargeted={swapTargeted}
             hitKey={battle.playerHitKey}
             defeatingCard={battle.lastDefeatedPlayerCard}
@@ -735,6 +764,14 @@ export default function BattleScreen({ navigation, route }: Props) {
           />
         </View>
       </View>
+
+      {/* Attack buttons */}
+      <AttackButtons
+        phase={battle.phase}
+        stamina={battle.playerActive?.stamina ?? 0}
+        onAttack={battle.attack}
+        onRest={battle.rest}
+      />
 
       {/* Player zone — face-up hand only */}
       <PlayerZone

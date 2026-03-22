@@ -7,9 +7,16 @@ import { BATTLE_REWARDS } from '../data/constants';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type AttackWeight = 'light' | 'medium' | 'heavy';
+
+const WEIGHT_MODIFIER: Record<AttackWeight, number> = { light: 0.8, medium: 1.0, heavy: 1.5 };
+const WEIGHT_COST:     Record<AttackWeight, number> = { light: 1,   medium: 3,   heavy: 5   };
+
 export interface BattleCard extends Card {
   hp: number;
   maxHp: number;
+  stamina:    number;   // current stamina (fluctuates during battle)
+  maxStamina: number;   // card's base stamina stat (never changes)
   // one-time flags
   _shieldUsed:      boolean;
   _smokeUsed:       boolean;
@@ -47,7 +54,8 @@ export interface SideState {
 export type BattleEvent =
   | { type: 'BATTLE_START';   playerActive: { name: string; rarity: string; hp: number; maxHp: number }; aiActive: { name: string; rarity: string; hp: number; maxHp: number } }
   | { type: 'ROUND_START';    round: number; playerHp: number; playerMaxHp: number; aiHp: number; aiMaxHp: number }
-  | { type: 'ATTACK';         attacker: string; attackerSide?: string; defender: string; defenderSide?: string; damage: number; bonusDamage?: number; typeMultiplier: number; hpBefore: number; hpAfter: number; defenderMaxHp: number; missed: boolean }
+  | { type: 'ATTACK';         attacker: string; attackerSide?: string; defender: string; defenderSide?: string; damage: number; bonusDamage?: number; typeMultiplier: number; attackWeight?: AttackWeight; hpBefore: number; hpAfter: number; defenderMaxHp: number; missed: boolean }
+  | { type: 'REST';           card: string; side: 'player' | 'ai'; staminaBefore: number; staminaAfter: number }
   | { type: 'ABILITY';        ability: string; card: string; side?: string; effect: string; hpAfter?: number; maxHp?: number }
   | { type: 'DEFEAT';         card: string; byCard: string }
   | { type: 'CARD_ENTER';     side: 'player' | 'ai'; card: string; rarity: string; hp: number; maxHp: number }
@@ -108,10 +116,13 @@ export function effSpeed(bc: BattleCard): number {
 // ── 3. Battle card init ───────────────────────────────────────────────────────
 
 function initBattleCard(card: Card, fullDeck: Card[]): BattleCard {
+  const baseStamina = card.stamina ?? 10;
   const bc: BattleCard = {
     ...card,
-    hp:    calcMaxHp(card),
-    maxHp: calcMaxHp(card),
+    hp:         calcMaxHp(card),
+    maxHp:      calcMaxHp(card),
+    stamina:    baseStamina,
+    maxStamina: baseStamina,
     ability: card.ability ?? null as any,
     _shieldUsed:       false,
     _smokeUsed:        false,
@@ -204,7 +215,10 @@ export function aiSelectCard(hand: BattleCard[], opponentActiveType: string): Ba
 
 // ── 9. Execute one attack ─────────────────────────────────────────────────────
 
-export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[]): { damage: number; killed: boolean } {
+export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[], weight: AttackWeight = 'medium'): { damage: number; killed: boolean } {
+  // Deduct stamina cost (can't go below 0)
+  atk.stamina = Math.max(0, atk.stamina - WEIGHT_COST[weight]);
+
   let mult = getTypeMultiplier(atk.type, def.type);
 
   // Adaptable (defender)
@@ -226,8 +240,9 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   atkPow = Math.round(atkPow * atkSide.attackMult);
   if (atk._dominateDebuff && !isImmune(atk)) atkPow = Math.round(atkPow * 0.75);
 
-  // v2 damage formula: max(5, round(power × 0.4 × typeMultiplier − defense × 0.15))
-  let dmg = Math.max(5, Math.round(atkPow * 0.4 * mult - effDefense(def) * 0.15));
+  // v2 damage formula: max(5, round(power × 0.4 × typeMultiplier × staminaModifier − defense × 0.15))
+  const staminaMod = WEIGHT_MODIFIER[weight];
+  let dmg = Math.max(5, Math.round(atkPow * 0.4 * mult * staminaMod - effDefense(def) * 0.15));
 
   if (atk.ability === 'Adrenaline'  && atk.hp < atk.maxHp * 0.3)   dmg = Math.ceil(dmg * 1.2);
   if (atk.ability === 'Momentum'    && atk._momentumStacks > 0)      dmg = Math.ceil(dmg * (1 + atk._momentumStacks * 0.1));
@@ -246,7 +261,7 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   if (def.ability === 'Smoke Screen' && !def._smokeUsed) {
     def._smokeUsed = true;
     if (Math.random() < 0.5) {
-      log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: 0, typeMultiplier: mult, hpBefore: def.hp, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: true });
+      log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: 0, typeMultiplier: mult, attackWeight: weight, hpBefore: def.hp, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: true });
       return { damage: 0, killed: false };
     }
   }
@@ -260,7 +275,7 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   const hpBefore = def.hp;
   def.hp = Math.max(0, def.hp - dmg);
 
-  log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: dmg, bonusDamage: bonus || undefined, typeMultiplier: mult, hpBefore, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: false });
+  log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: dmg, bonusDamage: bonus || undefined, typeMultiplier: mult, attackWeight: weight, hpBefore, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: false });
 
   // On-damage triggers
   if (def.ability === 'Counterstrike' && Math.random() < 0.25) {
@@ -353,7 +368,20 @@ export function resolvePostRound(playerSide: SideState, aiSide: SideState, log: 
         log.push({ type: 'ABILITY', ability: 'Resilience', card: bc.name, effect: `+${heal} HP`, hpAfter: bc.hp, maxHp: bc.maxHp });
       }
     }
+    // Hand stamina regen: each card in hand gains +1 stamina per round
+    for (const c of side.hand) {
+      c.stamina = Math.min(c.maxStamina, c.stamina + 1);
+    }
   }
+}
+
+// ── 12b. Rest action ──────────────────────────────────────────────────────────
+// Adds +5 stamina to the active card (capped at maxStamina). Returns stamina gained.
+
+export function applyRestAction(bc: BattleCard, side: SideState, log: BattleEvent[]): void {
+  const before = bc.stamina;
+  bc.stamina = Math.min(bc.maxStamina, bc.stamina + 5);
+  log.push({ type: 'REST', card: bc.name, side: side._label, staminaBefore: before, staminaAfter: bc.stamina });
 }
 
 // ── 13. AI strategic swap ─────────────────────────────────────────────────────
@@ -362,7 +390,7 @@ export function aiSwapTarget(aSide: SideState, pSide: SideState): BattleCard | n
   if (!aSide.active || aSide.hand.length === 0 || !pSide.active) return null;
   const hpPct = aSide.active.hp / aSide.active.maxHp;
   if (hpPct > 0.35) return null;
-  const adv = aSide.hand.filter(c => getTypeMultiplier(c.type, pSide.active.type) === 1.5);
+  const adv = aSide.hand.filter(c => getTypeMultiplier(c.type, pSide.active.type) === 2.0);
   if (adv.length) return adv.reduce((b, c) => c.hp > b.hp ? c : b);
   if (hpPct <= 0.2) {
     const best = aSide.hand.reduce((b, c) => c.hp > b.hp ? c : b);
@@ -387,10 +415,31 @@ export function executeAIProactiveSwap(aSide: SideState, pSide: SideState, log: 
 // Called once per round, independently of what the player chose.
 // Priority: swap (critical HP) > draw (empty hand) > attack.
 
-export function aiDecide(aSide: SideState, pSide: SideState): 'attack' | 'draw' | 'swap' {
+export function aiDecide(aSide: SideState, pSide: SideState): 'attack' | 'draw' | 'swap' | 'rest' {
+  // Must rest if stamina is 0 — no attack option available
+  if (aSide.active.stamina === 0) return 'rest';
   if (aiSwapTarget(aSide, pSide)) return 'swap';
+  // Draw as an action (costs turn) when hand is empty — same rule as player
   if (aSide.hand.length === 0 && aSide.deck.length > 0) return 'draw';
   return 'attack';
+}
+
+// ── 14b. AI attack weight selection ──────────────────────────────────────────
+// Called after aiDecide returns 'attack'. Picks the best weight given stamina,
+// type advantage, and HP.
+
+export function aiChooseAttackWeight(aSide: SideState, pSide: SideState): AttackWeight {
+  const stamina = aSide.active.stamina;
+  const mult    = getTypeMultiplier(aSide.active.type, pSide.active?.type ?? '');
+  const hpPct   = aSide.active.hp / aSide.active.maxHp;
+
+  // Heavy: type advantage, full stamina available, healthy HP
+  if (stamina >= 5 && mult >= 2.0 && hpPct > 0.3) return 'heavy';
+  // Light: low stamina or near death — conserve
+  if (stamina <= 2 || hpPct < 0.25) return 'light';
+  // Medium: default
+  if (stamina >= 3) return 'medium';
+  return 'light';
 }
 
 // ── 15. Battle reward calculation ─────────────────────────────────────────────

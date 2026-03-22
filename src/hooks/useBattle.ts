@@ -13,17 +13,17 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { TIER_INFO } from '../data/constants';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
-  BattleCard, SideState, BattleEvent,
+  BattleCard, SideState, BattleEvent, AttackWeight,
   initSideState, applyEntryEffects, effSpeed,
   executeAttack, resolveKill, resolveDefeat,
-  drawCard, aiSelectCard, aiDecide,
+  drawCard, aiSelectCard, aiDecide, aiChooseAttackWeight, applyRestAction,
   executeAIProactiveSwap, resolvePostRound,
   calcBattleRewards,
 } from '../battle/battleEngine';
 import { buildAiDeck } from '../battle/aiDeck';
 
 export type BattlePhase = 'init' | 'ready' | 'animating' | 'result' | 'selecting' | 'swapping' | 'done';
-type RoundAction = 'attack' | 'draw' | 'swap';
+type RoundAction = 'attack' | 'draw' | 'swap' | 'rest';
 
 export interface UseBattleResult {
   phase:           BattlePhase;
@@ -49,7 +49,8 @@ export interface UseBattleResult {
   lastDefeatedPlayerCard:  BattleCard | null;  // player's last killed card (for defeat animation)
   lastDefeatedAiCard:      BattleCard | null;  // AI's last killed card (for defeat animation)
   swapOutCardId:           number | null;      // id of the card that just moved from active→hand
-  attack:          () => void;
+  attack:          (weight: AttackWeight) => void;
+  rest:            () => void;
   draw:            () => void;
   enterSwapMode:   () => void;
   cancelSwapMode:  () => void;
@@ -259,6 +260,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       drawCard(a);
     } else if (aiAction === 'swap') {
       executeAIProactiveSwap(a, p, events);
+    } else if (aiAction === 'rest') {
+      applyRestAction(a.active, a, events);
     }
     // 'attack' has no pre-combat side effect
   }, []);
@@ -272,7 +275,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   //  Free hit     │  step1: AI action shown  step1: AI action shown
   //               │  step2: player hits AI   —
   //
-  const attack = useCallback(() => {
+  const attack = useCallback((weight: AttackWeight) => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     const a = aRef.current!;
@@ -293,7 +296,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       refresh();
       // Step 2 (t=STEP_MS): player's free hit
       setTimeout(() => {
-        const r = executeAttack(p.active, a.active, p, a, events);
+        const r = executeAttack(p.active, a.active, p, a, events, weight);
         setTypeRevealed(true);
         setAiHitKey(k => k + 1);
         const aKilled = r.killed || a.active.hp <= 0;
@@ -314,15 +317,30 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       }, STEP_MS);
 
     } else {
-      // ── Both attack: sequential by speed order ──────────────────────────
-      const pSpd = effSpeed(p.active);
-      const aSpd = effSpeed(a.active);
-      const playerFirst = pSpd >= aSpd;
-      const [fSide, fOpp] = playerFirst ? [p, a] as const : [a, p] as const;
-      const [sSide, sOpp] = playerFirst ? [a, p] as const : [p, a] as const;
+      // ── Both attack: determine turn order ───────────────────────────────
+      // Heavy attacker always goes second. Exception: both Heavy → speed check.
+      const aiWeight    = aiChooseAttackWeight(a, p);
+      const pSpd        = effSpeed(p.active);
+      const aSpd        = effSpeed(a.active);
+      const bothHeavy   = weight === 'heavy' && aiWeight === 'heavy';
+      const playerHeavy = weight === 'heavy' && !bothHeavy;
+      const aiHeavy     = aiWeight === 'heavy' && !bothHeavy;
 
-      // Step 1 (t=0): first hit (player's spring-back is the visual "lunge")
-      const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events);
+      // playerFirst: true if player attacks before AI this round
+      let playerFirst: boolean;
+      if (playerHeavy)     playerFirst = false;  // player chose Heavy → goes second
+      else if (aiHeavy)    playerFirst = true;   // AI chose Heavy → player goes first
+      else                 playerFirst = pSpd >= aSpd; // normal speed check
+
+      const [fSide, fOpp, fWeight] = playerFirst
+        ? [p, a, weight]    as const
+        : [a, p, aiWeight]  as const;
+      const [sSide, sOpp, sWeight] = playerFirst
+        ? [a, p, aiWeight]  as const
+        : [p, a, weight]    as const;
+
+      // Step 1 (t=0): first hit
+      const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight);
       setTypeRevealed(true);
       if (fSide === p) { setAiHitKey(k => k + 1); }
       else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
@@ -338,7 +356,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       } else {
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
-          const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events);
+          const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight);
           if (sSide === p) { setAiHitKey(k => k + 1); }
           else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
           const pKilled = p.active.hp <= 0;
@@ -391,6 +409,62 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       // Step 2 (t=STEP_MS): AI free hit on player
       setTimeout(() => {
         const r = executeAttack(a.active, p.active, a, p, events);
+        setPlayerHitKey(k => k + 1);
+        setAiAttackKey(k => k + 1);
+        const pKilled = r.killed || p.active.hp <= 0;
+        if (pKilled) setLastDefeatedPlayerCard(p.active);
+        refresh();
+        setTimeout(() => {
+          if (pKilled) {
+            resolveKill(a.active, a, p, events);
+            resolveDefeat(p.active, p, events);
+            (p as any).active = null;
+            if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+            if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+            setPhase('result'); refresh();
+          } else {
+            finishRound(events);
+          }
+        }, STEP_MS);
+      }, STEP_MS);
+    }
+  }, [phase, round, executeAiAction, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── REST — sequential steps ────────────────────────────────────────────────
+  //  step 1 (t=0):       player rests (+5 stamina) — no attack
+  //  step 2 (t=STEP_MS): AI non-combat action shown, or AI free hit fires
+  //  step 3 (t=2*STEP_MS or STEP_MS): finish or handle death
+  const rest = useCallback(() => {
+    if (phase !== 'ready') return;
+    const p = pRef.current!;
+    const a = aRef.current!;
+    setLastDefeatedPlayerCard(null);
+    setLastDefeatedAiCard(null);
+    const events: BattleEvent[] = [];
+    eventsRef.current = events;
+    events.push({ type: 'ROUND_START', round, playerHp: p.active.hp, playerMaxHp: p.active.maxHp, aiHp: a.active.hp, aiMaxHp: a.active.maxHp });
+    setTypeRevealed(false);
+    setPhase('animating');
+
+    // Step 1 (t=0): apply rest to player
+    applyRestAction(p.active, p, events);
+    refresh();
+
+    const aiAction = aiDecide(a, p);
+
+    if (aiAction !== 'attack') {
+      // Step 2 (t=STEP_MS): AI non-combat action
+      setTimeout(() => {
+        executeAiAction(aiAction, events);
+        refresh();
+        // Step 3 (t=2*STEP_MS): no combat — finish
+        setTimeout(() => finishRound(events), STEP_MS);
+      }, STEP_MS);
+    } else {
+      // Step 2 (t=STEP_MS): AI free hit on resting player
+      setTimeout(() => {
+        const aiWeight = aiChooseAttackWeight(a, p);
+        const r = executeAttack(a.active, p.active, a, p, events, aiWeight);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
         const pKilled = r.killed || p.active.hp <= 0;
@@ -530,6 +604,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     lastDefeatedAiCard,
     swapOutCardId,
     attack,
+    rest,
     draw,
     enterSwapMode,
     cancelSwapMode,
