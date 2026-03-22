@@ -54,6 +54,7 @@ function computeNewAchievements(
   ownedAvatars: string[],
   alreadyEarned: string[],
   roster: Card[],
+  battleStats: Record<string, number>,
 ): Achievement[] {
   const earned = new Set(alreadyEarned);
   const newlyEarned: Achievement[] = [];
@@ -72,7 +73,7 @@ function computeNewAchievements(
 
   for (const ach of ACHIEVEMENTS) {
     if (earned.has(ach.id)) continue;
-    const { type, n, rarity, alliance, pack, pct } = ach.req;
+    const { type, n, rarity, alliance, pack, pct, stat } = ach.req;
     let met = false;
 
     switch (type) {
@@ -95,6 +96,9 @@ function computeNewAchievements(
         }
         break;
       }
+      case 'battle_stat':
+        met = stat ? (battleStats[stat] ?? 0) >= n : false;
+        break;
     }
 
     if (met) newlyEarned.push(ach);
@@ -133,6 +137,8 @@ export interface GameState {
   addBattleCooldowns: (cardIds: number[]) => void;
   battleWinStreak: number;
   recordBattleResult: (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => void;
+  battleStats: Record<string, number>;
+  recordBattleStats: (delta: Record<string, number>) => void;
 }
 
 export function useGameState(uid: string, initialData?: PersistedGameData | null, cardRoster: Card[] = ALL_CARDS): GameState {
@@ -158,6 +164,10 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   });
   const [activeAvatar, setActiveAvatar] = useState(() =>
     initialData?.activeAvatar ?? 'a1');
+
+  // ── Battle stats ──────────────────────────────────────────────────────────
+  const [battleStats, setBattleStats] = useState<Record<string, number>>(() =>
+    isGod ? {} : (initialData?.battleStats ?? {}));
 
   // ── Battle state ─────────────────────────────────────────────────────────
   const [battleCooldowns, setBattleCooldowns] = useState<Record<number, number>>(() => {
@@ -214,7 +224,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   useEffect(() => {
     if (isGod) return; // god mode already has all achievements
     const newlyEarned = computeNewAchievements(
-      collection, packsOpened, level, totalTrades, ownedAvatars, earnedRef.current, cardRoster,
+      collection, packsOpened, level, totalTrades, ownedAvatars, earnedRef.current, cardRoster, battleStats,
     );
     if (newlyEarned.length === 0) return;
     const newIds = newlyEarned.map(a => a.id);
@@ -224,7 +234,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     for (const a of newlyEarned) { bonusXp += a.xp; bonusCredits += a.credits; }
     if (bonusXp > 0) setXp(prev => prev + bonusXp);
     if (bonusCredits > 0) setCoins(prev => prev + bonusCredits);
-  }, [collection, packsOpened, level, totalTrades, ownedAvatars]);
+  }, [collection, packsOpened, level, totalTrades, ownedAvatars, battleStats]);
 
   // ── Firestore save ────────────────────────────────────────────────────────
   // Always keep a ref with the latest payload so the unmount save is never stale.
@@ -238,6 +248,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     earnedAchievements,
     battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
     battleWinStreak,
+    battleStats:     Object.fromEntries(Object.entries(battleStats)),
   };
 
   // Skip saving on the very first render — the mount-time state is just
@@ -257,7 +268,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak, battleStats]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -332,6 +343,22 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   const dismissAchievement = () =>
     setPendingAchievements(prev => prev.slice(1));
 
+  const recordBattleStats = (delta: Record<string, number>) => {
+    if (isGod) return;
+    setBattleStats(prev => {
+      const next = { ...prev };
+      for (const [key, val] of Object.entries(delta)) {
+        if (key === 'maxWinStreak') {
+          // high watermark — take the max
+          next[key] = Math.max(next[key] ?? 0, val);
+        } else {
+          next[key] = (next[key] ?? 0) + val;
+        }
+      }
+      return next;
+    });
+  };
+
   const recordBattleResult = (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => {
     if (isGod) return;
     if (winner === 'player') {
@@ -369,5 +396,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     advanceQuest, dismissAchievement,
     addBattleCooldowns,
     battleWinStreak, recordBattleResult,
+    battleStats, recordBattleStats,
   };
 }

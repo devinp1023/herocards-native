@@ -20,7 +20,7 @@ import {
   executeAIProactiveSwap, resolvePostRound,
   calcBattleRewards,
   initAmpField, gainAmp, triggerAmp as triggerAmpFn, spendAmp as spendAmpFn,
-  aiDecideAmp, isLockOnActive, WEIGHT_AMP, legendaryLocked,
+  aiDecideAmp, isLockOnActive, WEIGHT_AMP, legendaryLocked, getTypeMultiplier,
 } from '../battle/battleEngine';
 import { buildAiDeck } from '../battle/aiDeck';
 
@@ -98,6 +98,29 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   const aRef      = useRef<SideState | null>(null);
   const eventsRef = useRef<BattleEvent[]>([]);
   const ampRef    = useRef<AmpField>(initAmpField());
+
+  // ── Per-battle stats tracking ─────────────────────────────────────────────
+  const perBattleStatsRef = useRef<Record<string, number>>({});
+  function resetPerBattleStats() { perBattleStatsRef.current = {}; }
+  function incStat(key: string, val = 1) {
+    perBattleStatsRef.current[key] = (perBattleStatsRef.current[key] ?? 0) + val;
+  }
+  // Called after any attack by the player to track stamina-based and juggernaut stats.
+  function checkPostPlayerAttack() {
+    const p = pRef.current;
+    if (!p?.active) return;
+    // Iron Will: player card stamina hit 0
+    if (p.active.stamina === 0) {
+      perBattleStatsRef.current.ironWillHit = 1;
+    }
+    // Juggernaut +50%: juggerStacks >= 5 means +50% dmg bonus (5 * 0.1 = 0.5 — 50% bonus)
+    if (p.active.ability === 'Juggernaut' && (p.active._juggerStacks ?? 0) >= 5) {
+      perBattleStatsRef.current.juggernauts50Win = 1;
+    }
+    // Well Rested: Rested and Ready fired for player card — check if _restedAndReady was consumed
+    // _restedAndReady starts true on full-stamina entry and flips false after first attack
+    // We can't check after-the-fact easily; track via ABILITY event for Rested and Ready below
+  }
 
   const [phase,        setPhase]        = useState<BattlePhase>('init');
   const [snap,         setSnap]         = useState<DisplaySnapshot>({
@@ -187,6 +210,14 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     ensureNonLegendaryOpener(p);
     ensureNonLegendaryOpener(a);
 
+    // Reset per-battle stats for new battle
+    resetPerBattleStats();
+
+    // Track opening type disadvantage (player opener vs AI opener)
+    if (getTypeMultiplier(p.active.type, a.active.type) < 1.0) {
+      perBattleStatsRef.current.openingDisadvantage = 1;
+    }
+
     const initEvents: BattleEvent[] = [];
     applyEntryEffects(p.active, p, a, initEvents);
     applyEntryEffects(a.active, a, p, initEvents);
@@ -205,11 +236,177 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   // ── End battle ────────────────────────────────────────────────────────────
   const endBattle = useCallback((w: 'player' | 'ai' | 'tie') => {
     eventsRef.current.push({ type: 'BATTLE_END', winner: w });
-    // Tenacity check: any player deck card has Tenacity → protect streak on loss
+
+    // ── Scan battle events to compute stats ──────────────────────────────────
+    const events = eventsRef.current;
+    const pSide  = pRef.current;
+    const bs: Record<string, number> = {};
+
+    // Basic battle outcome counters
+    bs.battlesPlayed = 1;
+    if (w === 'player') bs.battlesWon = 1;
+    if (w === 'player' && tier >= 3) bs.giantKillerWins = 1;
+    if (w === 'player' && tier === 5) bs.tier5Wins = 1;
+    if (w === 'tie') bs.tieBattles = 1;
+
+    // Win streak high watermark
+    if (w === 'player') {
+      bs.maxWinStreak = gs.battleWinStreak + 1; // recordBattleStats takes max
+    }
+
+    // Amp events
+    const playerAmpTriggers = events.filter(e => e.type === 'AMP_TRIGGER' && (e as any).side === 'player');
+    bs.ampTriggers = playerAmpTriggers.length;
+    bs.ampSwitches = events.filter(e => e.type === 'AMP_SPEND' && (e as any).side === 'player').length;
+
+    // Photo Finish and Amp Race — tracked in perBattleStatsRef during battle
+    bs.photoFinishTriggers    = perBattleStatsRef.current.photoFinishTriggers    ?? 0;
+    bs.ampRaceTriggers        = perBattleStatsRef.current.ampRaceTriggers        ?? 0;
+    bs.battlefieldControlBattles = perBattleStatsRef.current.battlefieldControlBattles ?? 0;
+
+    // Ability activations for player cards
+    const playerCardNames = new Set(
+      playerDeckIds.map(id => gs.cardRoster.find(c => c.id === id)?.name).filter(Boolean),
+    );
+    bs.abilityActivations = events.filter(e =>
+      e.type === 'ABILITY' &&
+      ((e as any).side === 'player' || playerCardNames.has((e as any).card)),
+    ).length;
+
+    // Second Chance survivals (Second Wind or Last Stand for player)
+    bs.secondChanceSurvivals = events.filter(e =>
+      e.type === 'ABILITY' &&
+      ((e as any).ability === 'Second Wind' || (e as any).ability === 'Last Stand') &&
+      ((e as any).side === 'player' || playerCardNames.has((e as any).card)),
+    ).length;
+
+    // Heavy kills: player ATTACK with heavy weight that killed the target (hpAfter <= 0)
+    bs.heavyKills = events.filter(e =>
+      e.type === 'ATTACK' &&
+      (e as any).attackerSide === 'player' &&
+      (e as any).attackWeight === 'heavy' &&
+      (e as any).hpAfter <= 0,
+    ).length;
+
+    // Execute kills: player attacker with Execute ability, target below 25% HP, killed
+    const executeCardNames = new Set(
+      playerDeckIds
+        .map(id => gs.cardRoster.find(c => c.id === id))
+        .filter(c => c?.ability === 'Execute')
+        .map(c => c!.name),
+    );
+    bs.executionerKills = events.filter(e =>
+      e.type === 'ATTACK' &&
+      (e as any).attackerSide === 'player' &&
+      (e as any).hpAfter <= 0 &&
+      (e as any).hpBefore < (e as any).defenderMaxHp * 0.25 &&
+      executeCardNames.has((e as any).attacker),
+    ).length;
+
+    // Iron Will: player won and any player card hit 0 stamina
+    if (w === 'player' && perBattleStatsRef.current.ironWillHit) {
+      bs.ironWillWins = 1;
+    }
+
+    // Well Rested round wins: ABILITY 'Rested and Ready' fired for a player card in a
+    // round where the player also scored a kill (hpAfter <= 0 ATTACK by player, same round)
+    {
+      let wellRestedCount = 0;
+      let restedInRound = false;
+      let killedInRound = false;
+      for (const ev of events) {
+        if (ev.type === 'ROUND_START') {
+          // Tally previous round
+          if (restedInRound && killedInRound) wellRestedCount++;
+          restedInRound = false;
+          killedInRound = false;
+        } else if (
+          ev.type === 'ABILITY' &&
+          (ev as any).ability === 'Rested and Ready' &&
+          playerCardNames.has((ev as any).card)
+        ) {
+          restedInRound = true;
+        } else if (
+          ev.type === 'ATTACK' &&
+          (ev as any).attackerSide === 'player' &&
+          (ev as any).hpAfter <= 0
+        ) {
+          killedInRound = true;
+        }
+      }
+      // Tally last round
+      if (restedInRound && killedInRound) wellRestedCount++;
+      bs.wellRestedRoundWins = wellRestedCount;
+    }
+
+    // Perfect Battle: player won and no player card hit 0 stamina
+    if (w === 'player' && !perBattleStatsRef.current.ironWillHit) {
+      bs.perfectBattles = 1;
+    }
+
+    // The Comeback: player won with active card only (hand and deck empty)
+    if (w === 'player' && pSide && pSide.hand.length === 0 && pSide.deck.length === 0) {
+      bs.comebackWins = 1;
+    }
+
+    // Survivor: player won and Last Stand fired for a player card at least once
+    if (w === 'player') {
+      const lastStandFired = events.some(e =>
+        e.type === 'ABILITY' &&
+        (e as any).ability === 'Last Stand' &&
+        ((e as any).side === 'player' || playerCardNames.has((e as any).card)),
+      );
+      if (lastStandFired) bs.survivorWins = 1;
+    }
+
+    // Type Advantage wins: final kill by player was at typeMultiplier >= 2.0
+    if (w === 'player') {
+      const finalKillAttack = [...events].reverse().find(e =>
+        e.type === 'ATTACK' && (e as any).attackerSide === 'player' && (e as any).hpAfter <= 0,
+      );
+      if (finalKillAttack && (finalKillAttack as any).typeMultiplier >= 2.0) {
+        bs.typeAdvantageWins = 1;
+      }
+    }
+
+    // Cosmic Clash: player won, and the final kill attack had both cards as Cosmic.
+    // Check: player's active card (the winner) is Cosmic, and look up the last defeated AI card type.
+    if (w === 'player' && pSide?.active && pSide.active.type === 'Cosmic') {
+      // Find the last DEFEAT event (that's the final AI card killed)
+      const lastDefeat = [...events].reverse().find(e => e.type === 'DEFEAT');
+      if (lastDefeat) {
+        const defeatedCardName = (lastDefeat as any).card as string;
+        // Look up type from AI roster (find in cardRoster by name, from aRef defeated list)
+        const aFinal = aRef.current;
+        const defeatedCard = aFinal?.defeated.find(c => c.name === defeatedCardName) ??
+          gs.cardRoster.find(c => c.name === defeatedCardName);
+        if (defeatedCard && defeatedCard.type === 'Cosmic') {
+          bs.cosmicClashWins = 1;
+        }
+      }
+    }
+
+    // Against All Odds: player won and had opening type disadvantage
+    if (w === 'player' && perBattleStatsRef.current.openingDisadvantage) {
+      bs.typeDisadvantageWins = 1;
+    }
+
+    // Legendary Lock achievements
+    if (pSide && pSide.killCount >= 3) bs.lockBreakerCount = 1;
+    bs.legendaryUnleashed = perBattleStatsRef.current.legendaryUnleashed ?? 0;
+    if (w === 'player' && perBattleStatsRef.current.legendaryUsed) {
+      bs.legendaryVictorWins = 1;
+    }
+
+    // Juggernaut +50% wins — tracked in perBattleStatsRef
+    if (w === 'player' && perBattleStatsRef.current.juggernauts50Win) {
+      bs.juggernauts50Wins = 1;
+    }
+
+    // ── Finalize ─────────────────────────────────────────────────────────────
     const tenacityProtected = playerDeckIds.some(
       id => gs.cardRoster.find(c => c.id === id)?.ability === 'Tenacity',
     );
-    // Calculate rewards using current streak (before recording result)
     const r = calcBattleRewards(tier, w, gs.battleWinStreak);
     setRewards(r);
     setWinner(w);
@@ -218,6 +415,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     gs.addXp(r.xp);
     gs.addBattleCooldowns(playerDeckIds);
     gs.recordBattleResult(w, tenacityProtected);
+    gs.recordBattleStats(bs);
     refresh();
   }, [tier, playerDeckIds, gs]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -424,6 +622,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       setTimeout(() => {
         const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
         gainAmp(p, WEIGHT_AMP[weight]);
+        checkPostPlayerAttack();
         setTypeRevealed(true);
         setAiHitKey(k => k + 1);
         const aKilled = r.killed || a.active.hp <= 0;
@@ -473,6 +672,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       const staminaBeforeR1 = sSide.active.stamina; // for Stamina Leech check
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
+      if (fSide === p) checkPostPlayerAttack();
       setTypeRevealed(true);
       if (fSide === p) { setAiHitKey(k => k + 1); }
       else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
@@ -497,6 +697,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         setTimeout(() => {
           const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
           gainAmp(sSide, WEIGHT_AMP[sWeight]);
+          if (sSide === p) checkPostPlayerAttack();
           if (sSide === p) { setAiHitKey(k => k + 1); }
           else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
           const pKilled = p.active.hp <= 0;
@@ -693,6 +894,11 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     applyEntryEffects(chosen, p, a, events, true);
     events.push({ type: 'PLAYER_SWAP', card: chosen.name, prev: prev.name });
     gainAmp(p, 3);
+    // Track Legendary Unleashed: player swapped in a Legendary after lock was lifted
+    if (chosen.rarity === 'Legendary' && !legendaryLocked(p)) {
+      incStat('legendaryUnleashed');
+      perBattleStatsRef.current.legendaryUsed = 1;
+    }
     setSwapOutCardId(prev.id);
     setPhase('animating');
     refresh();
@@ -752,6 +958,11 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     p.active = chosen;
     applyEntryEffects(chosen, p, a, eventsRef.current, true);
     eventsRef.current.push({ type: 'CARD_ENTER', side: 'player', card: chosen.name, rarity: chosen.rarity, hp: chosen.hp, maxHp: chosen.maxHp });
+    // Track Legendary Unleashed on forced replacement
+    if (chosen.rarity === 'Legendary' && !legendaryLocked(p)) {
+      incStat('legendaryUnleashed');
+      perBattleStatsRef.current.legendaryUsed = 1;
+    }
     setRound(r => r + 1);
     setPhase('ready');
     refresh();
@@ -763,7 +974,20 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     const p = pRef.current!;
     const a = aRef.current!;
     if (p.amp < 100) return;
+    // Track photo finish: player triggers while opponent had >=80 Amp
+    if (a.amp >= 80) incStat('photoFinishTriggers');
+    // Track amp race: both meters were at 100 this same trigger moment
+    if (a.amp >= 100) incStat('ampRaceTriggers');
     triggerAmpFn(p, a, ampRef.current, eventsRef.current);
+    // Track battlefield control: count distinct effects the player has triggered this battle
+    const triggeredEffects = new Set(
+      eventsRef.current
+        .filter(e => e.type === 'AMP_TRIGGER' && (e as any).side === 'player')
+        .map(e => (e as any).effect),
+    );
+    if (triggeredEffects.size >= 6) {
+      perBattleStatsRef.current.battlefieldControlBattles = 1;
+    }
     refresh();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 

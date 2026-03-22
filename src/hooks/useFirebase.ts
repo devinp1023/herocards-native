@@ -22,6 +22,7 @@ export interface PersistedGameData {
   earnedAchievements: string[];
   battleCooldowns:    Record<string, number>;   // string card-id → timestamp ms
   battleWinStreak:    number;
+  battleStats?:       Record<string, number>;  // cumulative battle stat counters
 }
 
 export async function loadGameData(uid: string): Promise<PersistedGameData | null> {
@@ -44,6 +45,7 @@ export async function loadGameData(uid: string): Promise<PersistedGameData | nul
       earnedAchievements: Array.isArray(d.earnedAchievements)  ? d.earnedAchievements : [],
       battleCooldowns:    d.battleCooldowns    ?? {},
       battleWinStreak:    typeof d.battleWinStreak === 'number' ? d.battleWinStreak : 0,
+      battleStats:        d.battleStats        ?? {},
     };
   } catch {
     return null;
