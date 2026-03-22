@@ -88,6 +88,8 @@ export interface SideState {
   siegeStacks:        number;  // stamina cap reduction from opponent Siege (0 to maxStamina-3)
   pendingFullStamina: boolean; // Death Mark reward: next card enters at full stamina
   pendingPayback:     number;  // Payback: damage to deal to the next card this side plays
+  // ── Sprint 5: Legendary Lock ──────────────────────────────────────────────
+  killCount:          number;  // number of opponent cards defeated; must be ≥ 3 to play a Legendary
 }
 
 export type BattleEvent =
@@ -233,6 +235,8 @@ export function initSideState(deck: Card[], label: 'player' | 'ai'): SideState {
     siegeStacks:        0,
     pendingFullStamina: false,
     pendingPayback:     0,
+    // Sprint 5
+    killCount:          0,
   };
 }
 
@@ -585,7 +589,14 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
 
 // ── 10. On-kill triggers ──────────────────────────────────────────────────────
 
+export function legendaryLocked(side: SideState): boolean {
+  return side.killCount < 3;
+}
+
 export function resolveKill(killer: BattleCard, killerSide: SideState, opponentSide: SideState, log: BattleEvent[]): void {
+  // Sprint 5: track kills for Legendary Lock
+  killerSide.killCount += 1;
+
   if (killer.ability === 'Fortify') {
     killer._fortifyBonus += 8;
     log.push({ type: 'ABILITY', ability: 'Fortify', card: killer.name, effect: `Defence +8 (total: +${killer._fortifyBonus})` });
@@ -803,11 +814,24 @@ export function aiSwapTarget(aSide: SideState, pSide: SideState): BattleCard | n
     return null;
   }
 
+  // Sprint 5: Legendary Lock — if lock is active and kill count is 2, don't proactively
+  // swap away; prioritise securing the 3rd kill to unlock Legendary play
+  if (legendaryLocked(aSide) && aSide.killCount === 2 && aSide.hand.some(c => c.rarity === 'Legendary')) {
+    return null;
+  }
+
   if (hpPct > 0.35) return null;
-  const adv = aSide.hand.filter(c => getTypeMultiplier(c.type, pSide.active.type) === 2.0);
+
+  // Sprint 5: filter out locked Legendaries from swap candidates
+  const eligible = legendaryLocked(aSide)
+    ? aSide.hand.filter(c => c.rarity !== 'Legendary')
+    : aSide.hand;
+  if (eligible.length === 0) return null;
+
+  const adv = eligible.filter(c => getTypeMultiplier(c.type, pSide.active.type) === 2.0);
   if (adv.length) return adv.reduce((b, c) => c.hp > b.hp ? c : b);
   if (hpPct <= 0.2) {
-    const best = aSide.hand.reduce((b, c) => c.hp > b.hp ? c : b);
+    const best = eligible.reduce((b, c) => c.hp > b.hp ? c : b);
     if (best.hp > aSide.active.hp) return best;
   }
   return null;

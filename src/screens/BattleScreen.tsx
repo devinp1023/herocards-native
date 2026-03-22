@@ -423,30 +423,34 @@ const az = StyleSheet.create({
 
 // ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
 function HandCard({ card, phase, onSelect, onSwap, index, total,
-  playerActiveBoundsRef, onSwapHover, isReturned }: {
+  playerActiveBoundsRef, onSwapHover, isReturned, playerKillCount }: {
   card: BattleCard; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   index: number; total: number;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onSwapHover: (h: boolean) => void;
   isReturned: boolean;
+  playerKillCount: number;
 }) {
-  const dragX          = useRef(new Animated.Value(0)).current;
-  const dragY          = useRef(new Animated.Value(0)).current;
-  const phaseRef       = useRef(phase);
-  const onSelectRef    = useRef(onSelect);
-  const onSwapRef      = useRef(onSwap);
-  const onSwapHoverRef = useRef(onSwapHover);
-  const cardIdRef      = useRef(card.id);
+  const legendaryLock = card.rarity === 'Legendary' && playerKillCount < 3;
+  const dragX              = useRef(new Animated.Value(0)).current;
+  const dragY              = useRef(new Animated.Value(0)).current;
+  const phaseRef           = useRef(phase);
+  const onSelectRef        = useRef(onSelect);
+  const onSwapRef          = useRef(onSwap);
+  const onSwapHoverRef     = useRef(onSwapHover);
+  const cardIdRef          = useRef(card.id);
+  const legendaryLockRef   = useRef(legendaryLock);
   // Stable local ref so the PanResponder closure (created once) always reads
   // the latest prop value rather than the stale first-render value.
   const playerBoundsRef = useRef(playerActiveBoundsRef);
-  phaseRef.current        = phase;
-  onSelectRef.current     = onSelect;
-  onSwapRef.current       = onSwap;
-  onSwapHoverRef.current  = onSwapHover;
-  cardIdRef.current       = card.id;
-  playerBoundsRef.current = playerActiveBoundsRef;
+  phaseRef.current         = phase;
+  onSelectRef.current      = onSelect;
+  onSwapRef.current        = onSwap;
+  onSwapHoverRef.current   = onSwapHover;
+  cardIdRef.current        = card.id;
+  legendaryLockRef.current = legendaryLock;
+  playerBoundsRef.current  = playerActiveBoundsRef;
 
   // ── Entrance animation on mount ──────────────────────────────────────────────
   const entryScale = useSharedValue(0.6);
@@ -468,7 +472,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
 
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder:  (_, gs) => (phaseRef.current === 'ready' || phaseRef.current === 'selecting') && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
+    onMoveShouldSetPanResponder:  (_, gs) => !legendaryLockRef.current && (phaseRef.current === 'ready' || phaseRef.current === 'selecting') && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
     onPanResponderMove: (_, gs) => {
       dragX.setValue(gs.dx * 0.7);
       dragY.setValue(gs.dy * 0.7);
@@ -481,10 +485,12 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
     onPanResponderRelease: (_, gs) => {
       const p          = phaseRef.current;
       const id         = cardIdRef.current;
+      const locked     = legendaryLockRef.current;
       const bounds     = playerBoundsRef.current?.current ?? null;
       const overTarget = isOver(bounds, gs.moveX, gs.moveY);
       onSwapHoverRef.current(false);
       springBack();
+      if (locked) return; // silently reject locked Legendary
       if (p === 'selecting' && overTarget)  setTimeout(() => onSelectRef.current(id), 50);
       else if (p === 'ready' && overTarget) setTimeout(() => onSwapRef.current(id),   80);
     },
@@ -492,6 +498,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   })).current;
 
   const color = RC[card.rarity]?.color ?? '#808898';
+  const killsNeeded = 3 - playerKillCount;
 
   return (
     <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index }]}>
@@ -502,6 +509,11 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
         <View style={hc.col}>
           <View style={[hc.frame, { borderColor: color + '33' }]}>
             <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
+            {legendaryLock && (
+              <View style={hc.lockOverlay} pointerEvents="none">
+                <Text style={hc.lockText}>{killsNeeded} more{'\n'}kill{killsNeeded !== 1 ? 's' : ''}</Text>
+              </View>
+            )}
           </View>
           <View style={{ width: HAND_W, alignItems: 'center' }}>
             <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} compact />
@@ -512,17 +524,20 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   );
 }
 const hc = StyleSheet.create({
-  col:   { alignItems: 'flex-start' },
-  frame: { borderWidth: 1, borderRadius: 6, overflow: 'hidden' },
+  col:         { alignItems: 'flex-start' },
+  frame:       { borderWidth: 1, borderRadius: 6, overflow: 'hidden' },
+  lockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', borderRadius: 5 },
+  lockText:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#ffc04a', textAlign: 'center', lineHeight: 10, letterSpacing: 0.3 },
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
-function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId }: {
+function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId, playerKillCount }: {
   hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onSwapHover: (h: boolean) => void;
   swapOutCardId: number | null;
+  playerKillCount: number;
 }) {
   return (
     <View style={pz.container}>
@@ -536,6 +551,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
             playerActiveBoundsRef={playerActiveBoundsRef}
             onSwapHover={onSwapHover}
             isReturned={card.id === swapOutCardId}
+            playerKillCount={playerKillCount}
           />
         ) : (
           <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: 0 }}>
@@ -899,6 +915,7 @@ export default function BattleScreen({ navigation, route }: Props) {
         playerActiveBoundsRef={playerActiveBounds}
         onSwapHover={onSwapHover}
         swapOutCardId={battle.swapOutCardId}
+        playerKillCount={battle.playerKillCount}
       />
 
 

@@ -20,7 +20,7 @@ import {
   executeAIProactiveSwap, resolvePostRound,
   calcBattleRewards,
   initAmpField, gainAmp, triggerAmp as triggerAmpFn, spendAmp as spendAmpFn,
-  aiDecideAmp, isLockOnActive, WEIGHT_AMP,
+  aiDecideAmp, isLockOnActive, WEIGHT_AMP, legendaryLocked,
 } from '../battle/battleEngine';
 import { buildAiDeck } from '../battle/aiDeck';
 
@@ -52,6 +52,8 @@ export interface UseBattleResult {
   ampTriggeredBy:  'player' | 'ai' | null;
   canTrigger:      boolean;
   canSpend:        boolean;
+  // ── Sprint 5: Legendary Lock ──────────────────────────────────────────────
+  playerKillCount: number;  // kills credited to the player side
   // ── Session 12 animation signals ─────────────────────────────────────────
   playerHitKey:            number;              // increments each time player's card is hit
   aiHitKey:                number;              // increments each time AI's card is hit
@@ -86,6 +88,7 @@ interface DisplaySnapshot {
   ampActiveEffect: AmpEffectName | null;
   ampRoundsLeft:   number;
   ampTriggeredBy:  'player' | 'ai' | null;
+  playerKillCount: number;
 }
 
 export function useBattle(playerDeckIds: number[], tier: number): UseBattleResult {
@@ -103,6 +106,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     playerAmp: 0, aiAmp: 0,
     ampPoolEffect: ampRef.current.poolEffect,
     ampActiveEffect: null, ampRoundsLeft: 0, ampTriggeredBy: null,
+    playerKillCount: 0,
   });
   const [round,        setRound]        = useState(1);
   const [winner,       setWinner]       = useState<'player' | 'ai' | 'tie' | null>(null);
@@ -134,6 +138,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       ampActiveEffect: ampRef.current.activeEffect,
       ampRoundsLeft:   ampRef.current.effectRoundsLeft,
       ampTriggeredBy:  ampRef.current.triggeredBy,
+      playerKillCount: pRef.current?.killCount ?? 0,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -162,6 +167,26 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     const aiCards     = buildAiDeck(tier, cardRoster);
     const p = initSideState(playerCards, 'player');
     const a = initSideState(aiCards,     'ai');
+
+    // Sprint 5: Legendary Lock — opening card cannot be Legendary.
+    // If the active card is Legendary, find the first non-Legendary in hand
+    // and swap it to active, pushing the Legendary to the back of the hand.
+    const ensureNonLegendaryOpener = (side: SideState) => {
+      if (side.active.rarity === 'Legendary') {
+        const firstNonLeg = side.hand.findIndex(c => c.rarity !== 'Legendary');
+        if (firstNonLeg !== -1) {
+          const replacement = side.hand[firstNonLeg];
+          side.hand[firstNonLeg] = side.active;
+          side.active = replacement;
+        }
+        // If entire hand is also Legendary (extremely unlikely), leave as-is —
+        // the player still starts with a Legendary opener which is undesirable
+        // but gracefully handled since no non-Legendary exists.
+      }
+    };
+    ensureNonLegendaryOpener(p);
+    ensureNonLegendaryOpener(a);
+
     const initEvents: BattleEvent[] = [];
     applyEntryEffects(p.active, p, a, initEvents);
     applyEntryEffects(a.active, a, p, initEvents);
@@ -196,6 +221,22 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     refresh();
   }, [tier, playerDeckIds, gs]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Sprint 5: check if a side is stuck — all remaining hand cards are
+  //    Legendary while the Legendary Lock is still active. Returns true if
+  //    that side has immediately lost and endBattle was scheduled.
+  const checkLegendaryStuck = useCallback((side: SideState, sideLabel: 'player' | 'ai', _events: BattleEvent[]): boolean => {
+    if (!legendaryLocked(side)) return false;
+    if (side.hand.length === 0) return false;
+    const allLegendary = side.hand.every(c => c.rarity === 'Legendary');
+    if (!allLegendary) return false;
+    // All remaining cards are Legendary and lock is active → immediate loss
+    const winner = sideLabel === 'player' ? 'ai' : 'player';
+    setPhase('result');
+    refresh();
+    setTimeout(() => endBattle(winner), 0);
+    return true;
+  }, [endBattle]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Post-round cleanup (bleed ticks, Resilience, bleed deaths) ────────────
   const finishRound = useCallback((events: BattleEvent[]) => {
     const p = pRef.current!;
@@ -221,6 +262,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       (p as any).active = null;
       if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+      // Sprint 5: player stuck with only locked Legendaries
+      if (checkLegendaryStuck(p, 'player', events)) return;
     }
     if (a.active && a.active.hp <= 0) {
       events.push({ type: 'DEFEAT', card: a.active.name, byCard: 'Bleed' });
@@ -228,11 +271,13 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       setLastDefeatedAiCard(a.active);
       (a as any).active = null;
       if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+      // Sprint 5: AI stuck with only locked Legendaries
+      if (checkLegendaryStuck(a, 'ai', events)) return;
       doAiReplace(events);
     }
     setPhase('result');
     refresh();
-  }, [endBattle]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [endBattle, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-advance: result → ready (or selecting if player card was killed) ──
   useEffect(() => {
@@ -287,6 +332,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       (a as any).active = null;
       if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+      // Sprint 5: AI stuck with only locked Legendaries
+      if (checkLegendaryStuck(a, 'ai', events)) return;
       doAiReplace(events);
       setPhase('result'); refresh(); return;
     }
@@ -299,6 +346,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         (a as any).active = null; (p as any).active = null;
         if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
         if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        // Sprint 5: AI stuck with only locked Legendaries
+        if (checkLegendaryStuck(a, 'ai', events)) return;
         doAiReplace(events);
         if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
         setPhase('result'); refresh(); return;
@@ -306,10 +355,12 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
       (p as any).active = null;
       if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+      // Sprint 5: player stuck with only locked Legendaries
+      if (checkLegendaryStuck(p, 'player', events)) return;
       setPhase('result'); refresh(); return;
     }
     finishRound(events);
-  }, [endBattle, doAiReplace, finishRound]);
+  }, [endBattle, doAiReplace, finishRound, checkLegendaryStuck]);
 
   // ── Execute AI's chosen action (non-combat part) ──────────────────────────
   const executeAiAction = useCallback((aiAction: RoundAction, events: BattleEvent[]) => {
@@ -385,6 +436,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
             resolveDefeat(a.active, a, events, p);
             (a as any).active = null;
             if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+            // Sprint 5: AI stuck with only locked Legendaries
+            if (checkLegendaryStuck(a, 'ai', events)) return;
             doAiReplace(events);
             setPhase('result'); refresh();
           } else {
@@ -514,6 +567,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+            // Sprint 5: player stuck with only locked Legendaries
+            if (checkLegendaryStuck(p, 'player', events)) return;
             setPhase('result'); refresh();
           } else {
             finishRound(events);
@@ -521,7 +576,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── REST — sequential steps ────────────────────────────────────────────────
   //  step 1 (t=0):       player rests (+5 stamina) — no attack
@@ -574,6 +629,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+            // Sprint 5: player stuck with only locked Legendaries
+            if (checkLegendaryStuck(p, 'player', events)) return;
             setPhase('result'); refresh();
           } else {
             finishRound(events);
@@ -581,7 +638,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SWAP MODE (kept for UI compatibility) ──────────────────────────────────
   const enterSwapMode = useCallback(() => {
@@ -606,6 +663,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     if (!chosen || !p.active) return;
     // Lock On: player cannot swap
     if (isLockOnActive(ampRef.current, 'player')) return;
+    // Sprint 5: Legendary Lock — block if chosen card is Legendary and lock is active
+    if (chosen.rarity === 'Legendary' && legendaryLocked(p)) return;
     setLastDefeatedPlayerCard(null);
     setLastDefeatedAiCard(null);
     const events: BattleEvent[] = [];
@@ -669,6 +728,8 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+            // Sprint 5: player stuck with only locked Legendaries
+            if (checkLegendaryStuck(p, 'player', events)) return;
             setPhase('result'); refresh();
           } else {
             finishRound(events);
@@ -676,7 +737,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         }, STEP_MS);
       }, STEP_MS);
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Forced card replacement (active card was killed) ──────────────────────
   const selectCard = useCallback((id: number) => {
@@ -740,6 +801,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     ampTriggeredBy:  snap.ampTriggeredBy,
     canTrigger:      snap.playerAmp >= 100 && phase === 'ready',
     canSpend:        snap.playerAmp >= 50 && phase === 'ready',
+    playerKillCount: snap.playerKillCount,
     playerHitKey,
     aiHitKey,
     aiAttackKey,
