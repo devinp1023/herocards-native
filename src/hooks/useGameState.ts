@@ -131,6 +131,8 @@ export interface GameState {
   advanceQuest: (type: Quest['req']['type'], opts?: { rarity?: string; alliance?: string }) => void;
   dismissAchievement: () => void;
   addBattleCooldowns: (cardIds: number[]) => void;
+  battleWinStreak: number;
+  recordBattleResult: (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => void;
 }
 
 export function useGameState(uid: string, initialData?: PersistedGameData | null, cardRoster: Card[] = ALL_CARDS): GameState {
@@ -164,6 +166,8 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
       Object.entries(initialData.battleCooldowns).map(([k, v]) => [parseInt(k, 10), v]),
     );
   });
+  const [battleWinStreak, setBattleWinStreak] = useState(() =>
+    isGod ? 0 : (initialData?.battleWinStreak ?? 0));
 
   // ── Quest state ───────────────────────────────────────────────────────────
   const [packsOpened,  setPacksOpened]  = useState(() => initialData?.packsOpened  ?? 0);
@@ -233,6 +237,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     questDate,       questProgress,
     earnedAchievements,
     battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
+    battleWinStreak,
   };
 
   // Skip saving on the very first render — the mount-time state is just
@@ -252,7 +257,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, battleCooldowns]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -327,6 +332,17 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   const dismissAchievement = () =>
     setPendingAchievements(prev => prev.slice(1));
 
+  const recordBattleResult = (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => {
+    if (isGod) return;
+    if (winner === 'player') {
+      setBattleWinStreak(prev => prev + 1);
+    } else if (winner === 'ai') {
+      // Tenacity protection: skip streak reset on one loss
+      if (!tenacityProtected) setBattleWinStreak(0);
+    }
+    // 'tie': streak unchanged (per PRD — Last Effort edge case, neither side earns a win)
+  };
+
   const addBattleCooldowns = (cardIds: number[]) => {
     const now = Date.now();
     setBattleCooldowns(prev => {
@@ -352,5 +368,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     incrementPacksOpened, incrementTrades,
     advanceQuest, dismissAchievement,
     addBattleCooldowns,
+    battleWinStreak, recordBattleResult,
   };
 }

@@ -37,7 +37,7 @@ export interface UseBattleResult {
   playerDeckCount: number;
   aiDeckCount:     number;
   lastEvents:      BattleEvent[];
-  winner:          'player' | 'ai' | null;
+  winner:          'player' | 'ai' | 'tie' | null;
   typeRevealed:    boolean;
   rewards:         { credits: number; xp: number; streakBonus: boolean } | null;
   tierColor:       string;
@@ -105,7 +105,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     ampActiveEffect: null, ampRoundsLeft: 0, ampTriggeredBy: null,
   });
   const [round,        setRound]        = useState(1);
-  const [winner,       setWinner]       = useState<'player' | 'ai' | null>(null);
+  const [winner,       setWinner]       = useState<'player' | 'ai' | 'tie' | null>(null);
   const [typeRevealed, setTypeRevealed] = useState(false);
   const [rewards,      setRewards]      = useState<{ credits: number; xp: number; streakBonus: boolean } | null>(null);
 
@@ -178,17 +178,23 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── End battle ────────────────────────────────────────────────────────────
-  const endBattle = useCallback((w: 'player' | 'ai') => {
+  const endBattle = useCallback((w: 'player' | 'ai' | 'tie') => {
     eventsRef.current.push({ type: 'BATTLE_END', winner: w });
-    const r = calcBattleRewards(tier, w, 0);
+    // Tenacity check: any player deck card has Tenacity → protect streak on loss
+    const tenacityProtected = playerDeckIds.some(
+      id => gs.cardRoster.find(c => c.id === id)?.ability === 'Tenacity',
+    );
+    // Calculate rewards using current streak (before recording result)
+    const r = calcBattleRewards(tier, w, gs.battleWinStreak);
     setRewards(r);
     setWinner(w);
     setPhase('done');
     gs.addCoins(r.credits);
     gs.addXp(r.xp);
     gs.addBattleCooldowns(playerDeckIds);
+    gs.recordBattleResult(w, tenacityProtected);
     refresh();
-  }, [tier, playerDeckIds, gs]);
+  }, [tier, playerDeckIds, gs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Post-round cleanup (bleed ticks, Resilience, bleed deaths) ────────────
   const finishRound = useCallback((events: BattleEvent[]) => {
@@ -197,15 +203,28 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     resolvePostRound(p, a, events, ampRef.current);
     if (p.active && p.active.hp <= 0) {
       events.push({ type: 'DEFEAT', card: p.active.name, byCard: 'Bleed' });
-      resolveDefeat(p.active, p, events);
+      resolveDefeat(p.active, p, events, a);
       setLastDefeatedPlayerCard(p.active);
+      // Last Effort could have killed a.active
+      if (a.active && a.active.hp <= 0) {
+        resolveDefeat(a.active, a, events);
+        setLastDefeatedAiCard(a.active);
+        (a as any).active = null;
+        (p as any).active = null;
+        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
+        if (a.hand.length === 0 && a.deck.length === 0) { (p as any).active = null; setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        (p as any).active = null;
+        doAiReplace(events);
+        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+        setPhase('result'); refresh(); return;
+      }
       (p as any).active = null;
       if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
     }
     if (a.active && a.active.hp <= 0) {
       events.push({ type: 'DEFEAT', card: a.active.name, byCard: 'Bleed' });
-      resolveDefeat(a.active, a, events);
+      resolveDefeat(a.active, a, events, p);
       setLastDefeatedAiCard(a.active);
       (a as any).active = null;
       if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
@@ -241,7 +260,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     if (!next) { endBattle('player'); return; }
     a.hand   = a.hand.filter(c => c.id !== next.id);
     a.active = next;
-    applyEntryEffects(next, a, p, events);
+    applyEntryEffects(next, a, p, events, true);
     events.push({ type: 'CARD_ENTER', side: 'ai', card: next.name, rarity: next.rarity, hp: next.hp, maxHp: next.maxHp });
   }, [endBattle]);
 
@@ -252,26 +271,38 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
     // NOTE: setLastDefeated* must be called by the caller before invoking this function.
     if (aKilled && pKilled) {
-      resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events);
-      resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events);
+      resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
+      resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
       (a as any).active = null; (p as any).active = null;
+      if (a.hand.length === 0 && a.deck.length === 0 && p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
       if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
       if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'),     0); return; }
       if (a.hand.length === 0 && a.deck.length > 0) drawCard(a);
       const next = aiSelectCard(a.hand, 'Brawler');
-      if (next) { a.hand = a.hand.filter(c => c.id !== next.id); a.active = next; applyEntryEffects(next, a, p, events); }
+      if (next) { a.hand = a.hand.filter(c => c.id !== next.id); a.active = next; applyEntryEffects(next, a, p, events, true); }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
       setPhase('result'); refresh(); return;
     }
     if (aKilled) {
-      resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events);
+      resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       (a as any).active = null;
       if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
       doAiReplace(events);
       setPhase('result'); refresh(); return;
     }
     if (pKilled) {
-      resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events);
+      resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
+      // Last Effort could kill a.active
+      if (a.active && a.active.hp <= 0) {
+        resolveDefeat(a.active, a, events);
+        setLastDefeatedAiCard(a.active);
+        (a as any).active = null; (p as any).active = null;
+        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
+        if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        doAiReplace(events);
+        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+        setPhase('result'); refresh(); return;
+      }
       (p as any).active = null;
       if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
@@ -351,7 +382,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
             setLastDefeatedAiCard(a.active);
             gainAmp(p, 15); // +15 for kill
             resolveKill(p.active, p, a, events);
-            resolveDefeat(a.active, a, events);
+            resolveDefeat(a.active, a, events, p);
             (a as any).active = null;
             if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
             doAiReplace(events);
@@ -386,12 +417,17 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         : [p, a, weight]    as const;
 
       // Step 1 (t=0): first hit
+      const staminaBeforeR1 = sSide.active.stamina; // for Stamina Leech check
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
       setTypeRevealed(true);
       if (fSide === p) { setAiHitKey(k => k + 1); }
       else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
       const firstKilled = r1.killed || fOpp.active.hp <= 0;
+      // Stamina Leech: if first attacker has Stamina Leech and drained second attacker to 0, cancel their attack
+      const staminaLeechCancelled = !firstKilled
+        && fSide.active.ability === 'Stamina Leech'
+        && fOpp.active.stamina === 0 && staminaBeforeR1 > 0;
       refresh();
 
       if (firstKilled) {
@@ -400,6 +436,9 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         if (aKilled) { setLastDefeatedAiCard(a.active); gainAmp(fSide, 15); }
         if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(fSide, 15); }
         setTimeout(() => handleCombatDeaths(pKilled, aKilled, events), STEP_MS);
+      } else if (staminaLeechCancelled) {
+        // Second attacker's stamina drained to 0 by Stamina Leech — skip their attack
+        setTimeout(() => finishRound(events), STEP_MS);
       } else {
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
@@ -471,7 +510,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         setTimeout(() => {
           if (pKilled) {
             resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events);
+            resolveDefeat(p.active, p, events, a);
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
@@ -531,7 +570,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
           if (pKilled) {
             gainAmp(a, 15); // +15 for kill
             resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events);
+            resolveDefeat(p.active, p, events, a);
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
@@ -576,10 +615,23 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
     // Step 1 (t=0): apply swap, show animations
     const prev = p.active;
+
+    // Reset Pressure/Siege effects when swapping that card out
+    if (prev.ability === 'Pressure') a.pressureStacks = 0;
+    if (prev.ability === 'Siege') {
+      a.siegeStacks = 0;
+      if (a.active) a.active.stamina = Math.min(a.active.stamina, a.active.maxStamina);
+    }
+    // Reset Juggernaut stacks when swapping out
+    if (prev.ability === 'Juggernaut') {
+      prev._juggerStacks = 0;
+      prev._juggerAttackedThisRound = false;
+    }
+
     p.hand = p.hand.filter(c => c.id !== id);
     p.hand.push(prev);
     p.active = chosen;
-    applyEntryEffects(chosen, p, a, events);
+    applyEntryEffects(chosen, p, a, events, true);
     events.push({ type: 'PLAYER_SWAP', card: chosen.name, prev: prev.name });
     gainAmp(p, 3);
     setSwapOutCardId(prev.id);
@@ -613,7 +665,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
         setTimeout(() => {
           if (pKilled) {
             resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events);
+            resolveDefeat(p.active, p, events, a);
             (p as any).active = null;
             if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
             if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
@@ -637,7 +689,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     setSwapOutCardId(null);
     p.hand   = p.hand.filter(c => c.id !== id);
     p.active = chosen;
-    applyEntryEffects(chosen, p, a, eventsRef.current);
+    applyEntryEffects(chosen, p, a, eventsRef.current, true);
     eventsRef.current.push({ type: 'CARD_ENTER', side: 'player', card: chosen.name, rarity: chosen.rarity, hp: chosen.hp, maxHp: chosen.maxHp });
     setRound(r => r + 1);
     setPhase('ready');

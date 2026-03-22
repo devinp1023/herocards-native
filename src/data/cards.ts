@@ -29,7 +29,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reshapes reality with a single thought.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Immunity"
+    "ability": "Amp Drain"
   },
   {
     "id": 2,
@@ -44,7 +44,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Devours light and bends dimensions at will.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Dominate"
+    "ability": "Amp Drain"
   },
   {
     "id": 3,
@@ -59,7 +59,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Channels the full power of a living star.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Overwhelming Force"
+    "ability": "Last Stand"
   },
   {
     "id": 4,
@@ -74,7 +74,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Exists outside time, rewinding fate itself.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Last Stand"
+    "ability": "Immunity"
   },
   {
     "id": 5,
@@ -89,7 +89,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "One punch collapses mountains into dust.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Apex Predator"
+    "ability": "Nullify"
   },
   {
     "id": 6,
@@ -104,7 +104,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reads and rewrites minds across continents.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Drain"
+    "ability": "Overwhelm"
   },
   {
     "id": 7,
@@ -119,7 +119,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Her armor has never been scratched.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Second Wind"
+    "ability": "Riposte"
   },
   {
     "id": 8,
@@ -134,7 +134,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Launches plasma from fingertips at hypersonic speed.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Overwhelm"
+    "ability": "Amp Surge"
   },
   {
     "id": 9,
@@ -150,7 +150,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_9_1773610522443.png?alt=media&token=7d1bb949-3fd8-45aa-854a-25c62b81fbf0",
-    "ability": "Unstoppable"
+    "ability": "Stamina Vampire"
   },
   {
     "id": 10,
@@ -165,7 +165,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Phases through matter and strikes vital points.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Execute"
+    "ability": "Second Wind"
   },
   {
     "id": 11,
@@ -181,7 +181,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_11_1773608038519.png?alt=media&token=184f5b6a-028f-4758-8845-fa5786fba298",
-    "ability": "Drain"
+    "ability": "Unstoppable"
   },
   {
     "id": 12,
@@ -197,7 +197,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_12_1773695338578.png?alt=media&token=e8a9cbaa-2ad6-4224-9fac-756fc107c15b",
-    "ability": "Overwhelm"
+    "ability": "Second Wind"
   },
   {
     "id": 13,
@@ -213,7 +213,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_13_1773609826307.png?alt=media&token=e16351c2-f0b4-43d5-aaa9-223cf17e5f7f",
-    "ability": "Second Wind"
+    "ability": "Death Mark"
   },
   {
     "id": 14,
@@ -228,7 +228,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Controls tectonic plates and ocean depths.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Unstoppable"
+    "ability": "Stamina Vampire"
   },
   {
     "id": 15,
@@ -244,7 +244,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_15_1773694534072.png?alt=media&token=ec42200d-7e94-4e8c-a5b2-d1e412b7a88f",
-    "ability": "Execute"
+    "ability": "Amp Surge"
   },
   {
     "id": 16,
@@ -259,7 +259,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Freezes targets solid at absolute zero.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Bleed"
+    "ability": "Payback"
   },
   {
     "id": 17,
@@ -274,7 +274,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Outruns lightning and delivers electrified blows.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Momentum"
+    "ability": "Amp Siphon"
   },
   {
     "id": 18,
@@ -290,7 +290,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_18_1773605862822.png?alt=media&token=e9df5e54-33ef-462e-a0f3-a51e04e6b236",
-    "ability": "Intimidate"
+    "ability": "Amp Shield"
   },
   {
     "id": 19,
@@ -306,7 +306,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_19_1773607000501.png?alt=media&token=5c1d9204-f6ed-4be5-adbd-8b8be860ffda",
-    "ability": "Counterstrike"
+    "ability": "Payback"
   },
   {
     "id": 20,
@@ -321,7 +321,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Raises fallen enemies as an undead army.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Intimidate"
+    "ability": "Payback"
   },
   {
     "id": 21,
@@ -337,7 +337,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_21.png?alt=media&token=e7354166-1c39-44e2-b8d1-0c276b880d08",
-    "ability": "Momentum"
+    "ability": "Pressure"
   },
   {
     "id": 22,
@@ -352,7 +352,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Absorbs any impact without flinching once.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Fortify"
+    "ability": "Intimidate"
   },
   {
     "id": 23,
@@ -382,7 +382,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Shifts into predators three times her size.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Counterstrike"
+    "ability": "Fortify"
   },
   {
     "id": 25,
@@ -398,7 +398,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_25_1773695560544.png?alt=media&token=90c03561-b3a2-4aed-a38c-e9efa9d773ad",
-    "ability": "Momentum"
+    "ability": "Fortify"
   },
   {
     "id": 26,
@@ -413,7 +413,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Nanotechnology swarm obeys her every mental command.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Bleed"
+    "ability": "Payback"
   },
   {
     "id": 27,
@@ -428,7 +428,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Regenerates allies and weaponizes healing energy offensively.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Fortify"
+    "ability": "Amp Siphon"
   },
   {
     "id": 28,
@@ -443,7 +443,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Merges with shadows, becoming completely undetectable.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Counterstrike"
+    "ability": "Amp Shield"
   },
   {
     "id": 29,
@@ -458,7 +458,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Fires psychic pulses that shatter concentration.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Bleed"
+    "ability": "Payback"
   },
   {
     "id": 30,
@@ -473,7 +473,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Superheats the air around enemies to ignite them.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Bleed"
+    "ability": "Amp Shield"
   },
   {
     "id": 31,
@@ -489,7 +489,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_31_1773611666131.png?alt=media&token=a2b45503-df04-4b95-93b0-566d2a4c6e4e",
-    "ability": "Momentum"
+    "ability": "Pressure"
   },
   {
     "id": 32,
@@ -504,7 +504,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reinforces her skeleton with living metal alloy.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Fortify"
+    "ability": "Bleed"
   },
   {
     "id": 33,
@@ -519,7 +519,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Rides desert winds and scours enemies with sand.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Intimidate"
+    "ability": "Dead Weight"
   },
   {
     "id": 34,
@@ -534,7 +534,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Triggers instant unconsciousness with a glance.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Counterstrike"
+    "ability": "Amp Shield"
   },
   {
     "id": 35,
@@ -549,7 +549,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Dives at Mach 2, talons shredding steel plating.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Momentum"
+    "ability": "Fortify"
   },
   {
     "id": 36,
@@ -565,7 +565,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_36_1773696003692.png?alt=media&token=91136593-872f-410a-b04c-1b9b0de9568a",
-    "ability": "Bleed"
+    "ability": "Dead Weight"
   },
   {
     "id": 37,
@@ -580,7 +580,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Warps local gravity to crush or repel anything.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Momentum"
+    "ability": "Intimidate"
   },
   {
     "id": 38,
@@ -596,7 +596,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_38_1773608703278.png?alt=media&token=01a942f7-6470-4152-88c0-4098a2fea246",
-    "ability": "Counterstrike"
+    "ability": "Intimidate"
   },
   {
     "id": 39,
@@ -628,7 +628,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_40_1773695896880.png?alt=media&token=c5eb0902-3143-4759-91eb-c3f1c94a8f7f",
-    "ability": "Intimidate"
+    "ability": "Fortify"
   },
   {
     "id": 41,
@@ -643,7 +643,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Creates a zone of absolute darkness around herself.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Counterstrike"
+    "ability": "Amp Shield"
   },
   {
     "id": 42,
@@ -658,7 +658,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Cybernetic arms punch through reinforced concrete easily.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Fortify"
+    "ability": "Amp Shield"
   },
   {
     "id": 43,
@@ -673,7 +673,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Draws life force from enemies to heal allies.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Fortify"
+    "ability": "Pressure"
   },
   {
     "id": 44,
@@ -688,7 +688,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Releases electromagnetic pulses disabling every nearby device.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Intimidate"
+    "ability": "Payback"
   },
   {
     "id": 45,
@@ -703,7 +703,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Channels nature's strength into every devastating strike.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Intimidate"
+    "ability": "Pressure"
   },
   {
     "id": 46,
@@ -718,7 +718,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Vibrates through solid objects at running speed.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Smoke Screen"
+    "ability": "Adaptable"
   },
   {
     "id": 47,
@@ -733,7 +733,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Becomes immovable when standing firm on ground.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Adaptable"
+    "ability": "Smoke Screen"
   },
   {
     "id": 48,
@@ -748,7 +748,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Charges her fists with bioelectric energy.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Adrenaline"
+    "ability": "Rested and Ready"
   },
   {
     "id": 49,
@@ -763,7 +763,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Accelerates natural healing in any living creature.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Rebound"
+    "ability": "Heavy Handed"
   },
   {
     "id": 50,
@@ -778,7 +778,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Teleports short distances leaving smoke decoys.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Smoke Screen"
+    "ability": "Rested and Ready"
   },
   {
     "id": 51,
@@ -793,7 +793,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Remotely hacks and controls enemy weapons mid-battle.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Adaptable"
+    "ability": "Stamina Leech"
   },
   {
     "id": 52,
@@ -808,7 +808,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Wing edges sharp enough to slice through vehicles.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Adrenaline"
+    "ability": "Adaptable"
   },
   {
     "id": 53,
@@ -823,7 +823,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Summons powerful gusts that redirect projectiles.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Adaptable"
+    "ability": "Rebound"
   },
   {
     "id": 54,
@@ -838,7 +838,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Plants false memories convincingly in unsuspecting minds.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Smoke Screen"
+    "ability": "Rebound"
   },
   {
     "id": 55,
@@ -868,7 +868,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Grows extra limbs and natural armor on demand.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Adaptable"
+    "ability": "Rebound"
   },
   {
     "id": 57,
@@ -883,7 +883,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Leaves a fiery trail that burns pursuing enemies.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Rebound"
+    "ability": "Momentum"
   },
   {
     "id": 58,
@@ -914,7 +914,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Fires photon bursts that disorient enemy senses.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Smoke Screen"
+    "ability": "Heavy Handed"
   },
   {
     "id": 60,
@@ -945,7 +945,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Travels through any shadow as if it were a door.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Smoke Screen"
+    "ability": "Rested and Ready"
   },
   {
     "id": 62,
@@ -960,7 +960,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Deploys miniature drone swarms on command.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Pack Tactics"
+    "ability": "Rested and Ready"
   },
   {
     "id": 63,
@@ -976,7 +976,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_63_1773694271380.png?alt=media&token=7161f77a-dd70-4161-a51d-67ef2192462d",
-    "ability": "Adrenaline"
+    "ability": "Smoke Screen"
   },
   {
     "id": 64,
@@ -991,7 +991,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Summons walls of seawater to shield allies.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Adaptable"
+    "ability": "Pack Tactics"
   },
   {
     "id": 65,
@@ -1006,7 +1006,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Makes herself invisible to human perception entirely.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Smoke Screen"
+    "ability": "Adaptable"
   },
   {
     "id": 66,
@@ -1021,7 +1021,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Hurls cursed bones that track and seek enemies.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Pack Tactics"
+    "ability": "Rested and Ready"
   },
   {
     "id": 67,
@@ -1036,7 +1036,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Refracts light into concentrated cutting beams.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Adaptable"
+    "ability": "Adrenaline"
   },
   {
     "id": 68,
@@ -1051,7 +1051,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Hardens her skin to the density of diamonds.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Adaptable"
+    "ability": "Rested and Ready"
   },
   {
     "id": 69,
@@ -1066,7 +1066,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Copies enemy powers for sixty seconds per shift.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Adaptable"
+    "ability": "Rested and Ready"
   },
   {
     "id": 70,
@@ -1081,7 +1081,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Generates EMP shockwaves at full running speed.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Adrenaline"
+    "ability": "Momentum"
   },
   {
     "id": 71,
@@ -1097,7 +1097,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_71.png?alt=media&token=0fc225ab-ad32-4163-960d-f1bae6e89648",
-    "ability": "Pack Tactics"
+    "ability": "Stamina Leech"
   },
   {
     "id": 72,
@@ -1112,7 +1112,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Concentrates sunlight into a laser-hot lance.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Rebound"
+    "ability": "Heavy Handed"
   },
   {
     "id": 73,
@@ -1172,7 +1172,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Fires adhesive webs strong enough to stop cars.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Pack Tactics"
+    "ability": "Momentum"
   },
   {
     "id": 77,
@@ -1188,7 +1188,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_77.png?alt=media&token=7d6cc45f-f63d-4a62-85bc-f955b2aaf8cc",
-    "ability": "Adaptable"
+    "ability": "Pack Tactics"
   },
   {
     "id": 78,
@@ -1203,7 +1203,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Crystal growths deflect projectiles in all directions.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Adaptable"
+    "ability": "Momentum"
   },
   {
     "id": 79,
@@ -1218,7 +1218,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Amplifies pain receptors without making physical contact.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Rebound"
+    "ability": "Adaptable"
   },
   {
     "id": 80,
@@ -1233,7 +1233,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Raises a skeletal champion from any nearby bones.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Pack Tactics"
+    "ability": "Heavy Handed"
   },
   {
     "id": 81,
@@ -1248,7 +1248,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Breathes pressurized steam while diving at enemies.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Adrenaline"
+    "ability": "Counterpunch"
   },
   {
     "id": 82,
@@ -1279,7 +1279,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_83_1773694078916.png?alt=media&token=6dd36fd7-b268-40da-88ac-3aae1162ab28",
-    "ability": "Pack Tactics"
+    "ability": "Smoke Screen"
   },
   {
     "id": 84,
@@ -1294,7 +1294,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Injects venom using hollow darkness-forged fangs.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Smoke Screen"
+    "ability": "Rebound"
   },
   {
     "id": 85,
@@ -1309,7 +1309,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reshapes earth and stone into barriers or weapons.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Rebound"
+    "ability": "Counterpunch"
   },
   {
     "id": 86,
@@ -1324,7 +1324,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Ignites her coat of fur for flaming tackles.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Adrenaline"
+    "ability": "Stamina Leech"
   },
   {
     "id": 87,
@@ -1339,7 +1339,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Splits into two half-strength duplicates mid-fight.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Smoke Screen"
+    "ability": "Stamina Leech"
   },
   {
     "id": 88,
@@ -1354,7 +1354,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Surfs atop self-generated waves of water.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Adrenaline"
+    "ability": "Rebound"
   },
   {
     "id": 89,
@@ -1369,7 +1369,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Bends light around herself to become translucent.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Pack Tactics"
+    "ability": "Rested and Ready"
   },
   {
     "id": 90,
@@ -1384,7 +1384,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Metallic wing-dust blinds sensors and organic eyes.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Rebound"
+    "ability": "Counterpunch"
   },
   {
     "id": 91,
@@ -1400,7 +1400,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_91.png?alt=media&token=1cb134af-51f0-418a-a4ef-78100cfdb71a",
-    "ability": "Adaptable"
+    "ability": "Pack Tactics"
   },
   {
     "id": 92,
@@ -1415,7 +1415,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Gains full invisibility the moment the sun sets.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Smoke Screen"
+    "ability": "Adrenaline"
   },
   {
     "id": 93,
@@ -1462,7 +1462,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Channels electrical surges through every heavy punch.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Adrenaline"
+    "ability": "Smoke Screen"
   },
   {
     "id": 96,
@@ -1508,7 +1508,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Creates a vacuum wake that pulls enemies off balance.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Adrenaline"
+    "ability": "Adaptable"
   },
   {
     "id": 99,
@@ -1523,7 +1523,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Tail stinger injects paralyzing venom in combat.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Adrenaline"
+    "ability": "Rested and Ready"
   },
   {
     "id": 100,
@@ -1539,7 +1539,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_100_1773694854064.png?alt=media&token=8ca0ff0b-4bd5-4b8a-8232-292fcc513b51",
-    "ability": "Pack Tactics"
+    "ability": "Stamina Leech"
   },
   {
     "id": 101,
@@ -1555,7 +1555,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_101_1773695052820.png?alt=media&token=fb5faa7a-b857-4a13-a63c-1c1e9b0fdde6",
-    "ability": "Shield Up"
+    "ability": "Grit"
   },
   {
     "id": 102,
@@ -1571,7 +1571,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Anti-Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_102.png?alt=media&token=5a298a3c-f30b-4d7d-a686-e2289479cd66",
-    "ability": "Grit"
+    "ability": "Opportunist"
   },
   {
     "id": 103,
@@ -1586,7 +1586,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Generates small but painful electric shocks.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Warm Up"
   },
   {
     "id": 104,
@@ -1601,7 +1601,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Closes minor wounds with a gentle touch.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Grit"
   },
   {
     "id": 105,
@@ -1616,7 +1616,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Blends into darkness in low-light conditions.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Shield Up"
   },
   {
     "id": 106,
@@ -1631,7 +1631,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Rigs up useful gadgets from everyday objects.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Shield Up"
   },
   {
     "id": 107,
@@ -1646,7 +1646,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Floats silently and scouts from above rooftops.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Warm Up"
   },
   {
     "id": 108,
@@ -1661,7 +1661,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Manipulates small bodies of water nearby.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Resilience"
+    "ability": "Last Effort"
   },
   {
     "id": 109,
@@ -1692,7 +1692,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Street-fighter with quick reflexes and hard hands.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Resilience"
   },
   {
     "id": 111,
@@ -1707,7 +1707,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Hacks basic security systems with her phone.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Resilience"
   },
   {
     "id": 112,
@@ -1722,7 +1722,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Wings release a fine powder that blurs vision.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Grit"
   },
   {
     "id": 113,
@@ -1737,7 +1737,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Toughened fists deliver bone-cracking reliable haymakers.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Resilience"
   },
   {
     "id": 114,
@@ -1752,7 +1752,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Salts wounds and corrodes metal armor slowly.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Resilience"
+    "ability": "Steady"
   },
   {
     "id": 115,
@@ -1767,7 +1767,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Blinks short distances in a split second.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Tenacity"
+    "ability": "Last Effort"
   },
   {
     "id": 116,
@@ -1782,7 +1782,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Refuses to go down without a serious fight.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Opportunist"
   },
   {
     "id": 117,
@@ -1797,7 +1797,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Lights small fires with concentrated willpower.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Opportunist"
+    "ability": "Steady"
   },
   {
     "id": 118,
@@ -1812,7 +1812,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Releases deafening sonic blasts at close range.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Shield Up"
+    "ability": "Warm Up"
   },
   {
     "id": 119,
@@ -1857,7 +1857,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Projects a small cloud of obscuring darkness.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Scrapper"
   },
   {
     "id": 122,
@@ -1872,7 +1872,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Stabilizes injuries with herbal knowledge and calm hands.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Grit"
   },
   {
     "id": 123,
@@ -1887,7 +1887,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Mechanically-assisted arms deliver piston-powered punches.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Tenacity"
   },
   {
     "id": 124,
@@ -1902,7 +1902,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Floats on air currents to reposition quickly.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Warm Up"
   },
   {
     "id": 125,
@@ -1917,7 +1917,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Launches tiny stinging micro-darts with precision.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Opportunist"
+    "ability": "Tenacity"
   },
   {
     "id": 126,
@@ -1932,7 +1932,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Drops local temperature enough to slow enemies.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Scrapper"
   },
   {
     "id": 127,
@@ -1947,7 +1947,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Generates a blinding flash to buy escape time.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Steady"
   },
   {
     "id": 128,
@@ -1962,7 +1962,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Moves silently and leaves no footprints at all.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Opportunist"
   },
   {
     "id": 129,
@@ -1977,7 +1977,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Causes dread and unease in enemies nearby.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Steady"
   },
   {
     "id": 130,
@@ -1992,7 +1992,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "No powers, just relentless toughness and determination.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Grit"
+    "ability": "Warm Up"
   },
   {
     "id": 131,
@@ -2007,7 +2007,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Brews fast-acting healing salves from wild plants.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Resilience"
+    "ability": "Tenacity"
   },
   {
     "id": 132,
@@ -2022,7 +2022,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Runs faster than any unenhanced human alive.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Warm Up"
   },
   {
     "id": 133,
@@ -2037,7 +2037,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Wrist-mounted buzzsaw cuts through most light materials.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Stubborn"
   },
   {
     "id": 134,
@@ -2052,7 +2052,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Calls up bursts of wind to knock people over.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Tenacity"
   },
   {
     "id": 135,
@@ -2068,7 +2068,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_135_1773612350087.png?alt=media&token=7380ed04-2200-475c-91f1-7e6fc1528937",
-    "ability": "Opportunist"
+    "ability": "Shield Up"
   },
   {
     "id": 136,
@@ -2083,7 +2083,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Light and quick, perfect for aerial reconnaissance.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Resilience"
+    "ability": "Warm Up"
   },
   {
     "id": 137,
@@ -2099,7 +2099,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Hero",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_137_1773695242188.png?alt=media&token=0975bf36-ebeb-4cac-a307-89a7f343da53",
-    "ability": "Tenacity"
+    "ability": "Grit"
   },
   {
     "id": 138,
@@ -2114,7 +2114,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Compact and tough, a reliable defensive line holder.",
     "pack": 1,
     "alliance": "Villain",
-    "ability": "Shield Up"
+    "ability": "Warm Up"
   },
   {
     "id": 139,
@@ -2129,7 +2129,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Scorches enemies with small but hot flame jets.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Warm Up"
   },
   {
     "id": 140,
@@ -2144,7 +2144,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Lays concealed snares and trip-wire devices quickly.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Scrapper"
   },
   {
     "id": 141,
@@ -2159,7 +2159,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Rattles nearby skeletons to distract and disturb enemies.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Shield Up"
   },
   {
     "id": 142,
@@ -2174,7 +2174,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Smears visibility with inky shadow projections.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Tenacity"
   },
   {
     "id": 143,
@@ -2189,7 +2189,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Sharp thorns protect while soft vines bind wounds.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Resilience"
   },
   {
     "id": 144,
@@ -2204,7 +2204,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Amplifies signals to disrupt enemy communications mid-battle.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Tenacity"
+    "ability": "Scrapper"
   },
   {
     "id": 145,
@@ -2220,7 +2220,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 1,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_145_1773693919144.png?alt=media&token=54a79fcd-a1a9-42d9-bce0-ca1cccb5764c",
-    "ability": "Grit"
+    "ability": "Scrapper"
   },
   {
     "id": 146,
@@ -2235,7 +2235,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Fires grappling hooks to swing across any gap.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Warm Up"
   },
   {
     "id": 147,
@@ -2250,7 +2250,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Mudslides obey her and slow escaping enemies.",
     "pack": 1,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Grit"
   },
   {
     "id": 148,
@@ -2265,7 +2265,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Leaves ice patches underfoot to trip pursuers.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Resilience"
   },
   {
     "id": 149,
@@ -2280,7 +2280,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Bounces blinding reflections off any shiny surface.",
     "pack": 1,
     "alliance": "Anti-Hero",
-    "ability": "Opportunist"
+    "ability": "Scrapper"
   },
   {
     "id": 150,
@@ -2310,7 +2310,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Chatters mentally to distract enemies during critical moments.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Grit"
   },
   {
     "id": 152,
@@ -2325,7 +2325,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Most effective during twilight and dawn hours.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Steady"
   },
   {
     "id": 153,
@@ -2340,7 +2340,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Powerful swing sends opponents flying several meters.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Grit"
+    "ability": "Steady"
   },
   {
     "id": 154,
@@ -2355,7 +2355,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Creates thick obscuring haze in an area quickly.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Shield Up"
+    "ability": "Resilience"
   },
   {
     "id": 155,
@@ -2370,7 +2370,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Deploys retractable wire net to entangle enemies.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Opportunist"
   },
   {
     "id": 156,
@@ -2385,7 +2385,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Disorients with cascading rainbow light shows.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Scrapper"
   },
   {
     "id": 157,
@@ -2400,7 +2400,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Scouts high ground and radios positions to allies.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Last Effort"
   },
   {
     "id": 158,
@@ -2415,7 +2415,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Unbreakable grip holds any opponent completely immobile.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Steady"
   },
   {
     "id": 159,
@@ -2430,7 +2430,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Sends sharp electric jolts through touch or throw.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Opportunist"
+    "ability": "Steady"
   },
   {
     "id": 160,
@@ -2445,7 +2445,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Weaves through crowds without touching a single person.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Stubborn"
   },
   {
     "id": 161,
@@ -2475,7 +2475,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Bramble wraps bind wounds and snag attackers.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Shield Up"
   },
   {
     "id": 163,
@@ -2490,7 +2490,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Heavy and slow, but nearly impossible to topple.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Grit"
+    "ability": "Scrapper"
   },
   {
     "id": 164,
@@ -2505,7 +2505,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Dive-bombs enemies with enough force to stagger them.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Tenacity"
   },
   {
     "id": 165,
@@ -2520,7 +2520,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Minor hexes cause tripping, dropping things, small fumbles.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Tenacity"
   },
   {
     "id": 166,
@@ -2535,7 +2535,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Fires dense energy motes that sting and slow.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Resilience"
+    "ability": "Opportunist"
   },
   {
     "id": 167,
@@ -2550,7 +2550,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Feral fighting style overwhelms more trained opponents.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Stubborn"
   },
   {
     "id": 168,
@@ -2565,7 +2565,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Trickles of water guided with surprising accuracy.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Steady"
   },
   {
     "id": 169,
@@ -2580,7 +2580,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Stitches injuries closed with practiced surgical speed.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Shield Up"
   },
   {
     "id": 170,
@@ -2595,7 +2595,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Charges forward using sheer bulk to clear paths.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Scrapper"
   },
   {
     "id": 171,
@@ -2610,7 +2610,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Emits thin smoke trail to mask retreat path.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Stubborn"
   },
   {
     "id": 172,
@@ -2625,7 +2625,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Sparks fly when his fists hit hard surfaces.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Last Effort"
   },
   {
     "id": 173,
@@ -2640,7 +2640,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Delivers rapid-fire punches before opponents can react.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Steady"
   },
   {
     "id": 174,
@@ -2670,7 +2670,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Accelerates small stones to bullet-like velocities.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Opportunist"
   },
   {
     "id": 176,
@@ -2685,7 +2685,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Coaxes bodies to heal minor damage rapidly.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Tenacity"
   },
   {
     "id": 177,
@@ -2700,7 +2700,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Magnetic boots let him walk up metal structures.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Tenacity"
+    "ability": "Steady"
   },
   {
     "id": 178,
@@ -2715,7 +2715,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Aura of dread lowers enemy morale in battle.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Resilience"
   },
   {
     "id": 179,
@@ -2745,7 +2745,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Sends up bright signal flares that blind enemies.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Grit"
   },
   {
     "id": 181,
@@ -2760,7 +2760,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Runs fast enough to avoid most slow attacks.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Resilience"
   },
   {
     "id": 182,
@@ -2775,7 +2775,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Thick skin resists most blunt-force trauma well.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Steady"
   },
   {
     "id": 183,
@@ -2790,7 +2790,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Quick reflexes let him counter most standard attacks.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Tenacity"
+    "ability": "Resilience"
   },
   {
     "id": 184,
@@ -2805,7 +2805,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Creates poultices from nearby plants during battles.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Warm Up"
   },
   {
     "id": 185,
@@ -2820,7 +2820,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Flings razor-sharp crystal fragments at close range.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Resilience"
   },
   {
     "id": 186,
@@ -2835,7 +2835,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Magnetic latches immobilize enemy tech and weapons.",
     "pack": 2,
     "alliance": "Anti-Hero",
-    "ability": "Shield Up"
+    "ability": "Steady"
   },
   {
     "id": 187,
@@ -2865,7 +2865,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reliable close-range electric shock, nothing fancy.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Resilience"
   },
   {
     "id": 189,
@@ -2880,7 +2880,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Ducks into shadows to dodge and reposition quickly.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Tenacity"
+    "ability": "Scrapper"
   },
   {
     "id": 190,
@@ -2895,7 +2895,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Glides on leaf-shaped wings through urban canyons.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Resilience"
+    "ability": "Stubborn"
   },
   {
     "id": 191,
@@ -2910,7 +2910,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Powers devices and stuns foes with stored charge.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Resilience"
   },
   {
     "id": 192,
@@ -2925,7 +2925,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Unconventional but effective at patching field injuries.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Last Effort"
   },
   {
     "id": 193,
@@ -2940,7 +2940,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Trip-wires and snares deployed at superhuman speed.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Shield Up"
+    "ability": "Scrapper"
   },
   {
     "id": 194,
@@ -2955,7 +2955,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Small water jets aimed accurately at joints and eyes.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Opportunist"
+    "ability": "Warm Up"
   },
   {
     "id": 195,
@@ -2970,7 +2970,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Wild unpredictable fighting style hard to anticipate.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Last Effort"
   },
   {
     "id": 196,
@@ -2985,7 +2985,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Causes sudden chills and unexplained dread in enemies.",
     "pack": 2,
     "alliance": "Villain",
-    "ability": "Opportunist"
+    "ability": "Resilience"
   },
   {
     "id": 197,
@@ -3001,7 +3001,7 @@ export const ALL_CARDS: Card[] = [
     "pack": 2,
     "alliance": "Villain",
     "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hero-cards-1f345.firebasestorage.app/o/card-images%2Fcard_197.png?alt=media&token=497b8f04-80ce-4d99-ae66-ed5d28dab768",
-    "ability": "Shield Up"
+    "ability": "Stubborn"
   },
   {
     "id": 198,
@@ -3031,7 +3031,7 @@ export const ALL_CARDS: Card[] = [
     "desc": "Slow-burning flames stick to targets and keep burning.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Resilience"
+    "ability": "Steady"
   },
   {
     "id": 200,
@@ -3046,6 +3046,6 @@ export const ALL_CARDS: Card[] = [
     "desc": "Reliable heat blasts, a dependable hero in any fight.",
     "pack": 2,
     "alliance": "Hero",
-    "ability": "Grit"
+    "ability": "Tenacity"
   }
 ];

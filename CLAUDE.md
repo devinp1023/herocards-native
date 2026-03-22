@@ -57,7 +57,10 @@ All quests and achievements UI lives inside **ProfileScreen** — there is no se
 | Script | What it does |
 |--------|-------------|
 | `npm run sync-cards` | Pulls all 200 cards from Firestore → regenerates `src/data/cards.ts` |
-| `node scripts/assign-v2-types-stamina.js` | One-time v2 script — randomly assigns battle type, stamina, and ability to all 200 cards (run once during Sprint 1/4a) |
+| `node scripts/assign-v2-types-stamina.js` | One-time v2 script — randomly assigns battle type and stamina to all 200 cards (run once, Sprint 1) |
+| `node scripts/assign-v2-abilities.js` | One-time v2 script — randomly assigns a v2 ability per card within rarity tier (run once, Sprint 4a) |
+| `node scripts/push-stamina-to-firestore.js` | Pushes stamina field from cards.ts to all 200 Firestore card documents |
+| `node scripts/push-abilities-to-firestore.js` | Pushes ability field from cards.ts to all 200 Firestore card documents |
 
 ## Haptics
 `expo-haptics` is used in `PackOpeningScreen` for card reveals. No audio — sound effects were not implemented.

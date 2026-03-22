@@ -306,10 +306,10 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
       </View>
 
       {/* Ability text */}
-      {abilityDesc && (
+      {card.ability && abilityDesc && (
         <View pointerEvents="none" style={styles.abilityOverlay}>
           <Text style={styles.abilityText} numberOfLines={2}>
-            {abilityDesc}
+            <Text style={styles.abilityName}>{card.ability}: </Text>{abilityDesc}
           </Text>
         </View>
       )}
@@ -446,5 +446,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 16,
     color: '#cccccc',
+  },
+  abilityName: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: 11,
+    color: '#ffffff',
   },
 });

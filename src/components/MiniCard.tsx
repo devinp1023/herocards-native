@@ -131,9 +131,9 @@ export function MiniCard({ card }: MiniCardProps) {
 
       {/* ── Ability bar ── */}
       <View style={s.abilityBar}>
-        {abilityDesc ? (
+        {card.ability && abilityDesc ? (
           <Text style={s.abilityText} numberOfLines={2}>
-            {abilityDesc}
+            <Text style={s.abilityName}>{card.ability}: </Text>{abilityDesc}
           </Text>
         ) : (
           <Text style={s.abilityText}>No special ability</Text>
@@ -287,6 +287,11 @@ const s = StyleSheet.create({
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 16,
     color: '#cccccc',
+  },
+  abilityName: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: 11,
+    color: '#ffffff',
   },
 
   // Stat pills

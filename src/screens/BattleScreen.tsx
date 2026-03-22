@@ -733,14 +733,16 @@ const atb = StyleSheet.create({
 
 // ── Result screen ─────────────────────────────────────────────────────────────
 function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
-  winner: 'player' | 'ai';
+  winner: 'player' | 'ai' | 'tie';
   rewards: { credits: number; xp: number; streakBonus: boolean } | null;
   tierColor: string; tierName: string; onBack: () => void;
 }) {
-  const won = winner === 'player';
+  const outcomeText  = winner === 'player' ? 'VICTORY' : winner === 'tie' ? 'TIE' : 'DEFEAT';
+  const outcomeColor = winner === 'player' ? '#4caf50' : winner === 'tie' ? '#ffa726' : '#ef5350';
   return (
     <View style={rs.root}>
-      <Text style={[rs.outcome, { color: won ? '#4caf50' : '#ef5350' }]}>{won ? 'VICTORY' : 'DEFEAT'}</Text>
+      <Text style={[rs.outcome, { color: outcomeColor }]}>{outcomeText}</Text>
+      {winner === 'tie' && <Text style={rs.tieNote}>Last Effort — both last cards fell simultaneously</Text>}
       <Text style={[rs.tier, { color: tierColor }]}>{tierName.toUpperCase()}</Text>
       {rewards && (
         <View style={rs.rewardsBox}>
@@ -766,6 +768,7 @@ const rs = StyleSheet.create({
   streak:       { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ffa726', letterSpacing: 1, marginTop: 4 },
   backBtn:      { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, borderWidth: 1, marginTop: 8 },
   backText:     { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 1.5 },
+  tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: '#888aa8', textAlign: 'center', marginTop: -8 },
 });
 
 // ── BattleScreen ──────────────────────────────────────────────────────────────
