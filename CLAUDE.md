@@ -109,7 +109,7 @@ herocards-native/
     │   ├── abilities.ts             ← Ability definitions and descriptions
     │   ├── achievements.ts          ← ACHIEVEMENTS array + Achievement interface
     │   ├── cards.ts                 ← ALL_CARDS (200 cards) — fallback if Firestore is unavailable
-    │   ├── constants.ts             ← RC, RO, XP_THRESHOLDS, TYPE_COLORS, BATTLE_RARITY_LIMITS, TIER_INFO, BATTLE_REWARDS, cooldown helpers
+    │   ├── constants.ts             ← RC, RO, XP_THRESHOLDS, TYPE_COLORS, TYPE_META, RARITY_META, BATTLE_RARITY_LIMITS, TIER_INFO, BATTLE_REWARDS, cooldown helpers
     │   ├── packs.ts                 ← PACKS, AVATARS, AVATAR_TIER_COLORS, LEVEL_AVATARS
     │   └── quests.ts                ← DAILY_QUESTS, getTodaysQuests(), Quest interface
     ├── firebase/
@@ -173,9 +173,25 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - Scale targets: collection 45%, detail 90%, battle active 85%, battle hand 40%, pack reveal 100%
 - `useFont()` hook required for all text inside canvas — CSS font-family does not apply
 - Emoji do not render in Skia canvas — use a separate RN `Text` overlay for emoji
-- **RN overlay pattern**: Skia handles backgrounds, gradient washes, borders, image windows. RN `View`/`Text` overlays (with `pointerEvents="none"`) handle all icons, text, and colored badges — placing colored backgrounds in Skia causes them to be obscured by RN overlay Views
+- **RN overlay pattern**: Skia handles backgrounds, borders, image windows, shimmer, noise. RN `View`/`Text` overlays (with `pointerEvents="none"`) handle type wash, icons, text, stat sections
+- **Skia LinearGradient with hex alpha colors does not render visibly** — use RN View overlays for type color wash instead
 - `HeroCard` uses `MaterialCommunityIcons` RN overlays for type icon and stat pill icons
 - `MiniCard` (pure RN, no Skia) used in collection grid + battle hand for performance
+- **Image height (`IMG_H = 170`) is fixed** — never change unless explicitly asked
+
+### Card Color Scheme
+- **Type** → card color: full-card RN tint overlay (`typeColor + '30'`), type icon solid fill
+- **Rarity** → accents + animation: shimmer sweep (Rare/Epic/Legendary), card border, accent bars on ability + stats sections, rarity strip at top of image
+- Both cards use identical color logic
+
+### Card Layout (4 sections)
+1. **Header** — type icon (solid `typeColor` fill, white icon), card name, alliance/number/rarity
+2. **Image** — fixed 170px height, bordered with rarity color
+3. **Ability box** — dark `rgba(0,0,0,0.75)` background, rarity-colored left accent bar
+4. **Stats box** — dark background (Skia-rendered on HeroCard for shimmer pass-through), rarity-colored left accent bar, contains HP row + STA row + stat pills
+
+### Stat Pill Colors
+- ATK: red `#e8445a` | DEF: purple `#8b5cf6` | SPD: amber `#f59e0b`
 
 ## Battle System
 See `PRDs/HeroCards_BattleSystem_v2_PRD.md` for full rules.
