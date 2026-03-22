@@ -5,7 +5,7 @@
 //   Draw    — tap the deck card back
 // Session 12 adds full Reanimated lunge/shake/defeat animations.
 
-import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity,
   StyleSheet, Platform, PanResponder, Animated,
@@ -13,7 +13,7 @@ import {
 import ReAnimated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, Easing,
 } from 'react-native-reanimated';
-import { Canvas, Path, Skia } from '@shopify/react-native-skia';
+
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
@@ -21,11 +21,12 @@ import { BattleEvent, BattleCard, AttackWeight, AmpEffectName } from '../battle/
 import { RC } from '../data/constants';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
+import { HeroCard } from '../components/HeroCard';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE = 0.36;
-const HAND_SCALE   = 0.22;
+const ACTIVE_SCALE = 0.55;
+const HAND_SCALE   = 0.30;
 const DECK_SCALE   = 0.22;
 const HAND_OVERLAP = 10;
 
@@ -36,9 +37,6 @@ const HAND_H   = Math.round(CARD_H * HAND_SCALE);
 const DECK_W   = Math.round(CARD_W * DECK_SCALE);
 const DECK_H   = Math.round(CARD_H * DECK_SCALE);
 
-const CH_SIZE = 64;
-const CH_SW   = 6;
-const CH_OVAL = { x: CH_SW / 2, y: CH_SW / 2, width: CH_SIZE - CH_SW, height: CH_SIZE - CH_SW };
 const HP_GAP  = 12;
 
 const MAX_HAND = 5;
@@ -72,63 +70,6 @@ const cb = StyleSheet.create({
   diamond: { borderWidth: 1, borderColor: '#3a3a5a', transform: [{ rotate: '45deg' }] },
 });
 
-// ── Circular HP ring ──────────────────────────────────────────────────────────
-function CircleHp({ hp, maxHp }: { hp: number; maxHp: number }) {
-  const pct   = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 0;
-  const color = pct > 0.6 ? '#4caf50' : pct > 0.33 ? '#ffeb3b' : '#ef5350';
-
-  const bgPath = useMemo(() => { const p = Skia.Path.Make(); p.addOval(CH_OVAL); return p; }, []);
-  const fgPath = useMemo(() => {
-    const p = Skia.Path.Make();
-    if (pct >= 1) p.addOval(CH_OVAL);
-    else if (pct > 0) p.addArc(CH_OVAL, -90, pct * 360);
-    return p;
-  }, [hp, maxHp]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <View style={{ width: CH_SIZE, height: CH_SIZE }}>
-      <Canvas style={{ width: CH_SIZE, height: CH_SIZE }}>
-        <Path path={bgPath} color="#1a1a35" style="stroke" strokeWidth={CH_SW} />
-        {pct > 0 && <Path path={fgPath} color={color} style="stroke" strokeWidth={CH_SW} />}
-      </Canvas>
-      <View style={ch.overlay}>
-        <Text style={[ch.hpNum, { color }]}>{hp}</Text>
-        <Text style={ch.hpDiv}>—</Text>
-        <Text style={ch.hpMax}>{maxHp}</Text>
-      </View>
-    </View>
-  );
-}
-const ch = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  hpNum:   { fontFamily: 'Orbitron_900Black', fontSize: 14, lineHeight: 16 },
-  hpDiv:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#40405a', lineHeight: 8 },
-  hpMax:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#606080', lineHeight: 9 },
-});
-
-// ── Stamina bar ───────────────────────────────────────────────────────────────
-function StaminaBar({ stamina, maxStamina, compact }: { stamina: number; maxStamina: number; compact?: boolean }) {
-  const pct   = maxStamina > 0 ? Math.max(0, Math.min(1, stamina / maxStamina)) : 0;
-  const color = pct > 0.6 ? '#4fc3f7' : pct > 0.3 ? '#ffa726' : '#ef5350';
-  return (
-    <View style={[sb.row, compact && sb.rowCompact]}>
-      <View style={[sb.track, compact ? sb.trackCompact : sb.trackFull]}>
-        <View style={[sb.fill, { width: `${Math.round(pct * 100)}%` as any, backgroundColor: color }]} />
-      </View>
-      <Text style={[sb.label, { color }, compact && sb.labelCompact]}>{stamina}</Text>
-    </View>
-  );
-}
-const sb = StyleSheet.create({
-  row:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  rowCompact:   { justifyContent: 'center', gap: 3 },
-  track:        { height: 4, backgroundColor: '#1a1a35', borderRadius: 2, overflow: 'hidden' },
-  trackFull:    { flex: 1 },
-  trackCompact: { width: 30, height: 3 },
-  fill:         { position: 'absolute', top: 0, left: 0, bottom: 0, borderRadius: 2 },
-  label:        { fontFamily: 'Orbitron_700Bold', fontSize: 7, lineHeight: 10, minWidth: 14, textAlign: 'right' },
-  labelCompact: { fontSize: 7, minWidth: 0 },
-});
 
 // ── Defeat animation — card falls and fades ───────────────────────────────────
 function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absolute?: boolean }) {
@@ -147,7 +88,15 @@ function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absol
       style={[absolute && da.absolute, animStyle]}
       pointerEvents="none"
     >
-      <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+      <CardWrapper scale={ACTIVE_SCALE}>
+        <HeroCard
+          card={card}
+          currentHp={0}
+          maxHp={card.maxHp}
+          currentStamina={card.stamina}
+          hpPct={0}
+        />
+      </CardWrapper>
     </ReAnimated.View>
   );
 }
@@ -219,9 +168,6 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
   }
   return (
     <View style={aas.row}>
-      <CircleHp hp={card.hp} maxHp={card.maxHp} />
-      <View style={{ width: HP_GAP }} />
-      {/* Measure only the card itself — this is the precise attack drop-zone */}
       {/* lungeStyle moves the whole card+shake together toward the player */}
       <ReAnimated.View style={lungeStyle}>
         <ReAnimated.View style={shakeStyle}>
@@ -231,12 +177,21 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
             onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
           >
             <ReAnimated.View style={entryStyle}>
-              <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+              <CardWrapper scale={ACTIVE_SCALE}>
+                <HeroCard
+                  card={card}
+                  showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                  currentHp={card.hp}
+                  maxHp={card.maxHp}
+                  currentStamina={card.stamina}
+                  isActive
+                  hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                />
+              </CardWrapper>
             </ReAnimated.View>
             <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
             {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
           </View>
-          <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} />
         </ReAnimated.View>
       </ReAnimated.View>
       <View style={{ width: HP_GAP }} />
@@ -248,9 +203,6 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
           </View>
         ) : (
           <View style={{ width: DECK_W, height: DECK_H }} />
-        )}
-        {card.ability && revealed && (
-          <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
         )}
       </View>
     </View>
@@ -336,18 +288,12 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
       ) : (
         <View style={{ width: DECK_W, height: DECK_H }} />
       )}
-      {card?.ability && revealed && (
-        <View style={aas.abilityBadge}><Text style={aas.abilityText}>{card.ability}</Text></View>
-      )}
     </View>
   );
 
   if (!card) {
     return (
       <View style={pas.row}>
-        {/* Spacer to match CircleHp width */}
-        <View style={{ width: CH_SIZE, height: CH_SIZE }} />
-        <View style={{ width: HP_GAP }} />
         {/* Empty active slot — measured as the swap drop-zone for hand card drags */}
         <View
           ref={cardSlotRef}
@@ -367,9 +313,6 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
 
   return (
     <View style={pas.row}>
-      <CircleHp hp={card.hp} maxHp={card.maxHp} />
-      <View style={{ width: HP_GAP }} />
-
       {/* Measure only the card slot — this is the precise swap drop-zone */}
       <View
         ref={cardSlotRef}
@@ -378,11 +321,20 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
       >
         <ReAnimated.View style={shakeStyle}>
           <ReAnimated.View style={entryStyle}>
-            <CardWrapper scale={ACTIVE_SCALE}><MiniCard card={card} /></CardWrapper>
+            <CardWrapper scale={ACTIVE_SCALE}>
+              <HeroCard
+                card={card}
+                showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                currentHp={card.hp}
+                maxHp={card.maxHp}
+                currentStamina={card.stamina}
+                isActive
+                hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+              />
+            </CardWrapper>
           </ReAnimated.View>
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
         </ReAnimated.View>
-        <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} />
       </View>
 
       <View style={{ width: HP_GAP }} />
@@ -508,15 +460,20 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
       >
         <View style={hc.col}>
           <View style={[hc.frame, { borderColor: color + '33' }]}>
-            <CardWrapper scale={HAND_SCALE}><MiniCard card={card} /></CardWrapper>
+            <CardWrapper scale={HAND_SCALE}>
+              <MiniCard
+                card={card}
+                currentHp={card.hp}
+                maxHp={card.maxHp}
+                currentStamina={card.stamina}
+                hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+              />
+            </CardWrapper>
             {legendaryLock && (
               <View style={hc.lockOverlay} pointerEvents="none">
                 <Text style={hc.lockText}>{killsNeeded} more{'\n'}kill{killsNeeded !== 1 ? 's' : ''}</Text>
               </View>
             )}
-          </View>
-          <View style={{ width: HAND_W, alignItems: 'center' }}>
-            <StaminaBar stamina={card.stamina} maxStamina={card.maxStamina} compact />
           </View>
         </View>
       </Animated.View>

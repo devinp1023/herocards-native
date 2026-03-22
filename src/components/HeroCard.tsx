@@ -19,6 +19,7 @@ import Animated, {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   Canvas,
+  Rect,
   RoundedRect,
   LinearGradient,
   RadialGradient,
@@ -28,13 +29,18 @@ import {
   Paint,
   Path,
   Skia,
+  Image as SkImage,
+  useImage,
 } from '@shopify/react-native-skia';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
-import { RC, TYPE_COLORS } from '../data/constants';
+import { RC, TYPE_COLORS, TYPE_META, RARITY_META } from '../data/constants';
 import { ABILITY_DESC } from '../data/abilities';
 import { useFontContext } from '../context/FontContext';
 import { CARD_W, CARD_H } from './CardWrapper';
+
+// Pre-load noise texture
+const noiseSource = require('../../assets/noise.png');
 
 // ── Layout constants (all in canvas units) ──────────────────────────────────
 const PAD       = 10;
@@ -42,33 +48,38 @@ const INNER_W   = CARD_W - PAD * 2;   // 280
 const CORNER_R  = 14;
 
 // Header
-const TYPE_R    = 15;
-const TYPE_CX   = PAD + TYPE_R + 2;    // 27
+const TYPE_R    = 18;
+const TYPE_CX   = PAD + TYPE_R + 2;    // 30
 const TYPE_CY   = 24;
-const NAME_X    = TYPE_CX + TYPE_R + 8; // 50
-const NAME_Y    = 8;
+const NAME_X    = TYPE_CX + TYPE_R + 8; // 56
+const NAME_Y    = 5;
 
-// HP badge (top-right pill)
-const HP_W      = 68;
-const HP_H      = 28;
-const HP_R      = 14;
-const HP_X      = CARD_W - PAD - HP_W;  // 222
-const HP_Y      = 10;
+// Subtitle info (top-right)
+const SUB_X     = CARD_W - PAD - 100;   // right-aligned area
+const SUB_Y     = 10;
 
 // Stat pills (anchored to bottom)
-const PILL_H    = 40;
-const PILL_Y    = CARD_H - 12 - PILL_H; // 381
+const PILL_H    = 26;
+const PILL_Y    = CARD_H - 12 - PILL_H;
 const PILL_W    = 82;
 const PILL_GAP  = (INNER_W - 3 * PILL_W) / 2; // 17
 const PILL_R    = 20;
 
-// Ability bar (above pills)
-const ABL_H     = 54;
-const ABL_Y     = PILL_Y - 4 - ABL_H;   // 343
+// Ability bar height (3 lines)
+const ABL_H     = 76;
 
-// Image window (between header and ability)
+// Image window — fixed height, do not change
 const IMG_Y     = 50;
-const IMG_H     = ABL_Y - 4 - IMG_Y;    // 289
+const IMG_H     = 170;
+
+// Ability sits 8px below image
+const ABL_Y     = IMG_Y + IMG_H + 8;   // 228
+
+// HP bar + stamina dark pill rows anchored right below ability
+const HPBAR_H   = 36;
+const STAM_H    = 36;
+const HPBAR_Y   = ABL_Y + ABL_H + 1;   // 305
+const STAM_Y    = HPBAR_Y + HPBAR_H + 3; // 344
 
 // Shimmer colours per rarity
 const SHIMMER_COLOR: Record<string, string> = {
@@ -112,30 +123,93 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 
-interface HeroCardProps {
+export interface BattleProps {
+  currentHp?: number;
+  maxHp?: number;
+  currentStamina?: number;
+  isActive?: boolean;
+  hpPct?: number;
+}
+
+interface HeroCardProps extends BattleProps {
   card: Card;
   showShine?: boolean;   // shimmer sweep — default false
   enableTilt?: boolean;  // 3D tilt on touch — default false
 }
 
-export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCardProps) {
+export function HeroCard({
+  card,
+  showShine = false,
+  enableTilt = false,
+  currentHp,
+  maxHp,
+  currentStamina,
+  isActive = false,
+  hpPct,
+}: HeroCardProps) {
   const fonts = useFontContext();
+  const noiseImage = useImage(noiseSource);
 
   const cfg        = RC[card.rarity] ?? RC.Common;
   const typeColor  = TYPE_COLORS[card.type] ?? '#888888';
+  const tm         = TYPE_META[card.type] ?? { primary: typeColor, bg: '#0f1528', mid: '#151a2e' };
+  const rm         = RARITY_META[card.rarity] ?? { color: '#9CA3AF', shimmer: false };
+  const rc         = rm.color;
   const rarityColor = cfg.color;
   const borderColor = cfg.border;
 
-  const hp = Math.round(100 + card.defense * 0.5);
+  // Battle-aware values (defaults to base stats when not in battle)
+  const computedMaxHp = maxHp ?? Math.round(100 + card.defense * 0.5);
+  const displayHp     = currentHp ?? computedMaxHp;
+  const displayHpPct  = hpPct ?? (currentHp != null && maxHp ? currentHp / maxHp : 1);
+  const maxStam       = card.stamina ?? 0;
+  const displayStam   = currentStamina ?? maxStam;
+
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
+
+  // HP bar color based on percentage
+  const hpBarColor = displayHpPct > 0.5 ? '#4ade80' : displayHpPct > 0.25 ? '#facc15' : '#ef4444';
+  const isLowHp = displayHpPct <= 0.25 && currentHp != null;
+
+  // Low HP pulse animation
+  const lowHpPulse = useSharedValue(0.15);
+  useEffect(() => {
+    if (!isLowHp) { cancelAnimation(lowHpPulse); lowHpPulse.value = 0; return; }
+    lowHpPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.35, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.15, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(lowHpPulse);
+  }, [isLowHp]);
+  const lowHpOpacity = useDerivedValue(() => lowHpPulse.value);
+
+  // Active glow pulse animation
+  const activeGlow = useSharedValue(0.3);
+  useEffect(() => {
+    if (!isActive) { cancelAnimation(activeGlow); activeGlow.value = 0; return; }
+    activeGlow.value = withRepeat(
+      withSequence(
+        withTiming(0.6, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(activeGlow);
+  }, [isActive]);
+  const activeGlowStyle = useAnimatedStyle(() => ({
+    opacity: activeGlow.value,
+  }));
 
   const statPills = [
     { label: 'A', value: card.power,   bg: '#e8445a', bgDark: '#b8283a' },
-    { label: 'D', value: card.defense, bg: '#3aadad', bgDark: '#2a8888' },
-    { label: 'S', value: card.speed,   bg: '#4caf6a', bgDark: '#3a8a52' },
+    { label: 'D', value: card.defense, bg: '#8b5cf6', bgDark: '#6d3fd4' },
+    { label: 'S', value: card.speed,   bg: '#f59e0b', bgDark: '#c47d08' },
   ];
-
-  const gradColors = [typeColor + '40', typeColor + '18', '#0f152800'];
 
   // ── Shimmer sweep ─────────────────────────────────────────────────────────
   const shimmerX = useSharedValue(-CARD_W * 0.6);
@@ -186,35 +260,52 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
   // ── Render ────────────────────────────────────────────────────────────────
   const card3d = (
     <Animated.View style={enableTilt ? tiltStyle : undefined}>
+      {/* Active outer glow */}
+      {isActive && (
+        <Animated.View style={[styles.activeGlow, { backgroundColor: typeColor }, activeGlowStyle]} />
+      )}
       <Canvas style={{ width: CARD_W, height: CARD_H }} pointerEvents="none">
 
-        {/* 1. Dark base */}
+        {/* 3a. Card body background */}
         <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}
-          color="#0f1528" />
+          color="#040408" />
 
-        {/* 2. Type colour gradient wash */}
-        <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
+        {/* 3d. Gradient border — swaps to type color when active */}
+        <RoundedRect x={0.75} y={0.75} width={CARD_W - 1.5} height={CARD_H - 1.5} r={CORNER_R}>
+          <Paint style="stroke" strokeWidth={isActive ? 2 : 1.5}>
+            <LinearGradient
+              start={vec(CARD_W / 2, 0)}
+              end={vec(CARD_W / 2, CARD_H)}
+              colors={isActive
+                ? [tm.primary + '88', tm.primary + '44', 'rgba(0,0,0,0.5)']
+                : ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.5)']}
+              positions={[0, 0.4, 1]}
+            />
+          </Paint>
+        </RoundedRect>
+
+        {/* 3e. Top specular edge */}
+        <Rect x={0} y={0} width={CARD_W} height={1.5}>
           <LinearGradient
-            start={vec(CARD_W / 2, 0)}
-            end={vec(CARD_W / 2, CARD_H * 0.6)}
-            colors={gradColors}
+            start={vec(0, 0)}
+            end={vec(CARD_W, 0)}
+            colors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.16)', 'rgba(255,255,255,0.03)']}
           />
-        </RoundedRect>
+        </Rect>
 
-        {/* 3. Rarity border */}
-        <RoundedRect x={2} y={2} width={CARD_W - 4} height={CARD_H - 4} r={CORNER_R - 1}>
-          <Paint style="stroke" strokeWidth={3} color={borderColor} />
-        </RoundedRect>
+        {/* 3f. Noise texture overlay */}
+        {noiseImage && (
+          <SkImage
+            image={noiseImage}
+            x={0} y={0} width={CARD_W} height={CARD_H}
+            fit="cover"
+            opacity={0.05}
+          />
+        )}
 
-        {/* 4. Type icon circle — icon rendered via RN overlay below */}
-        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R} color={typeColor + '35'} />
-        <Circle cx={TYPE_CX} cy={TYPE_CY} r={TYPE_R}>
-          <Paint style="stroke" strokeWidth={1.5} color="#ffffffcc" />
-        </Circle>
+        {/* Type icon circle — background + icon rendered via RN overlay below */}
 
-        {/* 5. HP badge pill — background rendered in RN overlay below */}
-
-        {/* 6. Image window */}
+        {/* Image window */}
         <RoundedRect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H} r={8}
           color="#000000" />
         {!card.imageUrl && (
@@ -235,13 +326,56 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
           <Paint style="stroke" strokeWidth={2.5} color={borderColor} />
         </RoundedRect>
 
-        {/* 7. Ability bar background */}
+        {/* 3g. Art window inset shadow (vignette) */}
+        <Rect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H}>
+          <RadialGradient
+            c={vec(PAD + INNER_W / 2, IMG_Y + IMG_H * 0.42)}
+            r={INNER_W * 0.65}
+            colors={['transparent', 'rgba(0,0,0,0.58)']}
+          />
+        </Rect>
+        <Rect x={PAD} y={IMG_Y + IMG_H - 36} width={INNER_W} height={36}>
+          <LinearGradient
+            start={vec(0, IMG_Y + IMG_H - 36)}
+            end={vec(0, IMG_Y + IMG_H)}
+            colors={['transparent', 'rgba(4,4,8,0.9)']}
+          />
+        </Rect>
+
+        {/* Low HP red pulse overlay */}
+        {isLowHp && (
+          <Rect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H}
+            color="red" opacity={lowHpOpacity} />
+        )}
+
+        {/* 3h. Rarity line at top of art window */}
+        <Rect x={PAD} y={IMG_Y} width={INNER_W} height={2}>
+          <LinearGradient
+            start={vec(PAD, 0)}
+            end={vec(PAD + INNER_W, 0)}
+            colors={['transparent', rc + 'bb', rc, rc + 'bb', 'transparent']}
+            positions={[0, 0.38, 0.5, 0.62, 1]}
+          />
+        </Rect>
+
+        {/* Ability bar background */}
         <RoundedRect x={PAD} y={ABL_Y} width={INNER_W} height={ABL_H} r={6}
-          color="rgba(0,0,0,0.50)" />
+          color="rgba(0,0,0,0.75)" />
 
-        {/* 8. Stat pills — backgrounds rendered in RN overlay below */}
+        {/* Stats group background */}
+        <RoundedRect x={PAD} y={HPBAR_Y} width={INNER_W} height={PILL_Y + PILL_H - HPBAR_Y} r={6}
+          color="rgba(0,0,0,0.75)" />
 
-        {/* 9. Shimmer sweep (Rare+ only, when showShine=true) */}
+        {/* 3i. Bottom rarity accent line */}
+        <Rect x={0} y={CARD_H - 2} width={CARD_W} height={2}>
+          <LinearGradient
+            start={vec(0, 0)}
+            end={vec(CARD_W, 0)}
+            colors={['transparent', rc + '88', 'transparent']}
+          />
+        </Rect>
+
+        {/* Shimmer sweep (Rare+ only, when showShine=true) */}
         {hasShimmer && (
           <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
             <LinearGradient
@@ -256,10 +390,13 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
 
       {/* ── RN overlays ────────────────────────────────────────────────────── */}
 
+      {/* Type colour wash — single full-card tint */}
+      <View pointerEvents="none" style={[styles.typeTint, { backgroundColor: typeColor + '30' }]} />
+
       {/* Card image */}
       {card.imageUrl && (
         <View pointerEvents="none"
-          style={[styles.imageOverlay, { borderColor }]}>
+          style={[styles.imageOverlay, { borderColor, opacity: isLowHp ? 0.65 : 1 }]}>
           <RNImage
             source={{ uri: card.imageUrl }}
             style={styles.image}
@@ -268,50 +405,96 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
         </View>
       )}
 
-      {/* Card name + subtitle */}
+      {/* Card name */}
       <View pointerEvents="none" style={styles.headerOverlay}>
         <Text style={styles.cardName} numberOfLines={1}>{card.name}</Text>
+      </View>
+
+      {/* Alliance / number / rarity (top-right) */}
+      <View pointerEvents="none" style={styles.subtitleOverlay}>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')} {'\u2022'} {card.rarity.toUpperCase()}
+          {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {card.rarity.toUpperCase()}
         </Text>
       </View>
 
       {/* Type icon */}
-      <View pointerEvents="none" style={styles.typeIconOverlay}>
+      <View pointerEvents="none" style={[styles.typeIconOverlay, { backgroundColor: typeColor }]}>
         <MaterialCommunityIcons
           name={(TYPE_ICONS[card.type] ?? 'help-circle-outline') as any}
           size={18}
           color="#ffffff"
+          style={{ textShadowColor: '#000000', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 }}
         />
       </View>
 
-      {/* HP badge icon + value */}
-      <View pointerEvents="none" style={styles.hpOverlay}>
-        <View style={styles.hpIconWrap}>
-          <MaterialCommunityIcons name="heart" size={12} color="#7c3aed" />
-        </View>
-        <Text style={styles.hpText}>{hp}</Text>
-      </View>
+      {/* Stats group wrapper — HP, STA, pills in one box */}
+      <View pointerEvents="none" style={styles.statsWrapper}>
+        <View style={[styles.statsAccentBar, { backgroundColor: rm.color }]} />
 
-      {/* Stat pill icons + values (backgrounds here too) */}
-      <View pointerEvents="none" style={styles.pillOverlay}>
-        {statPills.map(({ value, bg }, i) => (
-          <View key={i} style={[styles.pillContent, { backgroundColor: bg }]}>
-            <View style={styles.pillIconWrap}>
-              <MaterialCommunityIcons name={PILL_ICONS[i]} size={20} color="#7c3aed" />
-            </View>
-            <Text style={styles.pillValue}>{value}</Text>
+        {/* HP row */}
+        <View style={styles.hpSection}>
+          <View style={styles.statRowHeader}>
+            <Text style={styles.statTag}>HP</Text>
+            <Text style={[styles.statValue, { color: hpBarColor }]}>{displayHp}</Text>
           </View>
-        ))}
+          <View style={[styles.hpBarTrack, { shadowColor: hpBarColor }]}>
+            <View style={[styles.hpBarFill, { width: `${displayHpPct * 100}%`, backgroundColor: hpBarColor }]}>
+              <View style={styles.hpBarGloss} />
+            </View>
+          </View>
+        </View>
+
+        {/* STA row */}
+        <View style={styles.stamSection}>
+          <View style={styles.statRowHeader}>
+            <Text style={styles.statTag}>STA</Text>
+            <Text style={styles.stamValue}>{displayStam}</Text>
+          </View>
+          <View style={[styles.stamTrack, { shadowColor: '#4fc3f7' }]}>
+            {Array.from({ length: maxStam }, (_, i) => (
+              <View key={i} style={[
+                styles.stamPip,
+                i < displayStam ? styles.stamPipFilled : styles.stamPipEmpty,
+              ]}>
+                {i < displayStam && <View style={styles.stamPipGloss} />}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Stat pills */}
+        <View style={styles.pillRow}>
+          {statPills.map(({ value, bg }, i) => (
+            <View key={i} style={[styles.pillContent, {
+              backgroundColor: bg,
+              shadowColor: bg,
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
+            }]}>
+              <View style={styles.pillSpecular} />
+              <View style={styles.pillGradientTop} />
+              <MaterialCommunityIcons name={PILL_ICONS[i]} size={20} color="rgba(255,255,255,0.75)" />
+              <Text style={styles.pillValue}>{value}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Ability text */}
       {card.ability && abilityDesc && (
-        <View pointerEvents="none" style={styles.abilityOverlay}>
-          <Text style={styles.abilityText} numberOfLines={2}>
-            <Text style={styles.abilityName}>{card.ability}: </Text>{abilityDesc}
-          </Text>
-        </View>
+        <>
+          <View pointerEvents="none" style={[styles.abilityAccentBar, { backgroundColor: rm.color }]} />
+          <View pointerEvents="none" style={styles.abilityOverlay}>
+            <Text style={styles.abilityText} numberOfLines={3}>
+              <Text style={styles.abilityName}>{card.ability}: </Text>{abilityDesc}
+            </Text>
+          </View>
+        </>
       )}
 
     </Animated.View>
@@ -327,6 +510,18 @@ export function HeroCard({ card, showShine = false, enableTilt = false }: HeroCa
 }
 
 const styles = StyleSheet.create({
+  activeGlow: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: CORNER_R + 4,
+    // width/height not needed — absolute positioning handles it
+  },
+  // Type tint — full card wash
+  typeTint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: CORNER_R },
+
   imageOverlay: {
     position: 'absolute',
     left: PAD,
@@ -345,20 +540,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: NAME_X,
     top: NAME_Y,
-    width: HP_X - NAME_X - 4,
+    width: SUB_X - NAME_X - 4,
     height: 38,
     justifyContent: 'center',
   },
   cardName: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 14,
+    fontSize: 18,
     color: '#ffffff',
+  },
+  subtitleOverlay: {
+    position: 'absolute',
+    right: PAD,
+    top: SUB_Y,
+    width: 140,
+    height: 34,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   subtitle: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 10,
-    color: '#ffffff',
-    marginTop: 1,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    letterSpacing: 0.3,
   },
   typeIconOverlay: {
     position: 'absolute',
@@ -366,47 +570,128 @@ const styles = StyleSheet.create({
     top: TYPE_CY - TYPE_R,
     width: TYPE_R * 2,
     height: TYPE_R * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  hpOverlay: {
-    position: 'absolute',
-    left: HP_X,
-    top: HP_Y,
-    width: HP_W,
-    height: HP_H,
-    borderRadius: HP_R,
-    backgroundColor: '#7c3aed',
-    borderWidth: 2,
-    borderColor: '#ffffffcc',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  hpIconWrap: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#ffffff',
+    borderRadius: TYPE_R,
     borderWidth: 1.5,
-    borderColor: '#ffffffcc',
+    borderColor: 'rgba(255,255,255,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hpText: {
-    fontFamily: 'Orbitron_900Black',
-    fontSize: 14,
-    color: '#ffffff',
-  },
-  pillOverlay: {
+  // Stats group wrapper
+  statsWrapper: {
     position: 'absolute',
     left: PAD,
-    top: PILL_Y,
+    top: HPBAR_Y,
     width: INNER_W,
+    height: PILL_Y + PILL_H - HPBAR_Y,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    justifyContent: 'space-between',
+  },
+  statsAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderRadius: 2,
+  },
+  hpSection: {
+    height: HPBAR_H,
+    justifyContent: 'flex-start',
+    gap: 4,
+  },
+  statRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statTag: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 11,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+  },
+  statValue: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 16,
+    lineHeight: 18,
+  },
+  stamValue: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 16,
+    lineHeight: 18,
+    color: '#4fc3f7',
+  },
+  hpBarTrack: {
+    width: '100%',
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+  },
+  hpBarFill: {
+    height: '100%',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  hpBarGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderRadius: 99,
+  },
+
+  // Stamina pips
+  stamSection: {
+    height: STAM_H,
+    justifyContent: 'flex-start',
+    gap: 4,
+  },
+  stamTrack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+  },
+  stamPip: {
+    flex: 1,
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  stamPipFilled: {
+    backgroundColor: '#4fc3f7',
+  },
+  stamPipEmpty: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  stamPipGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  // Stat pills
+  pillRow: {
     height: PILL_H,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   pillContent: {
     width: PILL_W,
@@ -416,40 +701,70 @@ const styles = StyleSheet.create({
     borderColor: '#ffffffcc',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 5,
+    paddingHorizontal: 8,
+    overflow: 'hidden',
   },
-  pillIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#ffffffcc',
-    alignItems: 'center',
-    justifyContent: 'center',
+  pillSpecular: {
+    position: 'absolute',
+    top: 0,
+    left: 6,
+    right: 6,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.28)',
+  },
+  pillGradientTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   pillValue: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 14,
+    fontSize: 17,
     color: '#ffffff',
-    marginLeft: 6,
+    flex: 1,
+    textAlign: 'right',
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+
+  // Ability bar
+  abilityAccentBar: {
+    position: 'absolute',
+    left: PAD,
+    top: ABL_Y + 2,
+    width: 3,
+    height: ABL_H - 4,
+    borderRadius: 2,
   },
   abilityOverlay: {
     position: 'absolute',
-    left: PAD + 8,
+    left: PAD,
     top: ABL_Y + 2,
-    width: INNER_W - 16,
+    width: INNER_W,
     height: ABL_H - 4,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
   },
   abilityText: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 16,
-    color: '#cccccc',
+    color: '#e8e8e8',
+    lineHeight: 20,
   },
   abilityName: {
-    fontFamily: 'Orbitron_700Bold',
-    fontSize: 11,
+    fontFamily: 'Rajdhani_600SemiBold',
     color: '#ffffff',
+    letterSpacing: 0.5,
   },
 });

@@ -33,6 +33,12 @@ export const XP_AWARDS: Record<string, number> = {
 };
 
 // ── Type colours (v2 — 9 types) ─────────────────────────────────────
+export interface TypeMeta {
+  primary: string;
+  bg: string;      // deep dark tint for card body
+  mid: string;     // slightly lighter for art window bg
+}
+
 export const TYPE_COLORS: Record<string, string> = {
   Blaster:   '#FF5722',  // deep orange
   Magic:     '#9C27B0',  // purple
@@ -43,6 +49,27 @@ export const TYPE_COLORS: Record<string, string> = {
   Nature:    '#4CAF50',  // green
   Tech:      '#00BCD4',  // cyan
   Cosmic:    '#5C35CC',  // deep violet (rare)
+};
+
+export const TYPE_META: Record<string, TypeMeta> = {
+  Blaster:   { primary: '#FF5722', bg: '#1e0808', mid: '#3d1508' },
+  Magic:     { primary: '#9C27B0', bg: '#110618', mid: '#210830' },
+  Psychic:   { primary: '#E91E63', bg: '#1e0612', mid: '#35081e' },
+  Shadow:    { primary: '#546E7A', bg: '#06061a', mid: '#0c1520' },
+  Tank:      { primary: '#78909C', bg: '#060c14', mid: '#0e1620' },
+  Speedster: { primary: '#FFC107', bg: '#141000', mid: '#2d1e00' },
+  Nature:    { primary: '#4CAF50', bg: '#06120a', mid: '#0a1e0c' },
+  Tech:      { primary: '#00BCD4', bg: '#040c12', mid: '#041418' },
+  Cosmic:    { primary: '#5C35CC', bg: '#0e0820', mid: '#150830' },
+};
+
+// ── Rarity visual meta ──────────────────────────────────────────────
+export const RARITY_META: Record<string, { color: string; shimmer: boolean }> = {
+  Common:    { color: '#9CA3AF', shimmer: false },
+  Uncommon:  { color: '#34D399', shimmer: false },
+  Rare:      { color: '#60A5FA', shimmer: false },
+  Epic:      { color: '#A78BFA', shimmer: true  },
+  Legendary: { color: '#FBBF24', shimmer: true  },
 };
 
 // ── Battle deck limits ──────────────────────────────────────────────
