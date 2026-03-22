@@ -7,9 +7,11 @@
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity,
-  StyleSheet, Platform, PanResponder, Animated,
+  View, Text, TouchableOpacity, Modal,
+  StyleSheet, Platform, PanResponder, Animated, Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Canvas, Path as SkPath, Skia } from '@shopify/react-native-skia';
 import ReAnimated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, Easing,
 } from 'react-native-reanimated';
@@ -19,16 +21,20 @@ import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
 import { BattleEvent, BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
 import { RC } from '../data/constants';
+import { AVATARS, LEVEL_AVATARS } from '../data/packs';
+import { useGameStateContext } from '../context/GameStateContext';
+import { useSession } from '../context/SessionContext';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { HeroCard } from '../components/HeroCard';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE = 0.55;
-const HAND_SCALE   = 0.30;
-const DECK_SCALE   = 0.22;
-const HAND_OVERLAP = 10;
+const ACTIVE_SCALE = 0.40;
+const HAND_SCALE   = 0.20;
+const HAND_OVERLAP = 0;
+
+const DECK_SCALE = 0.22;
 
 const ACTIVE_W = Math.round(CARD_W * ACTIVE_SCALE);
 const ACTIVE_H = Math.round(CARD_H * ACTIVE_SCALE);
@@ -57,17 +63,72 @@ function CardBack({ w, h }: { w: number; h: number }) {
     </View>
   );
 }
+// ── Deck pile — stacked card backs for 3D depth ───────────────────────────────
+const DECK_LAYER_OFFSET = 2; // px shift per layer (right + down)
+function DeckPile({ w, h, count }: { w: number; h: number; count: number }) {
+  // Show 1–4 layers based on cards remaining
+  const layers = Math.min(count, 4);
+  return (
+    <View style={{ width: w + DECK_LAYER_OFFSET * 3, height: h + DECK_LAYER_OFFSET * 3 }}>
+      {Array.from({ length: layers }).map((_, i) => {
+        const offset = (layers - 1 - i) * DECK_LAYER_OFFSET;
+        return (
+          <View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: offset,
+              top: offset,
+              opacity: i === layers - 1 ? 1 : 0.5,
+            }}
+          >
+            <CardBack w={w} h={h} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+// ── Card preview modal — full-size card over dark backdrop ─────────────────────
+const PREVIEW_SCALE = 0.85;
+function CardPreviewModal({ card, onClose }: { card: BattleCard; onClose: () => void }) {
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={pm.backdrop} activeOpacity={1} onPress={onClose}>
+        <View style={pm.cardWrap}>
+          <CardWrapper scale={PREVIEW_SCALE}>
+            <HeroCard
+              card={card}
+              showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+              currentHp={card.hp}
+              maxHp={card.maxHp}
+              currentStamina={card.stamina}
+              isActive
+              hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+            />
+          </CardWrapper>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+const pm = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', alignItems: 'center', justifyContent: 'center' },
+  cardWrap: { alignItems: 'center' },
+});
+
 // ── Empty hand slot ────────────────────────────────────────────────────────────
 function EmptySlot({ w, h }: { w: number; h: number }) {
   return <View style={[es.slot, { width: w, height: h, borderRadius: w * 0.08 }]} />;
 }
 const es = StyleSheet.create({
-  slot: { borderWidth: 1, borderColor: '#1a1a30', borderStyle: 'dashed' },
+  slot: { borderWidth: 1, borderColor: '#ffffff33', borderStyle: 'dashed' },
 });
 
 const cb = StyleSheet.create({
-  card:    { borderRadius: 6, backgroundColor: '#0e0e22', borderWidth: 1, borderColor: '#2a2a48', alignItems: 'center', justifyContent: 'center' },
-  diamond: { borderWidth: 1, borderColor: '#3a3a5a', transform: [{ rotate: '45deg' }] },
+  card:    { borderRadius: 6, backgroundColor: '#0e0e22', borderWidth: 1, borderColor: '#ffffff44', alignItems: 'center', justifyContent: 'center' },
+  diamond: { borderWidth: 1, borderColor: '#ffffff55', transform: [{ rotate: '45deg' }] },
 });
 
 
@@ -105,10 +166,12 @@ const da = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure, onPreview, amp }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; attackKey: number; defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
+  onPreview: (c: BattleCard) => void;
+  amp: number;
 }) {
   const cardRef = useRef<View>(null);
 
@@ -168,6 +231,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
   }
   return (
     <View style={aas.row}>
+      <AmpBar amp={amp} baseColor="#ef5350" side="ai" />
       {/* lungeStyle moves the whole card+shake together toward the player */}
       <ReAnimated.View style={lungeStyle}>
         <ReAnimated.View style={shakeStyle}>
@@ -176,19 +240,21 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
             style={{ position: 'relative' }}
             onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
           >
-            <ReAnimated.View style={entryStyle}>
-              <CardWrapper scale={ACTIVE_SCALE}>
-                <HeroCard
-                  card={card}
-                  showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
-                  currentHp={card.hp}
-                  maxHp={card.maxHp}
-                  currentStamina={card.stamina}
-                  isActive
-                  hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
-                />
-              </CardWrapper>
-            </ReAnimated.View>
+            <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
+              <ReAnimated.View style={entryStyle}>
+                <CardWrapper scale={ACTIVE_SCALE}>
+                  <HeroCard
+                    card={card}
+                    showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                    currentHp={card.hp}
+                    maxHp={card.maxHp}
+                    currentStamina={card.stamina}
+                    isActive
+                    hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                  />
+                </CardWrapper>
+              </ReAnimated.View>
+            </TouchableOpacity>
             <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
             {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
           </View>
@@ -198,7 +264,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
       <View style={aas.deckCol}>
         {deckCount > 0 ? (
           <View style={aas.deckWrap}>
-            <CardBack w={DECK_W} h={DECK_H} />
+            <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
             <View style={aas.badge}><Text style={aas.badgeText}>{deckCount}</Text></View>
           </View>
         ) : (
@@ -223,13 +289,18 @@ const aas = StyleSheet.create({
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
 function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
-  swapTargeted, hitKey, defeatingCard, onCardMeasure }: {
+  swapTargeted, hitKey, defeatingCard, onCardMeasure, onPreview,
+  amp, canTrigger, canSpend, onTrigger, onSpend }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   swapTargeted: boolean;
   hitKey: number;
   defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
+  onPreview: (c: BattleCard) => void;
+  amp: number;
+  canTrigger: boolean; canSpend: boolean;
+  onTrigger: () => void; onSpend: () => void;
 }) {
   const cardSlotRef      = useRef<View>(null);
   const onCardMeasureRef = useRef(onCardMeasure);
@@ -279,7 +350,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
       {deckCount > 0 ? (
         <TouchableOpacity onPress={onDraw} disabled={!canDraw} activeOpacity={canDraw ? 0.7 : 1}>
           <View style={aas.deckWrap}>
-            <CardBack w={DECK_W} h={DECK_H} />
+            <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
             <View style={[aas.badge, canDraw && pas.deckBadgeActive]}>
               <Text style={[aas.badgeText, canDraw && pas.deckCountActive]}>{deckCount}</Text>
             </View>
@@ -294,6 +365,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
   if (!card) {
     return (
       <View style={pas.row}>
+        <AmpBar amp={amp} baseColor="#4fc3f7" side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
         {/* Empty active slot — measured as the swap drop-zone for hand card drags */}
         <View
           ref={cardSlotRef}
@@ -313,6 +385,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
 
   return (
     <View style={pas.row}>
+      <AmpBar amp={amp} baseColor="#4fc3f7" side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
       {/* Measure only the card slot — this is the precise swap drop-zone */}
       <View
         ref={cardSlotRef}
@@ -320,19 +393,21 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
         onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
       >
         <ReAnimated.View style={shakeStyle}>
-          <ReAnimated.View style={entryStyle}>
-            <CardWrapper scale={ACTIVE_SCALE}>
-              <HeroCard
-                card={card}
-                showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
-                currentHp={card.hp}
-                maxHp={card.maxHp}
-                currentStamina={card.stamina}
-                isActive
-                hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
-              />
-            </CardWrapper>
-          </ReAnimated.View>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
+            <ReAnimated.View style={entryStyle}>
+              <CardWrapper scale={ACTIVE_SCALE}>
+                <HeroCard
+                  card={card}
+                  showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                  currentHp={card.hp}
+                  maxHp={card.maxHp}
+                  currentStamina={card.stamina}
+                  isActive
+                  hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                />
+              </CardWrapper>
+            </ReAnimated.View>
+          </TouchableOpacity>
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
         </ReAnimated.View>
       </View>
@@ -361,7 +436,7 @@ function AIZone({ handCount }: { handCount: number }) {
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const filled = i < handCount;
         return (
-          <View key={i} style={{ marginLeft: i === 0 ? 0 : (filled ? -HAND_OVERLAP : 4), zIndex: filled ? 1 : 0 }}>
+          <View key={i} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: filled ? 1 : 0 }}>
             {filled ? <CardBack w={HAND_W} h={HAND_H} /> : <EmptySlot w={HAND_W} h={HAND_H} />}
           </View>
         );
@@ -375,7 +450,7 @@ const az = StyleSheet.create({
 
 // ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
 function HandCard({ card, phase, onSelect, onSwap, index, total,
-  playerActiveBoundsRef, onSwapHover, isReturned, playerKillCount }: {
+  playerActiveBoundsRef, onSwapHover, isReturned, playerKillCount, onPreview }: {
   card: BattleCard; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   index: number; total: number;
@@ -383,6 +458,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   onSwapHover: (h: boolean) => void;
   isReturned: boolean;
   playerKillCount: number;
+  onPreview: (c: BattleCard) => void;
 }) {
   const legendaryLock = card.rarity === 'Legendary' && playerKillCount < 3;
   const dragX              = useRef(new Animated.Value(0)).current;
@@ -453,29 +529,31 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   const killsNeeded = 3 - playerKillCount;
 
   return (
-    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : -HAND_OVERLAP, zIndex: total - index }]}>
+    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : 4, zIndex: total - index }]}>
       <Animated.View
         style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
         {...pan.panHandlers}
       >
-        <View style={hc.col}>
-          <View style={[hc.frame, { borderColor: color + '33' }]}>
-            <CardWrapper scale={HAND_SCALE}>
-              <MiniCard
-                card={card}
-                currentHp={card.hp}
-                maxHp={card.maxHp}
-                currentStamina={card.stamina}
-                hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
-              />
-            </CardWrapper>
-            {legendaryLock && (
-              <View style={hc.lockOverlay} pointerEvents="none">
-                <Text style={hc.lockText}>{killsNeeded} more{'\n'}kill{killsNeeded !== 1 ? 's' : ''}</Text>
-              </View>
-            )}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
+          <View style={hc.col}>
+            <View style={[hc.frame, { borderColor: color + '33' }]}>
+              <CardWrapper scale={HAND_SCALE}>
+                <MiniCard
+                  card={card}
+                  currentHp={card.hp}
+                  maxHp={card.maxHp}
+                  currentStamina={card.stamina}
+                  hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                />
+              </CardWrapper>
+              {legendaryLock && (
+                <View style={hc.lockOverlay} pointerEvents="none">
+                  <Text style={hc.lockText}>{killsNeeded} more{'\n'}kill{killsNeeded !== 1 ? 's' : ''}</Text>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Animated.View>
     </ReAnimated.View>
   );
@@ -488,13 +566,14 @@ const hc = StyleSheet.create({
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
-function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId, playerKillCount }: {
+function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId, playerKillCount, onPreview }: {
   hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
   onSwapHover: (h: boolean) => void;
   swapOutCardId: number | null;
   playerKillCount: number;
+  onPreview: (c: BattleCard) => void;
 }) {
   return (
     <View style={pz.container}>
@@ -509,6 +588,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
             onSwapHover={onSwapHover}
             isReturned={card.id === swapOutCardId}
             playerKillCount={playerKillCount}
+            onPreview={onPreview}
           />
         ) : (
           <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: 0 }}>
@@ -575,133 +655,212 @@ const evs = StyleSheet.create({
 });
 
 // ── Amp meter ─────────────────────────────────────────────────────────────────
-function AmpMeter({ playerAmp, aiAmp, poolEffect, activeEffect, roundsLeft, triggeredBy,
-  canTrigger, canSpend, onTrigger, onSpend }: {
-  playerAmp: number; aiAmp: number;
-  poolEffect: AmpEffectName; activeEffect: AmpEffectName | null;
-  roundsLeft: number; triggeredBy: 'player' | 'ai' | null;
-  canTrigger: boolean; canSpend: boolean;
-  onTrigger: () => void; onSpend: () => void;
+// ── Arch amp bar — ∩ shape drawn with Skia path trimming ──────────────────────
+const AMP_ARCH_W      = 58;  // canvas width
+const AMP_ARCH_H      = 48;  // canvas height
+const AMP_STROKE      = 5;
+const AMP_LEG_H       = 18;  // how far the legs extend below the curve
+// Build the ∩ path: starts bottom-left, goes up, arcs across the top, comes down right
+function makeArchPath() {
+  const p    = Skia.Path.Make();
+  const pad  = AMP_STROKE / 2 + 1;
+  const legB = AMP_ARCH_H - 1;           // bottom of legs
+  const legT = AMP_ARCH_H - AMP_LEG_H;   // where the curve starts
+  const cx   = AMP_ARCH_W / 2;
+  const rx   = cx - pad;                  // horizontal radius
+  const ry   = legT - pad;               // vertical radius (top of curve to pad)
+  // Start at bottom-left leg
+  p.moveTo(pad, legB);
+  p.lineTo(pad, legT);
+  // Arc across the top (semi-ellipse)
+  p.cubicTo(pad, pad, AMP_ARCH_W - pad, pad, AMP_ARCH_W - pad, legT);
+  // Down to bottom-right leg
+  p.lineTo(AMP_ARCH_W - pad, legB);
+  return p;
+}
+const archTrackPath = makeArchPath();
+
+function AmpBar({ amp, baseColor, side, canTrigger, canSpend, onTrigger, onSpend }: {
+  amp: number; baseColor: string; side: 'player' | 'ai';
+  canTrigger?: boolean; canSpend?: boolean;
+  onTrigger?: () => void; onSpend?: () => void;
 }) {
-  const effectColor  = AMP_EFFECT_COLORS[activeEffect ?? poolEffect];
-  const effectLabel  = AMP_EFFECT_LABELS[activeEffect ?? poolEffect];
-  const playerPct    = Math.min(1, playerAmp / 100);
-  const aiPct        = Math.min(1, aiAmp / 100);
-  const playerColor  = playerPct >= 1 ? '#ff9800' : '#4fc3f7';
-  const aiColor      = aiPct    >= 1 ? '#ff9800' : '#ef5350';
-  const effectActive = !!activeEffect && roundsLeft > 0;
-
+  const pct   = Math.min(1, amp / 100);
+  const color = pct >= 1 ? '#ff9800' : baseColor;
   return (
-    <View style={am.row}>
-      {/* AI meter (left, red) */}
-      <View style={am.meterCol}>
-        <Text style={am.meterLabel}>AI</Text>
-        <View style={am.track}>
-          <View style={[am.fill, { width: `${Math.round(aiPct * 100)}%` as any, backgroundColor: aiColor }]} />
-        </View>
-        <Text style={[am.pct, { color: aiColor }]}>{aiAmp}</Text>
-      </View>
-
-      {/* Center: effect info + buttons */}
-      <View style={am.center}>
-        <View style={[am.effectBadge, { borderColor: effectColor + '66', backgroundColor: effectColor + '18' }]}>
-          <Text style={[am.effectLabel, { color: effectColor }]}>{effectLabel}</Text>
-          {effectActive && (
-            <Text style={[am.roundsLeft, { color: effectColor }]}>{roundsLeft}r</Text>
-          )}
-        </View>
-        <View style={am.btnRow}>
-          {canSpend && !canTrigger && (
-            <TouchableOpacity style={[am.ampBtn, am.spendBtn]} onPress={onSpend} activeOpacity={0.75}>
-              <Text style={am.ampBtnText}>SPEND 50</Text>
-            </TouchableOpacity>
-          )}
-          {canTrigger && (
-            <TouchableOpacity style={[am.ampBtn, am.triggerBtn]} onPress={onTrigger} activeOpacity={0.75}>
-              <Text style={[am.ampBtnText, { color: '#ff9800' }]}>TRIGGER!</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Player meter (right, blue) */}
-      <View style={am.meterCol}>
-        <Text style={am.meterLabel}>YOU</Text>
-        <View style={am.track}>
-          <View style={[am.fill, { width: `${Math.round(playerPct * 100)}%` as any, backgroundColor: playerColor }]} />
-        </View>
-        <Text style={[am.pct, { color: playerColor }]}>{playerAmp}</Text>
-      </View>
+    <View style={ab.wrap}>
+      <Canvas style={{ width: AMP_ARCH_W, height: AMP_ARCH_H }}>
+        {/* Background track */}
+        <SkPath
+          path={archTrackPath}
+          color="#1a1a35"
+          style="stroke"
+          strokeWidth={AMP_STROKE}
+          strokeCap="round"
+        />
+        {/* Fill — trims along the path from start */}
+        {pct > 0 && (
+          <SkPath
+            path={archTrackPath}
+            color={color}
+            style="stroke"
+            strokeWidth={AMP_STROKE}
+            strokeCap="round"
+            start={0}
+            end={pct}
+          />
+        )}
+      </Canvas>
+      {/* Number underneath the curve */}
+      <Text style={[ab.pct, { color }]}>{amp}</Text>
+      {side === 'player' && canTrigger && onTrigger && (
+        <TouchableOpacity style={[ab.ampBtn, { borderColor: '#ff980088', backgroundColor: '#ff980020' }]} onPress={onTrigger} activeOpacity={0.75}>
+          <Text style={[ab.ampBtnText, { color: '#ff9800' }]}>TRIGGER</Text>
+        </TouchableOpacity>
+      )}
+      {side === 'player' && canSpend && !canTrigger && onSpend && (
+        <TouchableOpacity style={[ab.ampBtn, { borderColor: '#4fc3f766', backgroundColor: '#4fc3f714' }]} onPress={onSpend} activeOpacity={0.75}>
+          <Text style={ab.ampBtnText}>SPEND</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
-const am = StyleSheet.create({
-  row:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, gap: 8, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
-  meterCol:    { flex: 1, alignItems: 'center', gap: 2 },
-  meterLabel:  { fontFamily: 'Orbitron_700Bold', fontSize: 6, color: '#40405a', letterSpacing: 1 },
-  track:       { width: '100%', height: 4, backgroundColor: '#1a1a35', borderRadius: 2, overflow: 'hidden' },
-  fill:        { position: 'absolute', top: 0, left: 0, bottom: 0, borderRadius: 2 },
-  pct:         { fontFamily: 'Orbitron_700Bold', fontSize: 7, lineHeight: 10 },
-  center:      { flex: 2, alignItems: 'center', gap: 3 },
-  effectBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  effectLabel: { fontFamily: 'Orbitron_900Black', fontSize: 7, letterSpacing: 0.5 },
-  roundsLeft:  { fontFamily: 'Orbitron_700Bold', fontSize: 6 },
-  btnRow:      { flexDirection: 'row', gap: 4 },
-  ampBtn:      { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1 },
-  spendBtn:    { borderColor: '#4fc3f766', backgroundColor: '#4fc3f714' },
-  triggerBtn:  { borderColor: '#ff980088', backgroundColor: '#ff980020' },
-  ampBtnText:  { fontFamily: 'Orbitron_900Black', fontSize: 7, color: '#4fc3f7', letterSpacing: 0.5 },
+const ab = StyleSheet.create({
+  wrap:       { position: 'absolute', left: 4, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
+  pct:        { fontFamily: 'Orbitron_900Black', fontSize: 16, marginTop: -4 },
+  ampBtn:     { marginTop: 2, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
+  ampBtnText: { fontFamily: 'Orbitron_900Black', fontSize: 5, color: '#4fc3f7', letterSpacing: 0.3 },
+});
+
+// ── Shared amp effect banner — displayed in VS row ────────────────────────────
+function AmpEffectBanner({ poolEffect, activeEffect, roundsLeft, triggeredBy }: {
+  poolEffect: AmpEffectName; activeEffect: AmpEffectName | null;
+  roundsLeft: number; triggeredBy: 'player' | 'ai' | null;
+}) {
+  const effectColor = AMP_EFFECT_COLORS[activeEffect ?? poolEffect];
+  const effectLabel = AMP_EFFECT_LABELS[activeEffect ?? poolEffect];
+  const effectActive = !!activeEffect && roundsLeft > 0;
+  return (
+    <View style={[aeb.badge, { borderColor: effectColor + '66', backgroundColor: effectColor + '18' }]}>
+      <Text style={[aeb.label, { color: effectColor }]}>{effectLabel}</Text>
+      {effectActive && (
+        <Text style={[aeb.rounds, { color: effectColor }]}>{roundsLeft}r {triggeredBy === 'player' ? '(YOU)' : '(AI)'}</Text>
+      )}
+    </View>
+  );
+}
+const aeb = StyleSheet.create({
+  badge:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
+  label:  { fontFamily: 'Orbitron_900Black', fontSize: 7, letterSpacing: 0.5 },
+  rounds: { fontFamily: 'Orbitron_700Bold', fontSize: 6 },
 });
 
 // ── Attack buttons ────────────────────────────────────────────────────────────
-function AttackButtons({ phase, stamina, onAttack, onRest }: {
+// ── Skewed gradient button ─────────────────────────────────────────────────────
+const SKEW = '-6deg';
+const COUNTER_SKEW = '6deg';
+function SkewButton({ onPress, disabled, colors, borderColor, label, sub, opacity = 0.75 }: {
+  onPress: () => void; disabled: boolean;
+  colors: [string, string]; borderColor: string;
+  label: string; sub?: string; opacity?: number;
+}) {
+  const disColors: [string, string] = ['#0a0a18', '#0e0e20'];
+  return (
+    <TouchableOpacity
+      style={atb.btnOuter}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={opacity}
+    >
+      <LinearGradient
+        colors={disabled ? disColors : colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[atb.btnGrad, { borderColor: disabled ? '#1a1a35' : borderColor }]}
+      >
+        <View style={atb.btnContent}>
+          <Text style={[atb.label, disabled && atb.labelDis]}>{label}</Text>
+          {sub ? <Text style={[atb.sub, disabled && atb.subDis]}>{sub}</Text> : null}
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
+// ── Action bar — Rest (left) + Attack (right) with popup submenu ──────────────
+function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: {
   phase: BattlePhase; stamina: number;
   onAttack: (weight: AttackWeight) => void; onRest: () => void;
+  showMenu: boolean; setShowMenu: (v: boolean) => void;
 }) {
   const ready = phase === 'ready';
+  const attacks: { weight: AttackWeight; label: string; cost: string; mult: string; minSp: number; colors: [string, string]; border: string }[] = [
+    { weight: 'light',  label: 'LIGHT',  cost: '−1 SP', mult: '×0.8', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: '#4fc3f766' },
+    { weight: 'medium', label: 'MEDIUM', cost: '−3 SP', mult: '×1.0', minSp: 3, colors: ['#4a3000', '#2a1a00'], border: '#ffa72666' },
+    { weight: 'heavy',  label: 'HEAVY',  cost: '−5 SP', mult: '×1.5', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: '#ef535066' },
+  ];
   return (
-    <View style={atb.row}>
-      {([
-        { weight: 'light'  as AttackWeight, label: 'LIGHT',  cost: '−1', mult: '×0.8', minSp: 1, color: '#4fc3f7' },
-        { weight: 'medium' as AttackWeight, label: 'MEDIUM', cost: '−3', mult: '×1.0', minSp: 3, color: '#ffa726' },
-        { weight: 'heavy'  as AttackWeight, label: 'HEAVY',  cost: '−5', mult: '×1.5', minSp: 5, color: '#ef5350' },
-      ]).map(({ weight, label, cost, mult, minSp, color }) => {
-        const canUse = stamina >= minSp;
-        const dis    = !ready || !canUse;
-        return (
-          <TouchableOpacity
-            key={weight}
-            style={[atb.btn, { borderColor: dis ? '#1a1a35' : color + '66' }, dis && atb.btnDis]}
-            onPress={() => onAttack(weight)}
-            disabled={dis}
-            activeOpacity={0.75}
-          >
-            <Text style={[atb.cost, { color: dis ? '#303050' : color }]}>{cost} SP</Text>
-            <Text style={[atb.label, { color: dis ? '#303050' : '#e0e0f0' }]}>{label}</Text>
-            <Text style={[atb.mult, { color: dis ? '#303050' : color + 'aa' }]}>{mult}</Text>
-          </TouchableOpacity>
-        );
-      })}
-      <TouchableOpacity
-        style={[atb.btn, { borderColor: ready ? '#4caf5066' : '#1a1a35' }, !ready && atb.btnDis]}
-        onPress={onRest}
-        disabled={!ready}
-        activeOpacity={0.75}
-      >
-        <Text style={[atb.cost, { color: ready ? '#4caf50' : '#303050' }]}>+5 SP</Text>
-        <Text style={[atb.label, { color: ready ? '#e0e0f0' : '#303050' }]}>REST</Text>
-        <Text style={[atb.mult, { color: ready ? '#4caf5088' : '#303050' }]}>skip</Text>
-      </TouchableOpacity>
+    <View style={atb.wrap}>
+      {/* Attack submenu — floats above the bar */}
+      {showMenu && (
+        <>
+          <TouchableOpacity style={atb.menuBackdrop} activeOpacity={1} onPress={() => setShowMenu(false)} />
+          <View style={atb.menuRow}>
+            {attacks.map(({ weight, label, cost, mult, minSp, colors, border }) => {
+              const canUse = stamina >= minSp;
+              const dis = !ready || !canUse;
+              return (
+                <SkewButton
+                  key={weight}
+                  onPress={() => { onAttack(weight); setShowMenu(false); }}
+                  disabled={dis}
+                  colors={colors}
+                  borderColor={border}
+                  label={label}
+                  sub={`${cost}  ${mult}`}
+                />
+              );
+            })}
+          </View>
+        </>
+      )}
+
+      {/* Main two-button bar */}
+      <View style={atb.row}>
+        <SkewButton
+          onPress={() => { onRest(); setShowMenu(false); }}
+          disabled={!ready}
+          colors={['#1a4a2a', '#0a2a14']}
+          borderColor="#4caf5066"
+          label="REST"
+          sub="+5 SP"
+        />
+        <SkewButton
+          onPress={() => setShowMenu(!showMenu)}
+          disabled={!ready}
+          colors={showMenu ? ['#6a1a28', '#4a0e18'] : ['#5a1520', '#3a0a10']}
+          borderColor={showMenu ? '#ef5350aa' : '#ef535066'}
+          label="ATTACK"
+          sub={`${stamina} SP`}
+        />
+      </View>
     </View>
   );
 }
 const atb = StyleSheet.create({
-  row:    { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, gap: 6, backgroundColor: '#060610', borderTopWidth: 1, borderTopColor: '#10102a' },
-  btn:    { flex: 1, borderWidth: 1, borderRadius: 8, paddingVertical: 6, alignItems: 'center', backgroundColor: '#0a0a1e' },
-  btnDis: { backgroundColor: '#060610' },
-  cost:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.5, lineHeight: 11 },
-  label:  { fontFamily: 'Orbitron_900Black', fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
-  mult:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.5, lineHeight: 11 },
+  wrap:       { position: 'relative', zIndex: 10 },
+  row:        { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, gap: 8, backgroundColor: '#060610' },
+  btnOuter:   { flex: 1 },
+  btnGrad:    { borderWidth: 1.5, borderRadius: 4, paddingVertical: 10, alignItems: 'center', transform: [{ skewX: SKEW }], overflow: 'hidden' },
+  btnContent: { transform: [{ skewX: COUNTER_SKEW }], alignItems: 'center' },
+  label:      { fontFamily: 'Orbitron_900Black', fontSize: 14, letterSpacing: 1.5, color: '#ffffff' },
+  labelDis:   { color: '#303050' },
+  sub:        { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 0.5, marginTop: 2, color: '#ffffffaa' },
+  subDis:     { color: '#303050' },
+  // Submenu
+  menuBackdrop: { position: 'absolute', top: -500, left: 0, right: 0, bottom: 0, zIndex: 1 },
+  menuRow:    { position: 'absolute', bottom: '100%', left: 10, right: 10, flexDirection: 'row', gap: 6, paddingBottom: 6, zIndex: 2 },
 });
 
 // ── Result screen ─────────────────────────────────────────────────────────────
@@ -746,8 +905,24 @@ const rs = StyleSheet.create({
 
 // ── BattleScreen ──────────────────────────────────────────────────────────────
 export default function BattleScreen({ navigation, route }: Props) {
-  const { playerDeck, tier } = route.params;
-  const battle = useBattle(playerDeck, tier);
+  const { playerDeck, tier, resume } = route.params;
+  const battle = useBattle(playerDeck, tier, resume);
+  const gs = useGameStateContext();
+  const { username } = useSession();
+  const playerAvatar =
+    AVATARS.find(a => a.id === gs.activeAvatar) ??
+    LEVEL_AVATARS.find(a => a.id === gs.activeAvatar);
+
+  // ── Card preview modal ───────────────────────────────────────────────────
+  const [previewCard, setPreviewCard] = useState<BattleCard | null>(null);
+  const onPreview = useCallback((c: BattleCard) => setPreviewCard(c), []);
+
+  // ── Attack submenu ──────────────────────────────────────────────────────
+  const [showAttackMenu, setShowAttackMenu] = useState(false);
+  // Close menu when phase leaves 'ready'
+  useEffect(() => {
+    if (battle.phase !== 'ready') setShowAttackMenu(false);
+  }, [battle.phase]);
 
   // ── Drop-zone measurement (card-level, not section-level) ─────────────────
   const aiActiveBounds     = useRef<Bounds | null>(null);
@@ -787,14 +962,32 @@ export default function BattleScreen({ navigation, route }: Props) {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Text style={s.backText}>LOBBY</Text>
-        </TouchableOpacity>
-        <View style={s.headerCenter}>
-          <Text style={[s.tierName, { color: tc }]}>{battle.tierName.toUpperCase()}</Text>
-          <Text style={s.roundNum}>Round {battle.round}</Text>
+        {/* Player side */}
+        <View style={s.headerSide}>
+          <View style={[s.avatarCircle, { borderColor: playerAvatar?.color ?? '#4fc3f7' }]}>
+            <Text style={[s.avatarSymbol, { color: playerAvatar?.color ?? '#4fc3f7' }]}>
+              {playerAvatar?.symbol ?? 'θ'}
+            </Text>
+          </View>
+          <Text style={s.playerName} numberOfLines={1}>{username || 'YOU'}</Text>
         </View>
-        <View style={{ width: 48 }} />
+
+        {/* Center — round + forfeit */}
+        <View style={s.headerCenter}>
+          <Text style={s.roundNum}>ROUND</Text>
+          <Text style={[s.roundBig, { color: tc }]}>{battle.round}</Text>
+          <TouchableOpacity onPress={() => { battle.forfeit(); navigation.goBack(); }} style={s.forfeitBtn} activeOpacity={0.7}>
+            <Text style={s.forfeitText}>FORFEIT</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* AI side */}
+        <View style={[s.headerSide, { alignItems: 'flex-end' }]}>
+          <View style={[s.avatarCircle, { borderColor: tc }]}>
+            <Text style={[s.avatarSymbol, { color: tc }]}>{battle.tierSymbol}</Text>
+          </View>
+          <Text style={[s.playerName, { color: tc }]} numberOfLines={1}>{battle.tierName.toUpperCase()}</Text>
+        </View>
       </View>
 
       {/* AI zone — face-down hand only */}
@@ -810,12 +1003,19 @@ export default function BattleScreen({ navigation, route }: Props) {
             attackKey={battle.aiAttackKey}
             defeatingCard={battle.lastDefeatedAiCard}
             onCardMeasure={onAiCardMeasure}
+            onPreview={onPreview}
+            amp={battle.aiAmp}
           />
         </View>
 
         <View style={s.vsRow}>
           <View style={s.vsDivider} />
-          <Text style={s.vsText}>VS</Text>
+          <AmpEffectBanner
+            poolEffect={battle.ampPoolEffect}
+            activeEffect={battle.ampActiveEffect}
+            roundsLeft={battle.ampRoundsLeft}
+            triggeredBy={battle.ampTriggeredBy}
+          />
           <View style={s.vsDivider} />
         </View>
 
@@ -837,33 +1037,17 @@ export default function BattleScreen({ navigation, route }: Props) {
             hitKey={battle.playerHitKey}
             defeatingCard={battle.lastDefeatedPlayerCard}
             onCardMeasure={onPlayerCardMeasure}
+            onPreview={onPreview}
+            amp={battle.playerAmp}
+            canTrigger={battle.canTrigger}
+            canSpend={battle.canSpend}
+            onTrigger={battle.triggerAmp}
+            onSpend={battle.spendAmp}
           />
         </View>
       </View>
 
-      {/* Amp meter */}
-      <AmpMeter
-        playerAmp={battle.playerAmp}
-        aiAmp={battle.aiAmp}
-        poolEffect={battle.ampPoolEffect}
-        activeEffect={battle.ampActiveEffect}
-        roundsLeft={battle.ampRoundsLeft}
-        triggeredBy={battle.ampTriggeredBy}
-        canTrigger={battle.canTrigger}
-        canSpend={battle.canSpend}
-        onTrigger={battle.triggerAmp}
-        onSpend={battle.spendAmp}
-      />
-
-      {/* Attack buttons */}
-      <AttackButtons
-        phase={battle.phase}
-        stamina={battle.playerActive?.stamina ?? 0}
-        onAttack={battle.attack}
-        onRest={battle.rest}
-      />
-
-      {/* Player zone — face-up hand only */}
+      {/* Player zone — face-up hand (above action bar) */}
       <PlayerZone
         hand={battle.playerHand}
         phase={battle.phase}
@@ -873,8 +1057,23 @@ export default function BattleScreen({ navigation, route }: Props) {
         onSwapHover={onSwapHover}
         swapOutCardId={battle.swapOutCardId}
         playerKillCount={battle.playerKillCount}
+        onPreview={onPreview}
       />
 
+      {/* Action bar — Rest + Attack */}
+      <ActionBar
+        phase={battle.phase}
+        stamina={battle.playerActive?.stamina ?? 0}
+        onAttack={battle.attack}
+        onRest={battle.rest}
+        showMenu={showAttackMenu}
+        setShowMenu={setShowAttackMenu}
+      />
+
+      {/* Card preview modal */}
+      {previewCard && (
+        <CardPreviewModal card={previewCard} onClose={() => setPreviewCard(null)} />
+      )}
 
     </View>
   );
@@ -883,12 +1082,16 @@ export default function BattleScreen({ navigation, route }: Props) {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#060610' },
 
-  header:       { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#10102a', backgroundColor: '#060610' },
-  backBtn:      { width: 48 },
-  backText:     { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#4fc3f7', letterSpacing: 1 },
-  headerCenter: { alignItems: 'center' },
-  tierName:     { fontFamily: 'Orbitron_900Black', fontSize: 14, letterSpacing: 1 },
-  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#404458', letterSpacing: 1, marginTop: 1 },
+  header:       { paddingTop: Platform.OS === 'ios' ? 52 : 12, paddingHorizontal: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#10102a', backgroundColor: '#060610' },
+  headerSide:   { flex: 1, alignItems: 'flex-start', gap: 2 },
+  avatarCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a1e' },
+  avatarSymbol: { fontSize: 14, fontWeight: '700' },
+  playerName:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#c0c8dc', letterSpacing: 1 },
+  headerCenter: { alignItems: 'center', paddingHorizontal: 8 },
+  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 2 },
+  roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: 20, letterSpacing: 1, marginTop: -2 },
+  forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#ef535066', backgroundColor: '#ef535018' },
+  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#ef5350', letterSpacing: 1 },
 
   combatZone: { flex: 1, paddingVertical: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },

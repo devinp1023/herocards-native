@@ -4,7 +4,7 @@
 // Boundary rule: this hook never imports Firebase directly.
 // It will call useFirebase().saveData() once Session 13 wires persistence.
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ALL_CARDS, Card } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
@@ -139,6 +139,10 @@ export interface GameState {
   recordBattleResult: (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => void;
   battleStats: Record<string, number>;
   recordBattleStats: (delta: Record<string, number>) => void;
+  // Battle persistence
+  savedBattle: any | null;
+  saveBattleState: (state: any) => void;
+  clearBattleState: () => void;
 }
 
 export function useGameState(uid: string, initialData?: PersistedGameData | null, cardRoster: Card[] = ALL_CARDS): GameState {
@@ -178,6 +182,12 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   });
   const [battleWinStreak, setBattleWinStreak] = useState(() =>
     isGod ? 0 : (initialData?.battleWinStreak ?? 0));
+
+  // ── Battle persistence ────────────────────────────────────────────────────
+  const [savedBattle, setSavedBattle] = useState<any>(
+    isGod ? null : (initialData?.savedBattle ?? null));
+  const saveBattleState  = useCallback((state: any) => { if (!isGod) setSavedBattle(state); }, [isGod]);
+  const clearBattleState = useCallback(() => setSavedBattle(null), []);
 
   // ── Quest state ───────────────────────────────────────────────────────────
   const [packsOpened,  setPacksOpened]  = useState(() => initialData?.packsOpened  ?? 0);
@@ -249,6 +259,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
     battleWinStreak,
     battleStats:     Object.fromEntries(Object.entries(battleStats)),
+    savedBattle:     savedBattle,
   };
 
   // Skip saving on the very first render — the mount-time state is just
@@ -268,7 +279,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak, battleStats]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -397,5 +408,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     addBattleCooldowns,
     battleWinStreak, recordBattleResult,
     battleStats, recordBattleStats,
+    savedBattle, saveBattleState, clearBattleState,
   };
 }

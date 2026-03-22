@@ -21,6 +21,8 @@ import {
   calcBattleRewards,
   initAmpField, gainAmp, triggerAmp as triggerAmpFn, spendAmp as spendAmpFn,
   aiDecideAmp, isLockOnActive, WEIGHT_AMP, legendaryLocked, getTypeMultiplier,
+  serializeBattleCard, serializeSideState,
+  rehydrateSideState,
 } from '../battle/battleEngine';
 import { buildAiDeck } from '../battle/aiDeck';
 
@@ -42,6 +44,7 @@ export interface UseBattleResult {
   rewards:         { credits: number; xp: number; streakBonus: boolean } | null;
   tierColor:       string;
   tierName:        string;
+  tierSymbol:      string;
   canDraw:         boolean;
   canSwap:         boolean;
   playerAmp:       number;
@@ -70,6 +73,7 @@ export interface UseBattleResult {
   cancelSwapMode:  () => void;
   swapCard:        (id: number) => void;
   selectCard:      (id: number) => void;
+  forfeit:         () => void;
 }
 
 // Stable snapshot of the mutable ref state, committed at each refresh() call.
@@ -91,7 +95,7 @@ interface DisplaySnapshot {
   playerKillCount: number;
 }
 
-export function useBattle(playerDeckIds: number[], tier: number): UseBattleResult {
+export function useBattle(playerDeckIds: number[], tier: number, savedState?: any): UseBattleResult {
   const gs = useGameStateContext();
 
   const pRef      = useRef<SideState | null>(null);
@@ -186,14 +190,34 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const { cardRoster } = gs;
+
+    // ── Resume path: restore from saved battle state ──────────────────────
+    if (savedState && savedState.version === 1) {
+      try {
+        const p = rehydrateSideState(savedState.player, cardRoster);
+        const a = rehydrateSideState(savedState.ai, cardRoster);
+        pRef.current      = p;
+        aRef.current      = a;
+        eventsRef.current = savedState.events ?? [];
+        ampRef.current    = savedState.ampField ?? initAmpField();
+        perBattleStatsRef.current = savedState.perBattleStats ?? {};
+        setRound(savedState.round ?? 1);
+        setPhase('ready');
+        refresh();
+        return;
+      } catch (err) {
+        console.warn('[useBattle] Failed to restore saved battle, starting fresh:', err);
+        gs.clearBattleState();
+      }
+    }
+
+    // ── Fresh path: new battle ────────────────────────────────────────────
     const playerCards = playerDeckIds.map(id => cardRoster.find(c => c.id === id)!).filter(Boolean);
     const aiCards     = buildAiDeck(tier, cardRoster);
     const p = initSideState(playerCards, 'player');
     const a = initSideState(aiCards,     'ai');
 
     // Sprint 5: Legendary Lock — opening card cannot be Legendary.
-    // If the active card is Legendary, find the first non-Legendary in hand
-    // and swap it to active, pushing the Legendary to the back of the hand.
     const ensureNonLegendaryOpener = (side: SideState) => {
       if (side.active.rarity === 'Legendary') {
         const firstNonLeg = side.hand.findIndex(c => c.rarity !== 'Legendary');
@@ -202,9 +226,6 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
           side.hand[firstNonLeg] = side.active;
           side.active = replacement;
         }
-        // If entire hand is also Legendary (extremely unlikely), leave as-is —
-        // the player still starts with a Legendary opener which is undesirable
-        // but gracefully handled since no non-Legendary exists.
       }
     };
     ensureNonLegendaryOpener(p);
@@ -235,6 +256,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
 
   // ── End battle ────────────────────────────────────────────────────────────
   const endBattle = useCallback((w: 'player' | 'ai' | 'tie') => {
+    gs.clearBattleState();
     eventsRef.current.push({ type: 'BATTLE_END', winner: w });
 
     // ── Scan battle events to compute stats ──────────────────────────────────
@@ -1000,6 +1022,38 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     refresh();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Forfeit: clear saved battle before navigating away ───────────────────
+  const forfeit = useCallback(() => {
+    gs.clearBattleState();
+  }, [gs]);
+
+  // ── Checkpoint save: persist battle state when stable ────────────────────
+  useEffect(() => {
+    if (phase !== 'ready' || winner !== null) return;
+    if (!pRef.current || !aRef.current) return;
+    // Collect all AI card IDs from all zones (hand, deck, active, defeated)
+    const allAiCards = [
+      aRef.current.active,
+      ...aRef.current.hand,
+      ...aRef.current.deck,
+      ...aRef.current.defeated,
+    ].filter(Boolean);
+    const serialized = {
+      version:        1,
+      playerDeckIds,
+      aiDeckIds:      allAiCards.map(c => c.id),
+      tier,
+      round,
+      player:         serializeSideState(pRef.current),
+      ai:             serializeSideState(aRef.current),
+      ampField:       { ...ampRef.current },
+      events:         eventsRef.current,
+      perBattleStats: { ...perBattleStatsRef.current },
+      savedAt:        Date.now(),
+    };
+    gs.saveBattleState(serialized);
+  }, [phase, winner, round]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return {
     phase,
     round,
@@ -1015,6 +1069,7 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     rewards,
     tierColor:       tierInfo.color,
     tierName:        tierInfo.name,
+    tierSymbol:      tierInfo.symbol,
     canDraw:         snap.playerHand.length < 5 && snap.playerDeckCount > 0 && !isLockOnActive(ampRef.current, 'player'),
     canSwap:         !!snap.playerActive && snap.playerHand.length > 0 && !isLockOnActive(ampRef.current, 'player'),
     playerAmp:       snap.playerAmp,
@@ -1041,5 +1096,6 @@ export function useBattle(playerDeckIds: number[], tier: number): UseBattleResul
     cancelSwapMode,
     swapCard,
     selectCard,
+    forfeit,
   };
 }

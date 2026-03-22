@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
 import { Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
 import { useFont } from '@shopify/react-native-skia';
@@ -59,7 +60,7 @@ export type CollectionStackParamList = {
 
 export type BattleStackParamList  = {
   BattleLobby: undefined;
-  Battle: { playerDeck: number[]; tier: number };
+  Battle: { playerDeck: number[]; tier: number; resume?: any };
 };
 export type StoreStackParamList   = { Store:        undefined };
 export type ProfileStackParamList = { Profile:      undefined };
@@ -134,18 +135,39 @@ function CollectionStackNav() {
 }
 
 function BattleStackNav() {
+  const gs = useGameStateContext();
+  const saved = gs.savedBattle;
+  // If there's a saved battle less than 24h old, resume directly
+  const shouldResume = saved && saved.version === 1 &&
+    (Date.now() - (saved.savedAt ?? 0)) < 24 * 60 * 60 * 1000;
   return (
-    <BattleStack.Navigator screenOptions={{ headerShown: false }}>
+    <BattleStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={shouldResume ? 'Battle' : 'BattleLobby'}
+    >
       <BattleStack.Screen name="BattleLobby" component={BattleLobbyScreen} />
-      <BattleStack.Screen name="Battle" component={BattleScreen} options={{ gestureEnabled: false }} />
+      <BattleStack.Screen
+        name="Battle"
+        component={BattleScreen}
+        options={{ gestureEnabled: false }}
+        initialParams={shouldResume ? {
+          playerDeck: saved.playerDeckIds,
+          tier: saved.tier,
+          resume: saved,
+        } : undefined}
+      />
     </BattleStack.Navigator>
   );
 }
 
 // ── Main tab navigator ────────────────────────────────────────────────────────
 function MainTabs() {
+  const gs = useGameStateContext();
+  const hasSavedBattle = gs.savedBattle && gs.savedBattle.version === 1 &&
+    (Date.now() - (gs.savedBattle.savedAt ?? 0)) < 24 * 60 * 60 * 1000;
   return (
     <Tab.Navigator
+      initialRouteName={hasSavedBattle ? 'BattleTab' : 'HomeTab'}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -180,9 +202,13 @@ function MainTabs() {
       <Tab.Screen
         name="BattleTab"
         component={BattleStackNav}
-        options={{
-          tabBarIcon:  ({ focused }) => <TabIcon  label="BATTLE"  focused={focused} />,
-          tabBarLabel: ({ focused }) => <TabLabel label="BATTLE"  focused={focused} />,
+        options={({ route }) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? 'BattleLobby';
+          return {
+            tabBarIcon:  ({ focused }) => <TabIcon  label="BATTLE"  focused={focused} />,
+            tabBarLabel: ({ focused }) => <TabLabel label="BATTLE"  focused={focused} />,
+            ...(routeName === 'Battle' && { tabBarStyle: { display: 'none' as const } }),
+          };
         }}
       />
       <Tab.Screen

@@ -84,6 +84,7 @@ All quests and achievements UI lives inside **ProfileScreen** — there is no se
 - **react-native-get-random-values** — Metro shim for Firebase crypto (MUST be first import in App.tsx)
 - **expo-font + @expo-google-fonts/orbitron + @expo-google-fonts/rajdhani** — fonts
 - **@expo/vector-icons (MaterialCommunityIcons)** — type icons and stat pill icons on cards
+- **expo-linear-gradient** — gradient fills for battle action buttons
 
 ### File Structure
 ```
@@ -170,7 +171,7 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 ## Card Rendering — Skia
 - Each card is a fixed **300×433px canvas**, scaled externally via container transform
 - Never reflows — contents always at same coordinates relative to canvas
-- Scale targets: collection 45%, detail 90%, battle active 85%, battle hand 40%, pack reveal 100%
+- Scale targets: collection 45%, detail 90%, battle active 40%, battle hand 20%, battle preview 85%, pack reveal 100%
 - `useFont()` hook required for all text inside canvas — CSS font-family does not apply
 - Emoji do not render in Skia canvas — use a separate RN `Text` overlay for emoji
 - **RN overlay pattern**: Skia handles backgrounds, borders, image windows, shimmer, noise. RN `View`/`Text` overlays (with `pointerEvents="none"`) handle type wash, icons, text, stat sections
@@ -214,6 +215,12 @@ Key rules:
 - `useBattle` uses **DisplaySnapshot** pattern — ref state snapshotted into React state atomically on each `refresh()` call
 - `aiAttackKey` signal increments when AI attacks — triggers lunge animation in `AIActiveSection`
 - Round sequencing uses `setTimeout` chains at `STEP_MS = 1000ms` per step
+- **Tab bar hidden** during battle — only way to exit is Forfeit button in header
+- **Battle state persistence** — battle saved to Firestore at each `'ready'` phase checkpoint; resumes on app reopen (expires after 24h). Serialization helpers in `battleEngine.ts` (`serializeBattleCard`, `rehydrateBattleCard`, `serializeSideState`, `rehydrateSideState`). Cleared on battle end or forfeit. God Mode skips saves.
+- **Card preview modal** — tap any active card or hand card to see full-size HeroCard (0.85 scale) centered over dark overlay
+- **Action bar** — two skewed gradient buttons (REST + ATTACK); ATTACK opens a submenu with Light/Medium/Heavy options. Uses `expo-linear-gradient` + `skewX` transform.
+- **Amp bars** — Skia-drawn ∩ arches positioned absolute-left of each active card, with path trimming for fill. Shared amp effect shown as banner in VS divider row. TRIGGER/SPEND buttons appear below player's arch.
+- **Deck piles** — stacked card backs with offset layers (1–4 visible based on cards remaining) for 3D depth effect
 
 ## Navigation Structure
 ```
@@ -230,9 +237,9 @@ Root Stack
 ## State Architecture
 | Hook | Owns |
 |------|------|
-| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak). Debounced Firestore save on change. |
+| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak, savedBattle). Debounced Firestore save on change. |
 | `useFirebase` | `loadGameData` + `saveGameData` + `loadCardRoster` — all Firestore reads/writes. |
-| `useBattle` | Battle state machine, animation signals, round sequencing |
+| `useBattle` | Battle state machine, animation signals, round sequencing, checkpoint save/resume |
 
 ## God Mode
 Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements. Skips Firestore save.

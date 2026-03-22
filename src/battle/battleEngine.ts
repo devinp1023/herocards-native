@@ -1023,6 +1023,77 @@ export function aiDecideAmp(aSide: SideState, pSide: SideState, field: AmpField)
 
 // ── 16. Battle reward calculation ─────────────────────────────────────────────
 
+// ── Battle state serialization / rehydration ────────────────────────────────
+
+/** All mutable keys added by BattleCard (on top of Card base) */
+const BATTLE_CARD_MUTABLE_KEYS: (keyof BattleCard)[] = [
+  'hp', 'maxHp', 'stamina', 'maxStamina',
+  '_shieldUsed', '_smokeUsed', '_adaptableUsed', '_secondWindUsed',
+  '_lastStandUsed', '_lastStandActive', '_stubborn', '_lastEffortFired', '_restedAndReady',
+  '_unstoppableLeft', '_fortifyBonus', '_momentumStacks', '_apexMult', '_apexSpeedMult',
+  '_bleedRoundsLeft', '_bleedDmgPerRound', '_bleedEntryPending',
+  '_dominateDebuff', '_intimidatedRoundsLeft',
+  '_packTactics', '_reboundBonus',
+  '_paybackStored', '_overwhelmStacks', '_berserkerBonus', '_deathMarked', '_riposteActive',
+  '_nullifiedRoundsLeft', '_nullifiedAbility', '_juggerStacks', '_juggerAttackedThisRound',
+];
+
+export function serializeBattleCard(bc: BattleCard): Record<string, any> {
+  const out: Record<string, any> = { id: bc.id };
+  for (const k of BATTLE_CARD_MUTABLE_KEYS) out[k] = bc[k];
+  return out;
+}
+
+export function rehydrateBattleCard(saved: Record<string, any>, cardRoster: { id: number }[]): BattleCard {
+  const base = cardRoster.find(c => c.id === saved.id);
+  if (!base) throw new Error(`Card ${saved.id} not found in roster`);
+  const bc = { ...base } as any;
+  for (const k of BATTLE_CARD_MUTABLE_KEYS) {
+    if (k in saved) bc[k] = saved[k];
+  }
+  return bc as BattleCard;
+}
+
+export function serializeSideState(side: SideState): Record<string, any> {
+  return {
+    active:   side.active ? serializeBattleCard(side.active) : null,
+    hand:     side.hand.map(serializeBattleCard),
+    deck:     side.deck.map(serializeBattleCard),
+    defeated: side.defeated.map(serializeBattleCard),
+    attackMult:         side.attackMult,
+    intimidated:        side.intimidated,
+    pendingRebound:     side.pendingRebound,
+    pendingDominate:    side.pendingDominate,
+    amp:                side.amp,
+    _label:             side._label,
+    pressureStacks:     side.pressureStacks,
+    siegeStacks:        side.siegeStacks,
+    pendingFullStamina: side.pendingFullStamina,
+    pendingPayback:     side.pendingPayback,
+    killCount:          side.killCount,
+  };
+}
+
+export function rehydrateSideState(saved: Record<string, any>, cardRoster: { id: number }[]): SideState {
+  return {
+    active:          saved.active ? rehydrateBattleCard(saved.active, cardRoster) : null as any,
+    hand:            (saved.hand ?? []).map((c: any) => rehydrateBattleCard(c, cardRoster)),
+    deck:            (saved.deck ?? []).map((c: any) => rehydrateBattleCard(c, cardRoster)),
+    defeated:        (saved.defeated ?? []).map((c: any) => rehydrateBattleCard(c, cardRoster)),
+    attackMult:         saved.attackMult ?? 1.0,
+    intimidated:        saved.intimidated ?? false,
+    pendingRebound:     saved.pendingRebound ?? false,
+    pendingDominate:    saved.pendingDominate ?? false,
+    amp:                saved.amp ?? 0,
+    _label:             saved._label,
+    pressureStacks:     saved.pressureStacks ?? 0,
+    siegeStacks:        saved.siegeStacks ?? 0,
+    pendingFullStamina: saved.pendingFullStamina ?? false,
+    pendingPayback:     saved.pendingPayback ?? 0,
+    killCount:          saved.killCount ?? 0,
+  };
+}
+
 export function calcBattleRewards(tier: number, winner: 'player' | 'ai' | 'tie', streak: number): { credits: number; xp: number; streakBonus: boolean } {
   const t = BATTLE_REWARDS[tier] ?? BATTLE_REWARDS[1];
   if (winner === 'player') {
