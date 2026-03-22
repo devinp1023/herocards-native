@@ -24,12 +24,16 @@ All 14 build sessions complete. The app has:
 - Firestore as live card data source — falls back to `cards.ts`
 - CMS for managing card data and images — `Re-seed All Cards` to push to Firestore
 
-**Current milestone: Battle System v2 rewrite**
-- 7-sprint rewrite of the battle engine (see `PRDs/HeroCards_BattleSystem_v2_PRD.md`)
-- New type system (9 types), stamina system, Amp mechanic, 50 abilities, Legendary Lock
-- Sprint 6a complete: win-streak ×2 threshold fixed (now 3+), 13 new battle daily quests added, CMS DEFAULT_CARDS synced and redeployed
+**Battle System v2 rewrite — COMPLETE (all 6 sprints)**
+- Sprint 1: 9-type system + new damage formula
+- Sprint 2: Stamina system + attack weights (Light/Medium/Heavy/Rest)
+- Sprint 3: Amp meter + 6 effects (trigger at 100, spend 50 to switch)
+- Sprint 4a/4b: All 50 v2 abilities implemented + assigned to all 200 cards
+- Sprint 5: Legendary Lock + v2 AI deck compositions
+- Sprint 6a: Win-streak ×2 threshold fixed (3+), 13 new battle daily quests (pool 15→28), CMS DEFAULT_CARDS synced and redeployed
+- Sprint 6b: 119 new battle achievements across 27 families + `battleStats` cumulative tracking
 
-**Next milestone after v2: App Store submission**
+**Current milestone: App Store submission**
 - Switch Expo Go → EAS custom build
 - App icons, splash screen, bundle ID, signing
 - App Store Connect listing, TestFlight, submission
@@ -210,12 +214,13 @@ Root Stack
 ## State Architecture
 | Hook | Owns |
 |------|------|
-| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns). Debounced Firestore save on change. |
+| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak). Debounced Firestore save on change. |
 | `useFirebase` | `loadGameData` + `saveGameData` + `loadCardRoster` — all Firestore reads/writes. |
 | `useBattle` | Battle state machine, animation signals, round sequencing |
 
 ## God Mode
 Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements. Skips Firestore save.
+- God Mode does **NOT** bypass Legendary Lock — the lock applies in all modes
 
 ## Git Workflow
 
