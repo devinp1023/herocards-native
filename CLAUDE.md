@@ -8,6 +8,7 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 ## Key References
 - **Tech spec**: `PRDs/HeroCards_ReactNative_TechSpec.docx` — original session plan and architecture decisions
 - **Battle PRD**: `PRDs/HeroCards_BattleSystem_v2_PRD.md` — battle engine rules, abilities, AI logic (v2)
+- **Career Screen PRD**: `PRDs/CAREER_SCREEN.md` — achievement skill tree UI, collection flow, category layout
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -57,7 +58,7 @@ All 14 build sessions complete. The app has:
 
 ## Screens Overview
 - **HomeScreen** — hub with battle button, open packs button, daily quests displayed inline, profile card (taps to ProfileScreen)
-- **CareerScreen** — achievements (moved from ProfileScreen)
+- **CareerScreen** — paginated achievement skill tree (6 category pages: Collector, Progression, Combat, Strategy, Amp & Abilities, Feats) with collection flow
 - **ProfileScreen** — standalone profile page: battle stats grid, collection progress per pack, avatar gallery grid, account/logout
 - **DecksScreen** — coming soon placeholder
 - Daily quests live on **HomeScreen**, achievements live on **CareerScreen**. There is no SettingsScreen.
@@ -72,7 +73,7 @@ All 14 build sessions complete. The app has:
 | `node scripts/push-abilities-to-firestore.js` | Pushes ability field from cards.ts to all 200 Firestore card documents |
 
 ## Haptics
-`expo-haptics` is used in `PackOpeningScreen` for card reveals. No audio — sound effects were not implemented.
+`expo-haptics` is used in `PackOpeningScreen` for card reveals and `useGameState.ts` for achievement collection. No audio — sound effects were not implemented.
 
 ## Architecture
 
@@ -103,6 +104,9 @@ herocards-native/
     │   ├── aiDeck.ts                ← buildAiDeck() — randomised AI deck per tier
     │   └── battleEngine.ts          ← Pure battle logic (HP, damage, stamina, type multipliers, Amp, all 50 abilities)
     ├── components/
+    │   ├── AchievementNode.tsx      ← Skill tree node (4 visual states) + hub node
+    │   ├── AchievementPopup.tsx     ← Toast notification for earned achievements
+    │   ├── BranchConnector.tsx      ← Connecting lines between skill tree nodes
     │   ├── CardWrapper.tsx          ← Scale container for HeroCard/MiniCard
     │   ├── FaceDownCard.tsx         ← Skia face-down card
     │   ├── HeroCard.tsx             ← Skia hero card (glow, shine, tilt)
@@ -113,14 +117,15 @@ herocards-native/
     │   └── SessionContext.ts        ← uid + username + logout
     ├── data/
     │   ├── abilities.ts             ← Ability definitions and descriptions
-    │   ├── achievements.ts          ← ACHIEVEMENTS array + Achievement interface
+    │   ├── achievements.ts          ← ACHIEVEMENTS array, FAMILY_CATEGORY_MAP, getFamiliesForCategory(), AchievementFamily/AchievementTier interfaces
     │   ├── cards.ts                 ← ALL_CARDS (200 cards) — fallback if Firestore is unavailable
-    │   ├── constants.ts             ← RC, RO, XP_THRESHOLDS, TYPE_COLORS, TYPE_META, RARITY_META, BATTLE_RARITY_LIMITS, TIER_INFO, BATTLE_REWARDS, cooldown helpers
+    │   ├── constants.ts             ← RC, RO, XP_THRESHOLDS, TYPE_COLORS, TYPE_META, RARITY_META, BATTLE_RARITY_LIMITS, TIER_INFO, BATTLE_REWARDS, ACHIEVEMENT_CATEGORIES, cooldown helpers
     │   ├── packs.ts                 ← PACKS, AVATARS, AVATAR_TIER_COLORS, LEVEL_AVATARS
     │   └── quests.ts                ← DAILY_QUESTS, getTodaysQuests(), Quest interface
     ├── firebase/
     │   └── config.ts                ← Firebase init (auth, db, storage)
     ├── hooks/
+    │   ├── useAchievementProgress.ts ← Achievement progress computation for Career screen
     │   ├── useBattle.ts             ← Battle state machine, animation signals, round sequencing
     │   ├── useFirebase.ts           ← loadGameData / saveGameData / loadCardRoster (Firestore)
     │   └── useGameState.ts          ← All in-memory game state; debounced Firestore save on change
@@ -129,7 +134,7 @@ herocards-native/
     │   ├── BattleLobbyScreen.tsx
     │   ├── BattleScreen.tsx
     │   ├── CardDetailScreen.tsx
-    │   ├── CareerScreen.tsx           ← Achievements display (moved from ProfileScreen)
+    │   ├── CareerScreen.tsx           ← Paginated achievement skill tree with collection flow
     │   ├── CollectionScreen.tsx
     │   ├── DecksScreen.tsx            ← Coming soon placeholder
     │   ├── HomeScreen.tsx
@@ -250,6 +255,7 @@ Root Stack
 - Icons: MaterialCommunityIcons for 4 outer tabs, custom SVG/PNG for Home (animated crossfade between selected/unselected with reanimated)
 - Dark `NavigationContainer` theme (`#0a0a1a`) eliminates white bleed behind curve
 - Tab bar hidden during battle via `tabBarStyle: { display: 'none' }`
+- Career tab has a red badge showing uncollected achievement count (reads `uncollectedCount` from game state)
 
 ## State Architecture
 | Hook | Owns |
@@ -257,9 +263,24 @@ Root Stack
 | `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak, savedBattle). Debounced Firestore save on change. |
 | `useFirebase` | `loadGameData` + `saveGameData` + `loadCardRoster` — all Firestore reads/writes. |
 | `useBattle` | Battle state machine, animation signals, round sequencing, checkpoint save/resume |
+| `useAchievementProgress` | Computes `familiesByCategory`, `categoryStats`, `uncollectedCount` from game state for CareerScreen |
+
+## Achievement System
+- **41 families** across **6 categories** (collector, progression, combat, strategy, amp, feats) — 163 total tiers
+- **Career Screen PRD**: `PRDs/CAREER_SCREEN.md`
+- **Earned vs Collected**: achievements have two phases — `earnedAchievements` (criteria met) and `collectedAchievements` (rewards claimed via Career screen)
+- **4 node states**: locked → unlocked → earned → completed
+- **Uncollected achievements block the next tier** — player must collect (tap node → "Collect Rewards") before next tier unlocks
+- **Rewards** (XP + credits) are NOT auto-granted — only granted when player taps "Collect" on the Career screen via `collectAchievement(id)`
+- **Toast notification**: appears when achievement earned, tappable (navigates to correct Career page), X to close, suppressed during active battle
+- **Tab badge**: red badge on Career tab icon shows uncollected count
+- **Navigation ref**: `createNavigationContainerRef` in `App.tsx` enables global navigation from toast to Career tab
+- **Feats page**: 5 single-tier achievements arranged in a ring layout (not vertical branches)
+- **Battlefield Control**: only multi-tier family in feats-adjacent position — lives in `amp` category with 5 tiers
+- **Entry animations**: deferred for future implementation
 
 ## God Mode
-Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements. Skips Firestore save.
+Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements earned AND collected. Skips Firestore save.
 - God Mode does **NOT** bypass Legendary Lock — the lock applies in all modes
 
 ## Git Workflow
