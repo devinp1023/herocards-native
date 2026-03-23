@@ -2,15 +2,16 @@
 import 'react-native-get-random-values';
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
 import { Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
-import { useFont } from '@shopify/react-native-skia';
+import { useFont, Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
@@ -26,6 +27,8 @@ import BattleLobbyScreen     from './src/screens/BattleLobbyScreen';
 import BattleScreen          from './src/screens/BattleScreen';
 import StoreScreen           from './src/screens/StoreScreen';
 import ProfileScreen         from './src/screens/ProfileScreen';
+import CareerScreen          from './src/screens/CareerScreen';
+import DecksScreen           from './src/screens/DecksScreen';
 
 import { FontContext }        from './src/context/FontContext';
 import { SessionContext }     from './src/context/SessionContext';
@@ -41,16 +44,19 @@ export type RootStackParamList = {
 };
 
 export type MainTabParamList = {
-  HomeTab:       undefined;
   CollectionTab: undefined;
-  BattleTab:     undefined;
+  DecksTab:      undefined;
+  HomeTab:       undefined;
   StoreTab:      undefined;
-  ProfileTab:    undefined;
+  CareerTab:     undefined;
 };
 
 export type HomeStackParamList = {
   Home:        undefined;
-  PackOpening: undefined;  // Session 7
+  PackOpening: undefined;
+  BattleLobby: undefined;
+  Battle:      { playerDeck: number[]; tier: number; resume?: any };
+  Profile:     undefined;
 };
 
 export type CollectionStackParamList = {
@@ -58,6 +64,7 @@ export type CollectionStackParamList = {
   CardDetail: { cardId: number; owned: boolean; ownedCount: number };
 };
 
+// BattleStackParamList kept as alias for screens that import it
 export type BattleStackParamList  = {
   BattleLobby: undefined;
   Battle: { playerDeck: number[]; tier: number; resume?: any };
@@ -70,50 +77,169 @@ const RootStack        = createNativeStackNavigator<RootStackParamList>();
 const Tab              = createBottomTabNavigator<MainTabParamList>();
 const HomeStack        = createNativeStackNavigator<HomeStackParamList>();
 const CollectionStack  = createNativeStackNavigator<CollectionStackParamList>();
-const BattleStack      = createNativeStackNavigator<BattleStackParamList>();
 
 // Font asset paths for Skia
 const orbitronBoldTtf  = require('./assets/fonts/Orbitron_700Bold.ttf');
 const orbitronBlackTtf = require('./assets/fonts/Orbitron_900Black.ttf');
 const rajdhaniSemiTtf  = require('./assets/fonts/Rajdhani_600SemiBold.ttf');
 
-// ── Tab bar helpers ───────────────────────────────────────────────────────────
-// Emoji are unreliable with Hermes + custom fonts — use styled letter icons.
-const TAB_ICONS: Record<string, string> = {
-  HOME: 'H', CARDS: 'C', BATTLE: 'B', STORE: 'S', PROFILE: 'P',
-};
+// ── Custom tab bar ───────────────────────────────────────────────────────────
+const TAB_ICON_MAP: (keyof typeof MaterialCommunityIcons.glyphMap)[] = [
+  'view-grid',      // Collection
+  'cards-outline',  // Decks
+  'home',           // Home (center)
+  'store',          // Store
+  'trophy',         // Career
+];
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  const letter = TAB_ICONS[label] ?? label[0];
+const CENTER_INDEX = 2;
+const HEX_SIZE     = 44;
+const CENTER_W     = 62;
+const CENTER_H     = 74;
+const BAR_H        = 70;
+const CURVE_RISE   = 18; // how much the sides curve up
+const BAR_TOTAL    = BAR_H + CURVE_RISE; // visible bar height
+const SCREEN_W     = Dimensions.get('window').width;
+
+// Vertical position for each icon — follows the curved arc
+// Outer icons sit higher on the curve, center at bottom
+const TAB_BOTTOM   = [22, 14, 8, 14, 22];
+
+// Build the curved bar background path — drawn within the bar area (BAR_H + CURVE_RISE)
+function makeBarPath(w: number): string {
+  const h = BAR_H + CURVE_RISE;
+  const cx = w / 2;
+  return `M 0 0 Q ${cx} ${CURVE_RISE + 12} ${w} 0 L ${w} ${h} L 0 ${h} Z`;
+}
+
+// Separate stroke path — just the curve line
+function makeStrokePath(w: number): string {
+  const cx = w / 2;
+  return `M 0 0 Q ${cx} ${CURVE_RISE + 12} ${w} 0`;
+}
+
+const barFillPath = Skia.Path.MakeFromSVGString(makeBarPath(SCREEN_W))!;
+const barStrokePath = Skia.Path.MakeFromSVGString(makeStrokePath(SCREEN_W))!;
+
+function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  // Hide tab bar during Battle screen
+  const homeRoute = state.routes.find(r => r.name === 'HomeTab');
+  if (homeRoute) {
+    const homeState = homeRoute.state;
+    if (homeState) {
+      const currentRoute = homeState.routes[homeState.index ?? 0];
+      if (currentRoute?.name === 'Battle') return null;
+    }
+  }
+
   return (
-    <View style={{
-      width: 28, height: 28, borderRadius: 8,
-      backgroundColor: focused ? '#4fc3f722' : 'transparent',
-      borderWidth: focused ? 1 : 0,
-      borderColor: '#4fc3f7',
-      alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Text style={{
-        fontFamily: 'Orbitron_900Black',
-        fontSize: 11,
-        color: focused ? '#4fc3f7' : '#404458',
-      }}>{letter}</Text>
+    <View style={tabStyles.outer}>
+      {/* Skia curved background */}
+      <Canvas style={tabStyles.canvas} pointerEvents="none">
+        <Path path={barFillPath} color="#08081a" />
+        <Path path={barStrokePath} color="#14142a" style="stroke" strokeWidth={1} />
+      </Canvas>
+
+      {/* Tab buttons */}
+      <View style={tabStyles.bar}>
+        {state.routes.map((route, index) => {
+          const focused    = state.index === index;
+          const isCenter   = index === CENTER_INDEX;
+          const iconName   = TAB_ICON_MAP[index] ?? 'help-circle';
+          const iconSize   = isCenter ? 32 : 24;
+          const bottom     = TAB_BOTTOM[index] ?? 8;
+
+          const onPress = () => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              activeOpacity={0.7}
+              onPress={onPress}
+              style={[tabStyles.tabBtn, { paddingBottom: bottom }]}
+            >
+              <View style={[
+                isCenter ? tabStyles.centerHex : tabStyles.hex,
+                focused && (isCenter ? tabStyles.centerHexActive : tabStyles.hexActive),
+              ]}>
+                <MaterialCommunityIcons
+                  name={iconName}
+                  size={iconSize}
+                  color={focused ? '#4fc3f7' : '#ffffff'}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
-function TabLabel({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <Text style={{
-      fontFamily: 'Orbitron_700Bold',
-      fontSize: 7,
-      letterSpacing: 0.5,
-      marginTop: 2,
-      color: focused ? '#4fc3f7' : '#404458',
-    }}>
-      {label}
-    </Text>
-  );
-}
+
+const tabStyles = StyleSheet.create({
+  outer: {
+    height: BAR_TOTAL,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  canvas: {
+    position: 'absolute',
+    left: 0, right: 0, top: 0, bottom: 0,
+  },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    flex: 1,
+  },
+  tabBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  // Regular hex icon container
+  hex: {
+    width: HEX_SIZE,
+    height: HEX_SIZE,
+    borderRadius: HEX_SIZE * 0.28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#12122a',
+    borderWidth: 1.5,
+    borderColor: '#1e1e3a',
+  },
+  hexActive: {
+    backgroundColor: '#4fc3f718',
+    borderColor: '#4fc3f7',
+    shadowColor: '#4fc3f7',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+  },
+  // Center button — taller shape
+  centerHex: {
+    width: CENTER_W,
+    height: CENTER_H,
+    borderRadius: CENTER_W * 0.24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#12122a',
+    borderWidth: 2,
+    borderColor: '#1e1e3a',
+  },
+  centerHexActive: {
+    backgroundColor: '#4fc3f718',
+    borderColor: '#4fc3f7',
+    shadowColor: '#4fc3f7',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+  },
+});
 
 // ── Nested stack navigators ───────────────────────────────────────────────────
 function HomeStackNav() {
@@ -121,6 +247,13 @@ function HomeStackNav() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home"        component={HomeScreen} />
       <HomeStack.Screen name="PackOpening" component={PackOpeningScreen} />
+      <HomeStack.Screen name="BattleLobby" component={BattleLobbyScreen} />
+      <HomeStack.Screen
+        name="Battle"
+        component={BattleScreen}
+        options={{ gestureEnabled: false }}
+      />
+      <HomeStack.Screen name="Profile"     component={ProfileScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -134,99 +267,20 @@ function CollectionStackNav() {
   );
 }
 
-function BattleStackNav() {
-  const gs = useGameStateContext();
-  const saved = gs.savedBattle;
-  // If there's a saved battle less than 24h old, resume directly
-  const shouldResume = saved && saved.version === 1 &&
-    (Date.now() - (saved.savedAt ?? 0)) < 24 * 60 * 60 * 1000;
-  return (
-    <BattleStack.Navigator
-      screenOptions={{ headerShown: false }}
-      initialRouteName={shouldResume ? 'Battle' : 'BattleLobby'}
-    >
-      <BattleStack.Screen name="BattleLobby" component={BattleLobbyScreen} />
-      <BattleStack.Screen
-        name="Battle"
-        component={BattleScreen}
-        options={{ gestureEnabled: false }}
-        initialParams={shouldResume ? {
-          playerDeck: saved.playerDeckIds,
-          tier: saved.tier,
-          resume: saved,
-        } : undefined}
-      />
-    </BattleStack.Navigator>
-  );
-}
-
 // ── Main tab navigator ────────────────────────────────────────────────────────
 function MainTabs() {
-  const gs = useGameStateContext();
-  const hasSavedBattle = gs.savedBattle && gs.savedBattle.version === 1 &&
-    (Date.now() - (gs.savedBattle.savedAt ?? 0)) < 24 * 60 * 60 * 1000;
   return (
     <Tab.Navigator
-      initialRouteName={hasSavedBattle ? 'BattleTab' : 'HomeTab'}
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#08081a',
-          borderTopColor: '#14142a',
-          borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-        },
-        // No tabBarLabelStyle here — fontFamily at navigator level propagates
-        // into screen content and breaks all emoji. Labels use per-tab render fns.
-        tabBarActiveTintColor:   '#4fc3f7',
-        tabBarInactiveTintColor: '#404458',
-      }}
+      initialRouteName="HomeTab"
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+      sceneContainerStyle={{ backgroundColor: '#08081a' }}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNav}
-        options={{
-          tabBarIcon:  ({ focused }) => <TabIcon  label="HOME"    focused={focused} />,
-          tabBarLabel: ({ focused }) => <TabLabel label="HOME"    focused={focused} />,
-        }}
-      />
-      <Tab.Screen
-        name="CollectionTab"
-        component={CollectionStackNav}
-        options={{
-          tabBarIcon:  ({ focused }) => <TabIcon  label="CARDS"   focused={focused} />,
-          tabBarLabel: ({ focused }) => <TabLabel label="CARDS"   focused={focused} />,
-        }}
-      />
-      <Tab.Screen
-        name="BattleTab"
-        component={BattleStackNav}
-        options={({ route }) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? 'BattleLobby';
-          return {
-            tabBarIcon:  ({ focused }) => <TabIcon  label="BATTLE"  focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="BATTLE"  focused={focused} />,
-            ...(routeName === 'Battle' && { tabBarStyle: { display: 'none' as const } }),
-          };
-        }}
-      />
-      <Tab.Screen
-        name="StoreTab"
-        component={StoreScreen}
-        options={{
-          tabBarIcon:  ({ focused }) => <TabIcon  label="STORE"   focused={focused} />,
-          tabBarLabel: ({ focused }) => <TabLabel label="STORE"   focused={focused} />,
-        }}
-      />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon:  ({ focused }) => <TabIcon  label="PROFILE" focused={focused} />,
-          tabBarLabel: ({ focused }) => <TabLabel label="PROFILE" focused={focused} />,
-        }}
-      />
+      <Tab.Screen name="CollectionTab" component={CollectionStackNav} />
+      <Tab.Screen name="DecksTab"      component={DecksScreen} />
+      <Tab.Screen name="HomeTab"       component={HomeStackNav} />
+      <Tab.Screen name="StoreTab"      component={StoreScreen} />
+      <Tab.Screen name="CareerTab"     component={CareerScreen} />
     </Tab.Navigator>
   );
 }
@@ -320,7 +374,7 @@ export default function App() {
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
           <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData} cardRoster={cardRoster}>
-          <NavigationContainer>
+          <NavigationContainer theme={{ dark: true, colors: { primary: '#4fc3f7', background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: '#4fc3f7' } }}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (
                 <RootStack.Screen name="Auth">
