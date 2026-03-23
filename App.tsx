@@ -1,8 +1,9 @@
 // ⚠️ react-native-get-random-values MUST be the first import.
 import 'react-native-get-random-values';
 
-import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
+import { View, Image, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -87,10 +88,94 @@ const rajdhaniSemiTtf  = require('./assets/fonts/Rajdhani_600SemiBold.ttf');
 const TAB_ICON_MAP: (keyof typeof MaterialCommunityIcons.glyphMap)[] = [
   'view-grid',      // Collection
   'cards-outline',  // Decks
-  'home',           // Home (center)
+  'home',           // Home (center) — fallback
   'store',          // Store
   'trophy',         // Career
 ];
+
+// SVG path data for custom icons (rendered via Skia Path) — keyed by tab index
+const HOME_SVG_PATH = "M523.180 352.756 C 527.219 355.056,551.116 376.332,616.922 436.216 L 626.500 444.932 627.000 417.014 C 627.376 396.001,627.821 388.776,628.799 387.798 C 629.798 386.799,637.645 386.434,662.865 386.212 C 694.913 385.930,695.692 385.970,698.317 388.034 L 701.000 390.145 701.000 450.587 L 701.000 511.029 704.250 514.545 C 706.038 516.479,723.457 532.560,742.960 550.281 C 782.418 586.133,783.153 587.008,783.829 598.975 C 784.305 607.410,781.745 613.246,774.847 619.448 C 765.816 627.567,753.504 627.858,743.175 620.195 C 737.650 616.097,715.221 595.874,596.846 488.261 C 552.487 447.934,515.127 414.101,513.825 413.077 L 511.456 411.214 495.906 425.357 C 487.354 433.136,470.473 448.500,458.394 459.500 C 446.315 470.500,424.747 490.100,410.466 503.055 C 396.185 516.011,379.100 531.555,372.500 537.599 C 306.593 597.947,280.066 621.532,276.025 623.371 C 270.028 626.102,260.009 626.177,254.597 623.533 C 249.291 620.942,244.810 616.255,242.077 610.440 C 239.117 604.142,239.457 594.759,242.903 587.676 C 245.223 582.908,258.682 570.234,326.984 508.500 C 358.376 480.127,364.637 474.448,385.540 455.390 C 397.068 444.880,419.550 424.440,435.500 409.967 C 451.450 395.494,471.394 377.318,479.821 369.576 C 495.445 355.221,500.665 351.346,506.314 349.913 C 511.304 348.646,517.923 349.762,523.180 352.756 M520.846 452.750 C 524.459 455.913,533.313 463.900,540.523 470.500 C 547.733 477.100,561.927 489.965,572.066 499.089 C 582.205 508.214,607.115 530.714,627.423 549.089 C 647.730 567.465,674.730 591.867,687.423 603.315 C 700.115 614.763,711.708 625.925,713.185 628.118 C 714.821 630.550,716.109 634.135,716.484 637.303 C 716.822 640.161,716.964 685.177,716.799 737.337 L 716.500 832.174 713.694 834.587 L 710.888 837.000 643.944 837.000 C 578.333 837.000,576.960 836.960,575.000 835.000 C 573.034 833.034,573.000 831.666,572.998 753.750 C 572.997 680.277,572.869 674.250,571.248 671.071 C 570.287 669.185,568.229 666.710,566.676 665.571 C 563.907 663.539,562.868 663.500,512.176 663.500 L 460.500 663.500 457.364 665.737 C 450.803 670.417,451.000 667.657,451.000 754.964 L 451.000 833.887 448.777 835.443 C 446.820 836.814,438.638 837.000,380.201 837.000 L 313.846 837.000 311.009 834.163 C 309.120 832.274,307.958 829.850,307.533 826.913 C 307.182 824.486,307.031 779.975,307.197 728.000 C 307.545 619.307,306.411 630.351,318.304 619.827 C 325.646 613.330,364.166 578.464,427.402 521.080 C 500.678 454.584,509.325 447.000,511.861 447.000 C 513.376 447.000,516.731 449.147,520.846 452.750";
+const TAB_SVG_PATHS: (string | undefined)[] = [
+  undefined,        // Collection
+  undefined,        // Decks
+  HOME_SVG_PATH,    // Home
+  undefined,        // Store
+  undefined,        // Career
+];
+
+// Pre-scale SVG paths for each icon size (center = 50, others = 30)
+function scaleSvgPath(pathStr: string, targetSize: number, offsetY = 0) {
+  const p = Skia.Path.MakeFromSVGString(pathStr)!;
+  const s = targetSize / 1024;
+  // Scale then translate: [scaleX, 0, translateX, 0, scaleY, translateY, 0, 0, 1]
+  p.transform(Skia.Matrix([s, 0, 0, 0, s, offsetY, 0, 0, 1]));
+  return p;
+}
+const HOME_PATH_50 = scaleSvgPath(HOME_SVG_PATH, 50);
+const HOME_PATH_30 = scaleSvgPath(HOME_SVG_PATH, 30);
+
+// Selected state PNG for home (the lightning bolt version looks great at this size)
+const HOME_SELECTED_PNG = require('./assets/nav-icons/home-selected.png');
+
+const AnimatedImage = Animated.createAnimatedComponent(Image);
+
+// Animated home icon — crossfades between SVG (unselected) and PNG (selected) with a scale pulse
+const AnimatedHomeIcon = React.memo(({ focused, size }: { focused: boolean; size: number }) => {
+  const selectedOpacity = useSharedValue(focused ? 1 : 0);
+  const unselectedOpacity = useSharedValue(focused ? 0 : 1);
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    const dur = 180;
+    const easing = Easing.out(Easing.quad);
+    if (focused) {
+      // Fade in selected, fade out unselected, pulse scale
+      selectedOpacity.value = withTiming(1, { duration: dur, easing });
+      unselectedOpacity.value = withTiming(0, { duration: dur, easing });
+      scale.value = withSequence(
+        withTiming(1.15, { duration: 100, easing: Easing.out(Easing.back(2)) }),
+        withTiming(1, { duration: 120, easing }),
+      );
+    } else {
+      selectedOpacity.value = withTiming(0, { duration: dur, easing });
+      unselectedOpacity.value = withTiming(1, { duration: dur, easing });
+      scale.value = withSequence(
+        withTiming(0.9, { duration: 80, easing }),
+        withTiming(1, { duration: 120, easing }),
+      );
+    }
+  }, [focused]);
+
+  const selectedStyle = useAnimatedStyle(() => ({
+    opacity: selectedOpacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  const unselectedStyle = useAnimatedStyle(() => ({
+    opacity: unselectedOpacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <View style={{ width: size, height: size, overflow: 'visible' }}>
+      {/* Unselected SVG layer */}
+      <Animated.View style={[{ position: 'absolute', top: 0, left: 0, width: size, height: size }, unselectedStyle]}>
+        <Canvas style={{ width: size, height: size }}>
+          <Path path={HOME_PATH_50} color="#ffffff" />
+        </Canvas>
+      </Animated.View>
+      {/* Selected PNG layer */}
+      <Animated.View style={[{ position: 'absolute', bottom: -1, left: -(size * 0.04), width: size * 1.08, height: size * 1.08 }, selectedStyle]}>
+        <Image
+          source={HOME_SELECTED_PNG}
+          style={{ width: size * 1.08, height: size * 1.08 }}
+          resizeMode="contain"
+        />
+      </Animated.View>
+    </View>
+  );
+});
+
 
 const CENTER_INDEX = 2;
 const HEX_SIZE     = 44;
@@ -103,7 +188,7 @@ const SCREEN_W     = Dimensions.get('window').width;
 
 // Vertical position for each icon — follows the curved arc
 // Outer icons sit higher on the curve, center at bottom
-const TAB_BOTTOM   = [22, 14, 8, 14, 22];
+const TAB_BOTTOM   = [22, 14, 16, 14, 22];
 
 // Notch dimensions — gap around center button
 const NOTCH_PAD    = 14;             // padding around button on each side
@@ -203,14 +288,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View style={tabStyles.outer}>
       {/* Skia curved background */}
       <Canvas style={tabStyles.canvas} pointerEvents="none">
-        {/* Gradient bar background — lighter at top, darker at bottom */}
-        <Rect x={0} y={0} width={SCREEN_W} height={BAR_TOTAL + CANVAS_PAD}>
-          <LinearGradient
-            start={vec(0, CANVAS_PAD)}
-            end={vec(0, BAR_TOTAL + CANVAS_PAD)}
-            colors={['#0e1028', '#08081a']}
-          />
-        </Rect>
+        {/* Gradient bar background — follows curve shape only */}
         <Path path={barFillPath}>
           <LinearGradient
             start={vec(0, CANVAS_PAD)}
@@ -233,7 +311,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const focused    = state.index === index;
           const isCenter   = index === CENTER_INDEX;
           const iconName   = TAB_ICON_MAP[index] ?? 'help-circle';
-          const iconSize   = isCenter ? 38 : 30;
+          const iconSize   = isCenter ? 50 : 30;
           const bottom     = TAB_BOTTOM[index] ?? 8;
 
           const onPress = () => {
@@ -254,11 +332,15 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 isCenter ? tabStyles.centerHex : tabStyles.hex,
                 focused && (isCenter ? tabStyles.centerHexActive : tabStyles.hexActive),
               ]}>
-                <MaterialCommunityIcons
-                  name={iconName}
-                  size={iconSize}
-                  color={focused ? '#4fc3f7' : '#ffffff'}
-                />
+                {TAB_SVG_PATHS[index] ? (
+                  <AnimatedHomeIcon focused={focused} size={iconSize} />
+                ) : (
+                  <MaterialCommunityIcons
+                    name={iconName}
+                    size={iconSize}
+                    color={focused ? '#4fc3f7' : '#ffffff'}
+                  />
+                )}
               </View>
             </TouchableOpacity>
           );
