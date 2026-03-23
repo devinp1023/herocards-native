@@ -11,7 +11,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
 import { Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
-import { useFont, Canvas, Path, Skia } from '@shopify/react-native-skia';
+import { useFont, Canvas, Path, Skia, LinearGradient, vec, Rect } from '@shopify/react-native-skia';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/firebase/config';
@@ -105,21 +105,88 @@ const SCREEN_W     = Dimensions.get('window').width;
 // Outer icons sit higher on the curve, center at bottom
 const TAB_BOTTOM   = [22, 14, 8, 14, 22];
 
-// Build the curved bar background path — drawn within the bar area (BAR_H + CURVE_RISE)
-function makeBarPath(w: number): string {
-  const h = BAR_H + CURVE_RISE;
+// Notch dimensions — gap around center button
+const NOTCH_PAD    = 14;             // padding around button on each side
+const NOTCH_HALF   = CENTER_W / 2 + NOTCH_PAD;  // half-width of notch
+const NOTCH_RISE   = 10;             // how far above the bar top the notch extends
+const NOTCH_R      = 14;             // corner radius at notch top
+const CANVAS_PAD   = NOTCH_RISE + 4; // extra canvas height above bar for notch
+
+// Build a curve path with a smooth notch around the center button
+// All Y values are offset by CANVAS_PAD so they stay in positive canvas space
+function makeNotchPath(w: number): string {
   const cx = w / 2;
-  return `M 0 0 Q ${cx} ${CURVE_RISE + 12} ${w} 0 L ${w} ${h} L 0 ${h} Z`;
+  const notchL = cx - NOTCH_HALF;
+  const notchR = cx + NOTCH_HALF;
+  const t = notchL / w;
+  const curveY = CANVAS_PAD + 2 * t * (1 - t) * (CURVE_RISE + 8);
+  const topY = CANVAS_PAD - NOTCH_RISE; // top of notch in canvas space
+  const sideY = CANVAS_PAD; // where sides sit (y=0 of bar, shifted by pad)
+
+  return [
+    `M 0 ${sideY}`,
+    `Q ${notchL * 0.55} ${sideY + curveY * 0.15} ${notchL} ${curveY}`,
+    `C ${notchL} ${topY + NOTCH_R * 2} ${cx - NOTCH_HALF + NOTCH_R} ${topY} ${cx - NOTCH_R} ${topY}`,
+    `L ${cx + NOTCH_R} ${topY}`,
+    `C ${cx + NOTCH_HALF - NOTCH_R} ${topY} ${notchR} ${topY + NOTCH_R * 2} ${notchR} ${curveY}`,
+    `Q ${notchR + (w - notchR) * 0.45} ${sideY + curveY * 0.15} ${w} ${sideY}`,
+  ].join(' ');
 }
 
-// Separate stroke path — just the curve line
-function makeStrokePath(w: number): string {
+// Fill path: notch curve + fill down to bottom
+function makeBarPath(w: number): string {
+  const h = BAR_TOTAL + CANVAS_PAD;
+  return `${makeNotchPath(w)} L ${w} ${h} L 0 ${h} Z`;
+}
+
+// Top curve stroke (bright cyan)
+function makeTopStrokePath(w: number): string {
+  return makeNotchPath(w);
+}
+
+// Notch wall strokes — octagonal shape (dimmer)
+function makeWallStrokePath(w: number): string {
   const cx = w / 2;
-  return `M 0 0 Q ${cx} ${CURVE_RISE + 12} ${w} 0`;
+  const notchL = cx - NOTCH_HALF;
+  const notchR = cx + NOTCH_HALF;
+  const t = notchL / w;
+  const curveY = CANVAS_PAD + 2 * t * (1 - t) * (CURVE_RISE + 8);
+  const barBottom = CANVAS_PAD + BAR_TOTAL;
+  const inset = 14;
+  const cornerY = barBottom - 18;
+  return `M ${notchL} ${curveY} L ${notchL} ${cornerY} L ${notchL + inset} ${barBottom} M ${notchR} ${curveY} L ${notchR} ${cornerY} L ${notchR - inset} ${barBottom}`;
 }
 
 const barFillPath = Skia.Path.MakeFromSVGString(makeBarPath(SCREEN_W))!;
-const barStrokePath = Skia.Path.MakeFromSVGString(makeStrokePath(SCREEN_W))!;
+const topStrokePath = Skia.Path.MakeFromSVGString(makeTopStrokePath(SCREEN_W))!;
+const wallStrokePath = Skia.Path.MakeFromSVGString(makeWallStrokePath(SCREEN_W))!;
+
+// Build angled divider lines between tabs (drawn in canvas space with CANVAS_PAD offset)
+function makeDividerPaths(w: number): string[] {
+  const tabW = w / 5;
+  const paths: string[] = [];
+  // Dividers at x = tabW, 2*tabW, 3*tabW, 4*tabW
+  // Skip dividers adjacent to center (index 2) — those touch the notch
+  const dividerXs = [1, 4]; // between tabs 0-1 and 3-4 (notch walls handle 1-2 and 2-3)
+  const barBottom = CANVAS_PAD + BAR_TOTAL;
+
+  for (const i of dividerXs) {
+    const x = tabW * i;
+    // Calculate slope: the curve dips toward center, so dividers tilt inward
+    // Top of divider sits on the curve, bottom at bar bottom
+    // Angle the top toward center by a few pixels
+    const tiltDir = x < w / 2 ? 1 : -1; // tilt toward center
+    const tilt = 6 * tiltDir;
+    // Calculate curve Y at this x position so divider starts just below it
+    const t = x / w;
+    const curveYAtX = CANVAS_PAD + 2 * t * (1 - t) * (CURVE_RISE + 8);
+    const topY = curveYAtX; // starts right at the curve line
+    paths.push(`M ${x + tilt} ${topY} L ${x} ${barBottom}`);
+  }
+  return paths;
+}
+
+const dividerPathStrs = makeDividerPaths(SCREEN_W);
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   // Hide tab bar during Battle screen
@@ -136,8 +203,28 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View style={tabStyles.outer}>
       {/* Skia curved background */}
       <Canvas style={tabStyles.canvas} pointerEvents="none">
-        <Path path={barFillPath} color="#08081a" />
-        <Path path={barStrokePath} color="#14142a" style="stroke" strokeWidth={1} />
+        {/* Gradient bar background — lighter at top, darker at bottom */}
+        <Rect x={0} y={0} width={SCREEN_W} height={BAR_TOTAL + CANVAS_PAD}>
+          <LinearGradient
+            start={vec(0, CANVAS_PAD)}
+            end={vec(0, BAR_TOTAL + CANVAS_PAD)}
+            colors={['#0e1028', '#08081a']}
+          />
+        </Rect>
+        <Path path={barFillPath}>
+          <LinearGradient
+            start={vec(0, CANVAS_PAD)}
+            end={vec(0, BAR_TOTAL + CANVAS_PAD)}
+            colors={['#10102a', '#08081a']}
+          />
+        </Path>
+        <Path path={topStrokePath} color="#4fc3f7" style="stroke" strokeWidth={1.5} />
+        <Path path={wallStrokePath} color="#2a7a9a" style="stroke" strokeWidth={1} />
+        {/* Outer divider lines — slightly dimmer */}
+        {dividerPathStrs.map((d, i) => {
+          const p = Skia.Path.MakeFromSVGString(d);
+          return p ? <Path key={i} path={p} color="#2a7a9a" style="stroke" strokeWidth={1} /> : null;
+        })}
       </Canvas>
 
       {/* Tab buttons */}
@@ -146,7 +233,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const focused    = state.index === index;
           const isCenter   = index === CENTER_INDEX;
           const iconName   = TAB_ICON_MAP[index] ?? 'help-circle';
-          const iconSize   = isCenter ? 32 : 24;
+          const iconSize   = isCenter ? 38 : 30;
           const bottom     = TAB_BOTTOM[index] ?? 8;
 
           const onPress = () => {
@@ -189,7 +276,7 @@ const tabStyles = StyleSheet.create({
   },
   canvas: {
     position: 'absolute',
-    left: 0, right: 0, top: 0, bottom: 0,
+    left: 0, right: 0, top: -CANVAS_PAD, bottom: 0,
   },
   bar: {
     flexDirection: 'row',
@@ -205,35 +292,23 @@ const tabStyles = StyleSheet.create({
   hex: {
     width: HEX_SIZE,
     height: HEX_SIZE,
-    borderRadius: HEX_SIZE * 0.28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#12122a',
-    borderWidth: 1.5,
-    borderColor: '#1e1e3a',
   },
   hexActive: {
-    backgroundColor: '#4fc3f718',
-    borderColor: '#4fc3f7',
     shadowColor: '#4fc3f7',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
   },
   // Center button — taller shape
   centerHex: {
     width: CENTER_W,
     height: CENTER_H,
-    borderRadius: CENTER_W * 0.24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#12122a',
-    borderWidth: 2,
-    borderColor: '#1e1e3a',
   },
   centerHexActive: {
-    backgroundColor: '#4fc3f718',
-    borderColor: '#4fc3f7',
     shadowColor: '#4fc3f7',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7,
