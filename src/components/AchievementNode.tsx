@@ -143,11 +143,6 @@ const AchievementNode = React.memo(function AchievementNode({
   return (
     <ReAnimated.View style={isCelebrating ? celebStyle : undefined}>
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={{ alignItems: 'center' }}>
-      {/* Progress ring for unlocked */}
-      {status === 'unlocked' && (
-        <ProgressRing progress={progress} color={categoryColor} size={size} />
-      )}
-
       {/* Main node — earned wraps with pulse scale */}
       <ReAnimated.View style={isEarned ? earnedPulseStyle : undefined}>
         <ReAnimated.View style={[
