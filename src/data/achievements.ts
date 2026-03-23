@@ -189,7 +189,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   {id:'photo_finish_4', family:'Photo Finish', symbol:'⚡', color:'#ff9800', cat:'Battle', tier:'IV',  name:'Photo Finish IV',  desc:'75 Photo Finish triggers', req:{type:'battle_stat',stat:'photoFinishTriggers',n:75}, xp:8000, credits:4000},
   {id:'photo_finish_5', family:'Photo Finish', symbol:'⚡', color:'#ff9800', cat:'Battle', tier:'V',   name:'Photo Finish V',   desc:'200 Photo Finish triggers',req:{type:'battle_stat',stat:'photoFinishTriggers',n:200},xp:20000,credits:10000},
 
-  {id:'battlefield_control_1', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'I', name:'Battlefield Control', desc:'Trigger all 6 Amp effects in a single battle', req:{type:'battle_stat',stat:'battlefieldControlBattles',n:1}, xp:2000, credits:1000},
+  {id:'battlefield_control_1', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'I',   name:'Battlefield Control I',   desc:'Trigger all 6 Amp effects in a single battle',     req:{type:'battle_stat',stat:'battlefieldControlBattles',n:1},  xp:500,   credits:250},
+  {id:'battlefield_control_2', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'II',  name:'Battlefield Control II',  desc:'Trigger all 6 Amp effects in 3 battles',           req:{type:'battle_stat',stat:'battlefieldControlBattles',n:3},  xp:1500,  credits:750},
+  {id:'battlefield_control_3', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'III', name:'Battlefield Control III', desc:'Trigger all 6 Amp effects in 5 battles',           req:{type:'battle_stat',stat:'battlefieldControlBattles',n:5},  xp:3500,  credits:1750},
+  {id:'battlefield_control_4', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'IV',  name:'Battlefield Control IV',  desc:'Trigger all 6 Amp effects in 8 battles',           req:{type:'battle_stat',stat:'battlefieldControlBattles',n:8},  xp:8000,  credits:4000},
+  {id:'battlefield_control_5', family:'Battlefield Control', symbol:'⚡', color:'#00e5ff', cat:'Battle', tier:'V',   name:'Battlefield Control V',   desc:'Trigger all 6 Amp effects in 10 battles',          req:{type:'battle_stat',stat:'battlefieldControlBattles',n:10}, xp:20000, credits:10000},
 
   {id:'the_switcher_1', family:'The Switcher', symbol:'⚡', color:'#ab47bc', cat:'Battle', tier:'I',   name:'The Switcher I',   desc:'Spend 50 Amp to switch effects',        req:{type:'battle_stat',stat:'ampSwitches',n:1},   xp:300,  credits:150},
   {id:'the_switcher_2', family:'The Switcher', symbol:'⚡', color:'#ab47bc', cat:'Battle', tier:'II',  name:'The Switcher II',  desc:'Switch Amp effects 10 times',  req:{type:'battle_stat',stat:'ampSwitches',n:10},  xp:900,  credits:450},
@@ -266,3 +270,149 @@ export const ACHIEVEMENT_FAMILIES = [
   'Legendary Unleashed', 'Lock Breaker', 'Legendary Victor',
   'Perfect Battle', 'The Comeback', 'Survivor', 'Amp Race', 'Tie Breaker',
 ];
+
+// ── Career skill tree — category mapping ────────────────────────────
+import { AchievementCategoryId } from './constants';
+
+export const FAMILY_CATEGORY_MAP: Record<string, AchievementCategoryId> = {
+  // collector
+  'Card Collector': 'collector', 'Pack Rat': 'collector', 'Uncommon Ground': 'collector',
+  'Rare Find': 'collector', 'Epic Discovery': 'collector', 'Legendary Hoard': 'collector',
+  'Type Master': 'collector', 'Pack Master': 'collector',
+  // progression
+  'Rising Star': 'progression', 'Merchant': 'progression', 'Big Spender': 'progression',
+  'Hero Path': 'progression', 'Villain Path': 'progression', 'Anti-Hero Path': 'progression',
+  // combat
+  'Battle Victor': 'combat', 'Battles Fought': 'combat', 'Win Streak': 'combat',
+  'Giant Killer': 'combat', 'Champion': 'combat', 'Heavy Hitter': 'combat', 'Well Rested': 'combat',
+  // strategy
+  'Type Advantage': 'strategy', 'Cosmic Clash': 'strategy', 'Against All Odds': 'strategy',
+  'Iron Will': 'strategy', 'Legendary Unleashed': 'strategy', 'Lock Breaker': 'strategy',
+  'Legendary Victor': 'strategy',
+  // amp
+  'Amped Up': 'amp', 'Photo Finish': 'amp', 'Battlefield Control': 'amp',
+  'The Switcher': 'amp', 'Ability Activated': 'amp', 'Second Chance': 'amp',
+  'Executioner': 'amp', 'Unstoppable Force': 'amp',
+  // feats
+  'Perfect Battle': 'feats', 'The Comeback': 'feats', 'Survivor': 'feats',
+  'Amp Race': 'feats', 'Tie Breaker': 'feats',
+};
+
+// ── Career skill tree — interfaces ──────────────────────────────────
+export interface AchievementFamily {
+  familyName: string;
+  categoryId: AchievementCategoryId;
+  tiers: AchievementTier[];
+}
+
+export interface AchievementTier {
+  achievement: Achievement;
+  status: 'locked' | 'unlocked' | 'completed';
+  progress: number;       // 0.0–1.0
+  progressLabel: string;  // e.g. "7 / 10"
+}
+
+// ── Progress context — precomputed stats for progress calculation ────
+export interface ProgressContext {
+  uniqueOwnedCount: number;
+  packsOpened: number;
+  level: number;
+  totalTrades: number;
+  purchasedAvatarCount: number;
+  rarityCount: (r: string) => number;
+  allianceCount: (a: string) => number;
+  uniqueTypes: number;
+  packOwned: (p: number) => number;
+  packTotal: (p: number) => number;
+  battleStats: Record<string, number>;
+}
+
+export function computeAchievementProgress(
+  ach: Achievement,
+  ctx: ProgressContext,
+): { current: number; target: number; progress: number; progressLabel: string } {
+  const { type, n, rarity, alliance, pack, pct, stat } = ach.req;
+  let current = 0;
+  let target = n;
+
+  switch (type) {
+    case 'col':      current = ctx.uniqueOwnedCount; break;
+    case 'packs':    current = ctx.packsOpened; break;
+    case 'rarity':   current = rarity ? ctx.rarityCount(rarity) : 0; break;
+    case 'level':    current = ctx.level; break;
+    case 'trades':   current = ctx.totalTrades; break;
+    case 'avatars':  current = ctx.purchasedAvatarCount; break;
+    case 'alliance': current = alliance ? ctx.allianceCount(alliance) : 0; break;
+    case 'types':    current = ctx.uniqueTypes; break;
+    case 'pack': {
+      if (pack == null) break;
+      const total = ctx.packTotal(pack);
+      current = ctx.packOwned(pack);
+      if (pct != null) {
+        target = Math.ceil(total * pct / 100);
+      }
+      break;
+    }
+    case 'battle_stat':
+      current = stat ? (ctx.battleStats[stat] ?? 0) : 0;
+      break;
+  }
+
+  const clamped = Math.min(current, target);
+  const progress = target > 0 ? clamped / target : 0;
+  return { current: clamped, target, progress, progressLabel: `${clamped} / ${target}` };
+}
+
+// ── Build family trees for a category ───────────────────────────────
+const TIER_SORT_ORDER: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
+
+export function getFamiliesForCategory(
+  categoryId: AchievementCategoryId,
+  allAchievements: Achievement[],
+  earnedIds: Set<string>,
+  ctx: ProgressContext,
+): AchievementFamily[] {
+  // Group achievements by family, filter to this category
+  const familyMap = new Map<string, Achievement[]>();
+  for (const ach of allAchievements) {
+    if (FAMILY_CATEGORY_MAP[ach.family] !== categoryId) continue;
+    const list = familyMap.get(ach.family);
+    if (list) list.push(ach);
+    else familyMap.set(ach.family, [ach]);
+  }
+
+  const families: AchievementFamily[] = [];
+  for (const [familyName, achs] of familyMap) {
+    // Sort tiers by Roman numeral order
+    achs.sort((a, b) => (TIER_SORT_ORDER[a.tier] ?? 99) - (TIER_SORT_ORDER[b.tier] ?? 99));
+
+    const tiers: AchievementTier[] = [];
+    for (let i = 0; i < achs.length; i++) {
+      const ach = achs[i];
+      const completed = earnedIds.has(ach.id);
+      const prevCompleted = i === 0 ? true : earnedIds.has(achs[i - 1].id);
+      const status: AchievementTier['status'] = completed
+        ? 'completed'
+        : prevCompleted ? 'unlocked' : 'locked';
+
+      const { progress, progressLabel } = computeAchievementProgress(ach, ctx);
+      tiers.push({
+        achievement: ach,
+        status,
+        progress: completed ? 1 : progress,
+        progressLabel: completed ? `${ach.req.n} / ${ach.req.n}` : progressLabel,
+      });
+    }
+
+    families.push({ familyName, categoryId, tiers });
+  }
+
+  // Maintain display order from ACHIEVEMENT_FAMILIES
+  families.sort((a, b) => {
+    const ai = ACHIEVEMENT_FAMILIES.indexOf(a.familyName);
+    const bi = ACHIEVEMENT_FAMILIES.indexOf(b.familyName);
+    return ai - bi;
+  });
+
+  return families;
+}

@@ -56,7 +56,11 @@ All 14 build sessions complete. The app has:
 - God Mode: toggle on the login screen — bypasses Firebase auth entirely
 
 ## Screens Overview
-All quests and achievements UI lives inside **ProfileScreen** — there is no separate QuestsScreen or AchievementsScreen. There is no SettingsScreen.
+- **HomeScreen** — hub with battle button, open packs button, daily quests displayed inline, profile card (taps to ProfileScreen)
+- **CareerScreen** — achievements (moved from ProfileScreen)
+- **ProfileScreen** — standalone profile page: battle stats grid, collection progress per pack, avatar gallery grid, account/logout
+- **DecksScreen** — coming soon placeholder
+- Daily quests live on **HomeScreen**, achievements live on **CareerScreen**. There is no SettingsScreen.
 
 ## Scripts
 | Script | What it does |
@@ -92,7 +96,8 @@ herocards-native/
 ├── App.tsx                          ← Entry point: shim, fonts, auth state, GameStateProvider
 ├── PRDs/                            ← Tech spec + battle PRD (.docx)
 ├── assets/
-│   └── fonts/                       ← Orbitron_700Bold.ttf, Orbitron_900Black.ttf, Rajdhani_600SemiBold.ttf
+│   ├── fonts/                       ← Orbitron_700Bold.ttf, Orbitron_900Black.ttf, Rajdhani_600SemiBold.ttf
+│   └── nav-icons/                   ← Custom home icon (SVG unselected, PNG selected)
 └── src/
     ├── battle/
     │   ├── aiDeck.ts                ← buildAiDeck() — randomised AI deck per tier
@@ -124,10 +129,12 @@ herocards-native/
     │   ├── BattleLobbyScreen.tsx
     │   ├── BattleScreen.tsx
     │   ├── CardDetailScreen.tsx
+    │   ├── CareerScreen.tsx           ← Achievements display (moved from ProfileScreen)
     │   ├── CollectionScreen.tsx
+    │   ├── DecksScreen.tsx            ← Coming soon placeholder
     │   ├── HomeScreen.tsx
     │   ├── PackOpeningScreen.tsx
-    │   ├── ProfileScreen.tsx
+    │   ├── ProfileScreen.tsx          ← Standalone profile: stats, collection, avatars, account
     │   └── StoreScreen.tsx
     └── theme/
         └── fonts.ts                 ← FONTS.orbitronBold, FONTS.orbitronBlack, FONTS.rajdhaniSemiBold
@@ -226,13 +233,23 @@ Key rules:
 ```
 Root Stack
 ├── AuthScreen          (when not logged in)
-└── MainTabs (Bottom Tab Navigator)
-    ├── Home Stack → HomeScreen, PackOpeningScreen
+└── MainTabs (Bottom Tab Navigator — custom Skia tab bar)
     ├── Collection Stack → CollectionScreen, CardDetailScreen
-    ├── Battle Stack → BattleLobbyScreen, BattleScreen
+    ├── Decks Stack → DecksScreen
+    ├── Home Stack → HomeScreen, PackOpeningScreen, ProfileScreen
     ├── StoreScreen
-    └── Profile Stack → ProfileScreen
+    └── Career Stack → CareerScreen
+    (Battle accessed via button on HomeScreen → BattleLobbyScreen → BattleScreen)
 ```
+
+### Tab Bar Architecture
+- **Custom Skia tab bar** defined in `App.tsx` — Marvel Snap-inspired design
+- Curved top edge drawn with Skia Path (quadratic bezier), octagonal notch around center Home button
+- Blue cyan (`#4fc3f7`) stroke on curve + notch, dimmer dividers between sections
+- Gradient background (`#10102a` → `#08081a`)
+- Icons: MaterialCommunityIcons for 4 outer tabs, custom SVG/PNG for Home (animated crossfade between selected/unselected with reanimated)
+- Dark `NavigationContainer` theme (`#0a0a1a`) eliminates white bleed behind curve
+- Tab bar hidden during battle via `tabBarStyle: { display: 'none' }`
 
 ## State Architecture
 | Hook | Owns |

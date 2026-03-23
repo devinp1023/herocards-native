@@ -140,3 +140,15 @@ export const TIER_INFO: TierInfo[] = [
   { tier:4, name:'Elite',    symbol:'◆', color:'#ab47bc', difficulty:4, description:'An elite challenger running powerful epic combinations. Expect a real fight.' },
   { tier:5, name:'Champion', symbol:'★', color:'#ffa726', difficulty:5, description:'The reigning champion. Runs legendary cards and counters everything.' },
 ];
+
+// ── Achievement categories (Career skill tree) ──────────────────────
+export const ACHIEVEMENT_CATEGORIES = [
+  { id: 'collector',    label: 'COLLECTOR',        icon: 'cards',          color: '#4FC3F7', description: 'Card gathering and set completion' },
+  { id: 'progression',  label: 'PROGRESSION',      icon: 'arrow-up-bold',  color: '#FBBF24', description: 'Leveling, economy, and allegiance' },
+  { id: 'combat',       label: 'COMBAT',           icon: 'sword-cross',    color: '#F87171', description: 'Core battle performance' },
+  { id: 'strategy',     label: 'STRATEGY',         icon: 'chess-knight',   color: '#60A5FA', description: 'Type mastery, resilience, and Legendary Lock' },
+  { id: 'amp',          label: 'AMP & ABILITIES',  icon: 'lightning-bolt', color: '#A78BFA', description: 'Amp system and ability-specific feats' },
+  { id: 'feats',        label: 'FEATS',            icon: 'trophy',         color: '#34D399', description: 'Rare one-off achievements' },
+] as const;
+
+export type AchievementCategoryId = typeof ACHIEVEMENT_CATEGORIES[number]['id'];
