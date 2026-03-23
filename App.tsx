@@ -3,11 +3,11 @@ import 'react-native-get-random-values';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
-import { View, Image, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-fonts/orbitron';
@@ -37,6 +37,11 @@ import { GameStateContext }   from './src/context/GameStateContext';
 import { useGameStateContext } from './src/context/GameStateContext';
 import { useGameState }       from './src/hooks/useGameState';
 import { AchievementPopup }  from './src/components/AchievementPopup';
+import { FAMILY_CATEGORY_MAP } from './src/data/achievements';
+import { ACHIEVEMENT_CATEGORIES } from './src/data/constants';
+
+// Navigation ref for global navigation (e.g. toast → Career tab)
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // ── Navigation param lists ────────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -49,7 +54,7 @@ export type MainTabParamList = {
   DecksTab:      undefined;
   HomeTab:       undefined;
   StoreTab:      undefined;
-  CareerTab:     undefined;
+  CareerTab:     { initialPage?: number } | undefined;
 };
 
 export type HomeStackParamList = {
@@ -273,7 +278,12 @@ function makeDividerPaths(w: number): string[] {
 
 const dividerPathStrs = makeDividerPaths(SCREEN_W);
 
+const CAREER_TAB_INDEX = 4; // CareerTab is the 5th tab (0-indexed)
+
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const gs = useGameStateContext();
+  const uncollectedCount = gs.uncollectedCount;
+
   // Hide tab bar during Battle screen
   const homeRoute = state.routes.find(r => r.name === 'HomeTab');
   if (homeRoute) {
@@ -341,6 +351,14 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     color={focused ? '#4fc3f7' : '#ffffff'}
                   />
                 )}
+                {/* Badge for Career tab */}
+                {index === CAREER_TAB_INDEX && uncollectedCount > 0 && (
+                  <View style={tabStyles.badge}>
+                    <Text style={tabStyles.badgeText}>
+                      {uncollectedCount > 99 ? '99+' : uncollectedCount}
+                    </Text>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           );
@@ -396,6 +414,17 @@ const tabStyles = StyleSheet.create({
     shadowOpacity: 0.7,
     shadowRadius: 14,
   },
+  badge: {
+    position: 'absolute', top: -4, right: -8,
+    minWidth: 16, height: 16, borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontFamily: 'Orbitron_700Bold', fontSize: 8,
+    color: '#ffffff', letterSpacing: 0,
+  },
 });
 
 // ── Nested stack navigators ───────────────────────────────────────────────────
@@ -443,13 +472,48 @@ function MainTabs() {
 }
 
 // ── AchievementOverlay — renders inside GameStateContext so it can read state ─
+// Suppresses the toast during active battle (before result screen).
+function useIsBattleActive(): boolean {
+  const [inBattle, setInBattle] = useState(false);
+  useEffect(() => {
+    if (!navigationRef.isReady()) return;
+    // Check current route on every navigation state change
+    const unsubscribe = navigationRef.addListener('state', () => {
+      const state = navigationRef.getRootState();
+      // Dig into Main → HomeTab → stack routes to find 'Battle'
+      const mainRoute = state?.routes?.find((r: any) => r.name === 'Main');
+      const tabState = mainRoute?.state;
+      const homeRoute = tabState?.routes?.find((r: any) => r.name === 'HomeTab');
+      const homeState = homeRoute?.state;
+      const currentRoute = homeState?.routes?.[homeState?.index ?? 0];
+      setInBattle(currentRoute?.name === 'Battle');
+    });
+    return unsubscribe;
+  }, []);
+  return inBattle;
+}
+
 function AchievementOverlay() {
   const gs = useGameStateContext();
   const pending = gs.pendingAchievements[0] ?? null;
+  const inBattle = useIsBattleActive();
+
+  const handleTap = useCallback(() => {
+    if (!pending) return;
+    const categoryId = FAMILY_CATEGORY_MAP[pending.family];
+    const pageIndex = ACHIEVEMENT_CATEGORIES.findIndex(c => c.id === categoryId);
+    // Navigate to Career tab with the correct page
+    if (navigationRef.isReady()) {
+      (navigationRef as any).navigate('Main', { screen: 'CareerTab', params: { initialPage: Math.max(0, pageIndex) } });
+    }
+  }, [pending]);
+
   return (
     <AchievementPopup
       achievement={pending}
       onDismiss={gs.dismissAchievement}
+      onTap={handleTap}
+      suppressed={inBattle}
     />
   );
 }
@@ -531,7 +595,7 @@ export default function App() {
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
           <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData} cardRoster={cardRoster}>
-          <NavigationContainer theme={{ dark: true, colors: { primary: '#4fc3f7', background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: '#4fc3f7' } }}>
+          <NavigationContainer ref={navigationRef} theme={{ dark: true, colors: { primary: '#4fc3f7', background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: '#4fc3f7' } }}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (
                 <RootStack.Screen name="Auth">

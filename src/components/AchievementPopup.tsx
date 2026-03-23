@@ -2,8 +2,9 @@
 // Rendered as a global overlay in App.tsx.
 // Shows the first item in pendingAchievements, auto-dismisses after 3.5s.
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,56 +23,80 @@ const FADE_OUT_MS = 280;
 interface Props {
   achievement: Achievement | null;
   onDismiss: () => void;
+  onTap?: () => void;
+  suppressed?: boolean; // true during active battle — delays toast until battle ends
 }
 
-export function AchievementPopup({ achievement, onDismiss }: Props) {
+export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = false }: Props) {
   const translateY = useSharedValue(100);
   const opacity    = useSharedValue(0);
+  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isShowing  = useRef(false);
 
   const dismiss = () => {
+    isShowing.current = false;
     opacity.value = withTiming(0, { duration: FADE_OUT_MS, easing: Easing.out(Easing.quad) },
       (finished) => { if (finished) runOnJS(onDismiss)(); },
     );
     translateY.value = withTiming(100, { duration: FADE_OUT_MS, easing: Easing.in(Easing.quad) });
   };
 
+  const handleTap = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    dismiss();
+    onTap?.();
+  };
+
+  const handleClose = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    dismiss();
+  };
+
   useEffect(() => {
-    if (!achievement) return;
+    if (!achievement || suppressed) return;
 
     // Slide in
+    isShowing.current = true;
     translateY.value = withSpring(0, { damping: 16, stiffness: 140 });
     opacity.value    = withTiming(1, { duration: SLIDE_IN_MS });
 
     // Auto-dismiss after DISPLAY_MS
-    const timer = setTimeout(dismiss, DISPLAY_MS);
-    return () => clearTimeout(timer);
-  }, [achievement?.id]);
+    timerRef.current = setTimeout(dismiss, DISPLAY_MS);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [achievement?.id, suppressed]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
-  if (!achievement) return null;
+  if (!achievement || suppressed) return null;
 
   return (
-    <Animated.View style={[s.container, animStyle]} pointerEvents="none">
-      <View style={s.toast}>
-        {/* Left accent strip */}
-        <View style={[s.strip, { backgroundColor: achievement.color }]} />
+    <Animated.View style={[s.container, animStyle]}>
+      <Pressable onPress={handleTap}>
+        <View style={s.toast}>
+          {/* Left accent strip */}
+          <View style={[s.strip, { backgroundColor: achievement.color }]} />
 
-        {/* Symbol badge */}
-        <View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }]}>
-          <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
-        </View>
+          {/* Symbol badge */}
+          <View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }]}>
+            <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
+          </View>
 
-        {/* Text */}
-        <View style={s.textBlock}>
-          <Text style={s.label}>ACHIEVEMENT UNLOCKED</Text>
-          <Text style={s.name} numberOfLines={1}>{achievement.name}</Text>
-          <Text style={s.rewards}>+{achievement.xp} XP  ·  +{achievement.credits} CR</Text>
+          {/* Text */}
+          <View style={s.textBlock}>
+            <Text style={s.label}>ACHIEVEMENT EARNED</Text>
+            <Text style={s.name} numberOfLines={1}>{achievement.name}</Text>
+            <Text style={s.tapHint}>Tap to collect rewards</Text>
+          </View>
+
+          {/* Close button */}
+          <Pressable onPress={handleClose} hitSlop={8} style={s.closeBtn}>
+            <MaterialCommunityIcons name="close" size={16} color="#606480" />
+          </Pressable>
         </View>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -133,10 +158,14 @@ const s = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 0.5,
   },
-  rewards: {
+  tapHint: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 12,
     color: '#4fc3f7',
     letterSpacing: 0.5,
+  },
+  closeBtn: {
+    padding: 4,
+    marginLeft: 4,
   },
 });

@@ -5,16 +5,19 @@ import {
   View, Text, FlatList, ScrollView, StyleSheet, Platform, Dimensions,
   NativeSyntheticEvent, NativeScrollEvent, Pressable,
 } from 'react-native';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import type { MainTabParamList } from '../../App';
 import ReAnimated, {
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
   interpolate, interpolateColor, Extrapolation, Easing,
-  withSpring, withTiming, withDelay, runOnJS,
+  withTiming, withSpring, withSequence, runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategoryId } from '../data/constants';
 import { AchievementFamily, AchievementTier } from '../data/achievements';
 import { useAchievementProgress } from '../hooks/useAchievementProgress';
+import { useGameStateContext } from '../context/GameStateContext';
 import { AchievementNode, HubNode } from '../components/AchievementNode';
 import { BranchConnector } from '../components/BranchConnector';
 
@@ -28,89 +31,48 @@ const PAGE_PAD = 16;
 
 type CategoryDef = typeof ACHIEVEMENT_CATEGORIES[number];
 
-// ── StaggeredNode — wraps a child with fade+slide entry animation ───
-// Triggers when the page scrolls into the visible threshold (driven by scrollX shared value)
-function StaggeredNode({ delay, pageIndex, scrollX, children }: {
-  delay: number;
-  pageIndex: number;
-  scrollX: { value: number };
-  children: React.ReactNode;
-}) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
-  const hasAnimated = useSharedValue(0);
-  const fastDelay = Math.round(delay * 0.4);
-
-  // Trigger animation when page comes within 0.6 screen widths of being centered
-  const threshold = SCREEN_W * 0.6;
-  const pageCenter = pageIndex * SCREEN_W + SCREEN_W / 2;
-
-  useAnimatedStyle(() => {
-    const viewCenter = scrollX.value + SCREEN_W / 2;
-    const dist = Math.abs(pageCenter - viewCenter);
-    if (dist < threshold && hasAnimated.value === 0) {
-      hasAnimated.value = 1;
-      opacity.value = withDelay(fastDelay, withTiming(1, { duration: 180 }));
-      translateY.value = withDelay(fastDelay, withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) }));
-    }
-    return {};
-  });
-
-  const animStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return <ReAnimated.View style={animStyle}>{children}</ReAnimated.View>;
-}
-
 // ── FamilyColumn — one family's vertical chain of tier nodes ────────
 const FamilyColumn = React.memo(function FamilyColumn({
-  family, categoryColor, colWidth, onNodePress, colIndex, pageIndex, scrollX,
+  family, categoryColor, colWidth, onNodePress,
+  lastCollectedId, celebrationScale,
 }: {
   family: AchievementFamily;
   categoryColor: string;
   colWidth: number;
   onNodePress: (tier: AchievementTier) => void;
-  colIndex: number;
-  pageIndex: number;
-  scrollX: { value: number };
+  lastCollectedId: string | null;
+  celebrationScale: { value: number };
 }) {
-  const baseDelay = 250 + colIndex * 40;
-
   return (
     <View style={{ width: colWidth, alignItems: 'center' }}>
-      <StaggeredNode delay={baseDelay} pageIndex={pageIndex} scrollX={scrollX}>
-        <Text style={fcStyles.familyLabel} numberOfLines={2}>
-          {family.familyName.toUpperCase()}
-        </Text>
-      </StaggeredNode>
+      <Text style={fcStyles.familyLabel} numberOfLines={2}>
+        {family.familyName.toUpperCase()}
+      </Text>
 
       {family.tiers.map((tier, i) => {
         const prevCompleted = i === 0 || family.tiers[i - 1].status === 'completed';
         const connProgress = tier.status === 'completed' ? 1 : prevCompleted ? tier.progress : 0;
-        const tierDelay = baseDelay + (i + 1) * 110;
         return (
-          <StaggeredNode key={tier.achievement.id} delay={tierDelay} pageIndex={pageIndex} scrollX={scrollX}>
-            <View style={{ alignItems: 'center' }}>
-              {i > 0 && (
-                <BranchConnector
-                  completed={tier.status === 'completed'}
-                  progress={connProgress}
-                  color={categoryColor}
-                  orientation="vertical"
-                  length={CONNECTOR_H}
-                />
-              )}
-              <AchievementNode
-                tier={tier}
-                categoryColor={categoryColor}
-                onPress={() => onNodePress(tier)}
-                size={NODE_SIZE}
-                singleTier={family.tiers.length === 1}
+          <View key={tier.achievement.id} style={{ alignItems: 'center' }}>
+            {i > 0 && (
+              <BranchConnector
+                completed={tier.status === 'completed'}
+                progress={connProgress}
+                color={categoryColor}
+                orientation="vertical"
+                length={CONNECTOR_H}
               />
-            </View>
-          </StaggeredNode>
+            )}
+            <AchievementNode
+              tier={tier}
+              categoryColor={categoryColor}
+              onPress={() => onNodePress(tier)}
+              size={NODE_SIZE}
+              singleTier={family.tiers.length === 1}
+              celebrationScale={celebrationScale}
+              isCelebrating={tier.achievement.id === lastCollectedId}
+            />
+          </View>
         );
       })}
     </View>
@@ -128,6 +90,7 @@ const fcStyles = StyleSheet.create({
 // ── FeatsPage — special layout for single-tier achievements ─────────
 const FeatsPage = React.memo(function FeatsPage({
   category, families, width, categoryStats, onNodePress, onHubPress, pageIndex, scrollX,
+  lastCollectedId, celebrationScale,
 }: {
   category: CategoryDef;
   families: AchievementFamily[];
@@ -137,6 +100,8 @@ const FeatsPage = React.memo(function FeatsPage({
   onHubPress: () => void;
   pageIndex: number;
   scrollX: { value: number };
+  lastCollectedId: string | null;
+  celebrationScale: { value: number };
 }) {
   return (
     <ScrollView
@@ -156,17 +121,15 @@ const FeatsPage = React.memo(function FeatsPage({
       <Text style={fpStyles.catDesc}>{category.description}</Text>
 
       {/* Hub */}
-      <StaggeredNode delay={100} pageIndex={pageIndex} scrollX={scrollX}>
-        <View style={{ alignItems: 'center', marginBottom: 24 }}>
-          <HubNode
-            icon={category.icon}
-            categoryColor={category.color}
-            completedCount={categoryStats.completed}
-            totalCount={categoryStats.total}
-            onPress={onHubPress}
-          />
-        </View>
-      </StaggeredNode>
+      <View style={{ alignItems: 'center', marginBottom: 24 }}>
+        <HubNode
+          icon={category.icon}
+          categoryColor={category.color}
+          completedCount={categoryStats.completed}
+          totalCount={categoryStats.total}
+          onPress={onHubPress}
+        />
+      </View>
 
       {/* Ring layout — feats nodes in a circle with connectors between them */}
       {(() => {
@@ -248,8 +211,7 @@ const FeatsPage = React.memo(function FeatsPage({
               const isBottom = Math.sin(angle) > 0.3;
 
               return (
-                <StaggeredNode key={fam.familyName} delay={250 + i * 80} pageIndex={pageIndex} scrollX={scrollX}>
-                <View style={{
+                <View key={fam.familyName} style={{
                   position: 'absolute',
                   left: positions[i].x,
                   top: positions[i].y,
@@ -262,6 +224,8 @@ const FeatsPage = React.memo(function FeatsPage({
                     onPress={() => onNodePress(tier)}
                     size={NODE_SZ}
                     singleTier
+                    celebrationScale={celebrationScale}
+                    isCelebrating={tier.achievement.id === lastCollectedId}
                   />
                   <Text style={[
                     fpStyles.badgeLabel,
@@ -274,7 +238,6 @@ const FeatsPage = React.memo(function FeatsPage({
                     {fam.familyName.toUpperCase()}
                   </Text>
                 </View>
-                </StaggeredNode>
               );
             })}
           </View>
@@ -297,6 +260,7 @@ const fpStyles = StyleSheet.create({
 // ── StandardPage — tree layout for categories with multi-tier families
 const StandardPage = React.memo(function StandardPage({
   category, families, width, categoryStats, onNodePress, onHubPress, pageIndex, scrollX,
+  lastCollectedId, celebrationScale,
 }: {
   category: CategoryDef;
   families: AchievementFamily[];
@@ -306,6 +270,8 @@ const StandardPage = React.memo(function StandardPage({
   onHubPress: () => void;
   pageIndex: number;
   scrollX: { value: number };
+  lastCollectedId: string | null;
+  celebrationScale: { value: number };
 }) {
   const usableW = width - PAGE_PAD * 2;
   const needsSplit = families.length > 4;
@@ -334,33 +300,30 @@ const StandardPage = React.memo(function StandardPage({
       <Text style={spStyles.catDesc}>{category.description}</Text>
 
       {/* Hub node */}
-      <StaggeredNode delay={100} pageIndex={pageIndex} scrollX={scrollX}>
-        <View style={{ alignItems: 'center', marginBottom: 20 }}>
-          <HubNode
-            icon={category.icon}
-            categoryColor={category.color}
-            completedCount={categoryStats.completed}
-            totalCount={categoryStats.total}
-            onPress={onHubPress}
-          />
-        </View>
-      </StaggeredNode>
+      <View style={{ alignItems: 'center', marginBottom: 20 }}>
+        <HubNode
+          icon={category.icon}
+          categoryColor={category.color}
+          completedCount={categoryStats.completed}
+          totalCount={categoryStats.total}
+          onPress={onHubPress}
+        />
+      </View>
 
       {/* Row A families */}
       <View style={spStyles.rowLabel}>
         <View style={[spStyles.rowDivider, { backgroundColor: category.color + '20' }]} />
       </View>
       <View style={spStyles.familyRow}>
-        {rowA.map((fam, i) => (
+        {rowA.map((fam) => (
           <FamilyColumn
             key={fam.familyName}
             family={fam}
             categoryColor={category.color}
             colWidth={colWidthA}
             onNodePress={onNodePress}
-            colIndex={i}
-            pageIndex={pageIndex}
-            scrollX={scrollX}
+            lastCollectedId={lastCollectedId}
+            celebrationScale={celebrationScale}
           />
         ))}
       </View>
@@ -372,16 +335,15 @@ const StandardPage = React.memo(function StandardPage({
             <View style={[spStyles.rowDivider, { backgroundColor: category.color + '20' }]} />
           </View>
           <View style={spStyles.familyRow}>
-            {rowB.map((fam, i) => (
+            {rowB.map((fam) => (
               <FamilyColumn
                 key={fam.familyName}
                 family={fam}
                 categoryColor={category.color}
                 colWidth={colWidthB}
                 onNodePress={onNodePress}
-                colIndex={rowA.length + i}
-                pageIndex={pageIndex}
-                scrollX={scrollX}
+                lastCollectedId={lastCollectedId}
+                celebrationScale={celebrationScale}
               />
             ))}
           </View>
@@ -435,10 +397,23 @@ const dotStyles = StyleSheet.create({
 
 // ── CareerScreen ────────────────────────────────────────────────────
 export default function CareerScreen() {
+  const route = useRoute<RouteProp<MainTabParamList, 'CareerTab'>>();
+  const gs = useGameStateContext();
   const { familiesByCategory, categoryStats, totalEarned, totalAchievements } = useAchievementProgress();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
+
+  // Scroll to page when navigated to via toast tap
+  useEffect(() => {
+    const page = route.params?.initialPage;
+    if (page != null && page >= 0 && page < ACHIEVEMENT_CATEGORIES.length) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({ index: page, animated: false });
+        setActiveIndex(page);
+      }, 50);
+    }
+  }, [route.params?.initialPage]);
 
   const lastSetIndex = useSharedValue(0);
   const animatedScrollHandler = useAnimatedScrollHandler({
@@ -454,6 +429,8 @@ export default function CareerScreen() {
 
   const [selectedTier, setSelectedTier] = useState<AchievementTier | null>(null);
   const [selectedColor, setSelectedColor] = useState('#ffffff');
+  const [lastCollectedId, setLastCollectedId] = useState<string | null>(null);
+  const celebrationScale = useSharedValue(1);
   const sheetY = useSharedValue(600);
   const DISMISS_THRESHOLD = 120;
 
@@ -471,6 +448,25 @@ export default function CareerScreen() {
     sheetY.value = withTiming(600, { duration: 240 });
     setTimeout(dismissSheet, 240);
   }, [dismissSheet]);
+
+  const handleCollect = useCallback(() => {
+    if (!selectedTier) return;
+    const achId = selectedTier.achievement.id;
+    gs.collectAchievement(achId);
+    setLastCollectedId(achId);
+    // Close sheet, then trigger celebration
+    sheetY.value = withTiming(600, { duration: 240 });
+    setTimeout(() => {
+      dismissSheet();
+      // Scale bounce celebration
+      celebrationScale.value = withSequence(
+        withTiming(1.3, { duration: 200 }),
+        withSpring(1.0, { damping: 12, stiffness: 200 }),
+      );
+      // Clear after animation
+      setTimeout(() => setLastCollectedId(null), 600);
+    }, 240);
+  }, [selectedTier, gs, dismissSheet]);
 
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
@@ -515,6 +511,8 @@ export default function CareerScreen() {
           onHubPress={handleHubPress}
           pageIndex={index}
           scrollX={scrollX}
+          lastCollectedId={lastCollectedId}
+          celebrationScale={celebrationScale}
         />
       );
     }
@@ -529,9 +527,11 @@ export default function CareerScreen() {
         onHubPress={handleHubPress}
         pageIndex={index}
         scrollX={scrollX}
+        lastCollectedId={lastCollectedId}
+        celebrationScale={celebrationScale}
       />
     );
-  }, [familiesByCategory, categoryStats, handleNodePress, handleHubPress, scrollX]);
+  }, [familiesByCategory, categoryStats, handleNodePress, handleHubPress, scrollX, lastCollectedId, celebrationScale]);
 
   const keyExtractor = useCallback((item: CategoryDef) => item.id, []);
 
@@ -611,9 +611,20 @@ export default function CareerScreen() {
               </View>
             </View>
 
-            {/* Status message */}
+            {/* Status / action */}
             {selectedTier.status === 'completed' && (
               <Text style={[bsStyles.statusText, { color: '#4caf50' }]}>COMPLETED</Text>
+            )}
+            {selectedTier.status === 'earned' && (
+              <Pressable
+                onPress={handleCollect}
+                style={[bsStyles.collectBtn, { backgroundColor: selectedColor }]}
+              >
+                <Text style={bsStyles.collectBtnText}>COLLECT REWARDS</Text>
+              </Pressable>
+            )}
+            {selectedTier.status === 'unlocked' && (
+              <Text style={[bsStyles.statusText, { color: selectedColor }]}>IN PROGRESS</Text>
             )}
             {selectedTier.status === 'locked' && (
               <Text style={[bsStyles.statusText, { color: '#606480' }]}>
@@ -692,6 +703,15 @@ const bsStyles = StyleSheet.create({
   statusText: {
     fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1,
     textAlign: 'center',
+  },
+  collectBtn: {
+    paddingVertical: 14, borderRadius: 12, alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 }, elevation: 6,
+  },
+  collectBtnText: {
+    fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#ffffff',
+    letterSpacing: 1.5,
   },
 });
 

@@ -307,7 +307,7 @@ export interface AchievementFamily {
 
 export interface AchievementTier {
   achievement: Achievement;
-  status: 'locked' | 'unlocked' | 'completed';
+  status: 'locked' | 'unlocked' | 'earned' | 'completed';
   progress: number;       // 0.0–1.0
   progressLabel: string;  // e.g. "7 / 10"
 }
@@ -370,6 +370,7 @@ export function getFamiliesForCategory(
   categoryId: AchievementCategoryId,
   allAchievements: Achievement[],
   earnedIds: Set<string>,
+  collectedIds: Set<string>,
   ctx: ProgressContext,
 ): AchievementFamily[] {
   // Group achievements by family, filter to this category
@@ -389,18 +390,21 @@ export function getFamiliesForCategory(
     const tiers: AchievementTier[] = [];
     for (let i = 0; i < achs.length; i++) {
       const ach = achs[i];
-      const completed = earnedIds.has(ach.id);
-      const prevCompleted = i === 0 ? true : earnedIds.has(achs[i - 1].id);
-      const status: AchievementTier['status'] = completed
+      const earned = earnedIds.has(ach.id);
+      const collected = collectedIds.has(ach.id);
+      // Uncollected achievements BLOCK the next tier
+      const prevCollected = i === 0 ? true : collectedIds.has(achs[i - 1].id);
+      const status: AchievementTier['status'] = collected
         ? 'completed'
-        : prevCompleted ? 'unlocked' : 'locked';
+        : earned ? 'earned'
+        : prevCollected ? 'unlocked' : 'locked';
 
       const { progress, progressLabel } = computeAchievementProgress(ach, ctx);
       tiers.push({
         achievement: ach,
         status,
-        progress: completed ? 1 : progress,
-        progressLabel: completed ? `${ach.req.n} / ${ach.req.n}` : progressLabel,
+        progress: collected ? 1 : progress,
+        progressLabel: collected ? `${ach.req.n} / ${ach.req.n}` : progressLabel,
       });
     }
 

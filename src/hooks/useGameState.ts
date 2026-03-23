@@ -4,7 +4,8 @@
 // Boundary rule: this hook never imports Firebase directly.
 // It will call useFirebase().saveData() once Session 13 wires persistence.
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import * as Haptics from 'expo-haptics';
 import { ALL_CARDS, Card } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
@@ -121,8 +122,11 @@ export interface GameState {
   totalTrades: number;
   questDate: string;
   questProgress: Record<string, number>;  // quest id → progress count
-  earnedAchievements: string[];           // achievement ids
+  earnedAchievements: string[];           // achievement ids (criteria met)
+  collectedAchievements: string[];       // achievement ids (rewards claimed)
+  uncollectedCount: number;              // earned - collected
   pendingAchievements: Achievement[];     // popup queue
+  collectAchievement: (id: string) => void;
   // Mutators
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
@@ -199,6 +203,8 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   // ── Achievement state ─────────────────────────────────────────────────────
   const [earnedAchievements, setEarnedAchievements] = useState<string[]>(() =>
     isGod ? ACHIEVEMENTS.map(a => a.id) : (initialData?.earnedAchievements ?? []));
+  const [collectedAchievements, setCollectedAchievements] = useState<string[]>(() =>
+    isGod ? ACHIEVEMENTS.map(a => a.id) : (initialData?.collectedAchievements ?? []));
   const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
 
   // ── Derived XP progress ───────────────────────────────────────────────────
@@ -240,10 +246,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     const newIds = newlyEarned.map(a => a.id);
     setEarnedAchievements(prev => [...prev, ...newIds]);
     setPendingAchievements(prev => [...prev, ...newlyEarned]);
-    let bonusXp = 0, bonusCredits = 0;
-    for (const a of newlyEarned) { bonusXp += a.xp; bonusCredits += a.credits; }
-    if (bonusXp > 0) setXp(prev => prev + bonusXp);
-    if (bonusCredits > 0) setCoins(prev => prev + bonusCredits);
+    // Rewards are NOT granted here — player must collect manually via Career screen
   }, [collection, packsOpened, level, totalTrades, ownedAvatars, battleStats]);
 
   // ── Firestore save ────────────────────────────────────────────────────────
@@ -255,7 +258,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     activeAvatar,    ownedAvatars,
     packsOpened,     totalTrades,
     questDate,       questProgress,
-    earnedAchievements,
+    earnedAchievements, collectedAchievements,
     battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
     battleWinStreak,
     battleStats:     Object.fromEntries(Object.entries(battleStats)),
@@ -279,7 +282,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, collectedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -354,6 +357,24 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   const dismissAchievement = () =>
     setPendingAchievements(prev => prev.slice(1));
 
+  const uncollectedCount = useMemo(
+    () => earnedAchievements.length - collectedAchievements.length,
+    [earnedAchievements.length, collectedAchievements.length],
+  );
+
+  const collectAchievement = useCallback((id: string) => {
+    setCollectedAchievements(prev => {
+      if (prev.includes(id)) return prev;
+      return [...prev, id];
+    });
+    const ach = ACHIEVEMENTS.find(a => a.id === id);
+    if (ach) {
+      setXp(prev => prev + ach.xp);
+      setCoins(prev => prev + ach.credits);
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
   const recordBattleStats = (delta: Record<string, number>) => {
     if (isGod) return;
     setBattleStats(prev => {
@@ -400,7 +421,8 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     collection, activeAvatar, ownedAvatars,
     packsOpened, totalTrades,
     questDate, questProgress,
-    earnedAchievements, pendingAchievements,
+    earnedAchievements, collectedAchievements, uncollectedCount,
+    pendingAchievements, collectAchievement,
     addXp, addCoins, spendCoins, addCards,
     equipAvatar, purchaseAvatar,
     incrementPacksOpened, incrementTrades,

@@ -14,6 +14,8 @@ interface AchievementNodeProps {
   onPress: () => void;
   size?: number;
   singleTier?: boolean;
+  celebrationScale?: { value: number }; // shared value for collect animation
+  isCelebrating?: boolean;
 }
 
 interface HubNodeProps {
@@ -72,6 +74,7 @@ const pStyles = StyleSheet.create({
 // ── AchievementNode ─────────────────────────────────────────────────
 const AchievementNode = React.memo(function AchievementNode({
   tier, categoryColor, onPress, size = 52, singleTier = false,
+  celebrationScale, isCelebrating = false,
 }: AchievementNodeProps) {
   const { achievement, status, progress } = tier;
   const isSingleTier = singleTier;
@@ -107,59 +110,95 @@ const AchievementNode = React.memo(function AchievementNode({
   }, [status]);
   const shimmerStyle = useAnimatedStyle(() => ({ opacity: shimmerOp.value }));
 
+  // Pulse scale for earned (uncollected) nodes — signals "tap me"
+  const earnedScale = useSharedValue(1);
+  useEffect(() => {
+    if (status !== 'earned') { cancelAnimation(earnedScale); earnedScale.value = 1; return; }
+    earnedScale.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+    );
+    return () => cancelAnimation(earnedScale);
+  }, [status]);
+  const earnedPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: earnedScale.value }],
+  }));
+
   const isCompleted = status === 'completed';
+  const isEarned    = status === 'earned';
   const isLocked    = status === 'locked';
 
+  // Celebration animation — scale bounce when collecting
+  const celebStyle = useAnimatedStyle(() => {
+    if (!celebrationScale || !isCelebrating) return {};
+    return { transform: [{ scale: celebrationScale.value }] };
+  });
+
+  // Earned and completed share the same "filled" look
+  const isFilled = isCompleted || isEarned;
+
   return (
+    <ReAnimated.View style={isCelebrating ? celebStyle : undefined}>
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={{ alignItems: 'center' }}>
       {/* Progress ring for unlocked */}
       {status === 'unlocked' && (
         <ProgressRing progress={progress} color={categoryColor} size={size} />
       )}
 
-      {/* Main node */}
-      <ReAnimated.View style={[
-        nStyles.node,
-        {
-          width: size, height: size, borderRadius,
-          backgroundColor: isCompleted ? categoryColor : isLocked ? '#08081a' : '#0a0a1e',
-          borderColor: isCompleted ? categoryColor : isLocked ? '#ffffff20' : categoryColor,
-          borderWidth: isCompleted ? 0 : 2,
-        },
-        isCompleted && {
-          shadowColor: categoryColor, shadowOpacity: 0.6, shadowRadius: 12,
-          shadowOffset: { width: 0, height: 0 }, elevation: 8,
-        },
-        status === 'unlocked' && pulseStyle,
-      ]}>
-        {/* Shimmer overlay for completed */}
-        {isCompleted && (
-          <ReAnimated.View style={[
-            nStyles.shimmer,
-            { borderRadius, backgroundColor: '#ffffff' },
-            shimmerStyle,
-          ]} />
-        )}
+      {/* Main node — earned wraps with pulse scale */}
+      <ReAnimated.View style={isEarned ? earnedPulseStyle : undefined}>
+        <ReAnimated.View style={[
+          nStyles.node,
+          {
+            width: size, height: size, borderRadius,
+            backgroundColor: isFilled ? categoryColor : isLocked ? '#08081a' : '#0a0a1e',
+            borderColor: isFilled ? categoryColor : isLocked ? '#ffffff20' : categoryColor,
+            borderWidth: isFilled ? 0 : 2,
+          },
+          isFilled && {
+            shadowColor: categoryColor, shadowOpacity: 0.6, shadowRadius: 12,
+            shadowOffset: { width: 0, height: 0 }, elevation: 8,
+          },
+          status === 'unlocked' && pulseStyle,
+        ]}>
+          {/* Shimmer overlay for completed */}
+          {isCompleted && (
+            <ReAnimated.View style={[
+              nStyles.shimmer,
+              { borderRadius, backgroundColor: '#ffffff' },
+              shimmerStyle,
+            ]} />
+          )}
 
-        {/* Tier numeral, star (single-tier), or lock icon */}
-        {isLocked ? (
-          <MaterialCommunityIcons name="lock" size={size * 0.36} color="#ffffff50" />
-        ) : isSingleTier ? (
-          <MaterialCommunityIcons name="star-four-points" size={size * 0.4} color={isCompleted ? '#ffffff' : categoryColor} />
-        ) : (
-          <Text style={[
-            nStyles.tierNumeral,
-            {
-              fontSize: size * 0.32,
-              color: isCompleted ? '#ffffff' : categoryColor,
-            },
-          ]}>
-            {achievement.tier}
-          </Text>
+          {/* Tier numeral, star (single-tier), or lock icon */}
+          {isLocked ? (
+            <MaterialCommunityIcons name="lock" size={size * 0.36} color="#ffffff50" />
+          ) : isSingleTier ? (
+            <MaterialCommunityIcons name="star-four-points" size={size * 0.4} color={isFilled ? '#ffffff' : categoryColor} />
+          ) : (
+            <Text style={[
+              nStyles.tierNumeral,
+              {
+                fontSize: size * 0.32,
+                color: isFilled ? '#ffffff' : categoryColor,
+              },
+            ]}>
+              {achievement.tier}
+            </Text>
+          )}
+        </ReAnimated.View>
+
+        {/* Red notification dot for earned (uncollected) */}
+        {isEarned && (
+          <View style={nStyles.notifDot} />
         )}
       </ReAnimated.View>
 
     </TouchableOpacity>
+    </ReAnimated.View>
   );
 });
 
@@ -172,6 +211,12 @@ const nStyles = StyleSheet.create({
   },
   tierNumeral: {
     fontFamily: 'Orbitron_700Bold', textAlign: 'center',
+  },
+  notifDot: {
+    position: 'absolute', top: -3, right: -3,
+    width: 12, height: 12, borderRadius: 6,
+    backgroundColor: '#ef4444',
+    borderWidth: 2, borderColor: '#060610',
   },
 });
 

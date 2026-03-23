@@ -19,7 +19,8 @@ export interface PersistedGameData {
   totalTrades:        number;
   questDate:          string;
   questProgress:      Record<string, number>;
-  earnedAchievements: string[];
+  earnedAchievements:    string[];
+  collectedAchievements?: string[];             // earned + rewards claimed
   battleCooldowns:    Record<string, number>;   // string card-id → timestamp ms
   battleWinStreak:    number;
   battleStats?:       Record<string, number>;  // cumulative battle stat counters
@@ -43,7 +44,8 @@ export async function loadGameData(uid: string): Promise<PersistedGameData | nul
       totalTrades:        typeof d.totalTrades === 'number'    ? d.totalTrades : 0,
       questDate:          typeof d.questDate === 'string'      ? d.questDate : '',
       questProgress:      d.questProgress      ?? {},
-      earnedAchievements: Array.isArray(d.earnedAchievements)  ? d.earnedAchievements : [],
+      earnedAchievements:    Array.isArray(d.earnedAchievements)  ? d.earnedAchievements : [],
+      collectedAchievements: Array.isArray(d.collectedAchievements) ? d.collectedAchievements : [],
       battleCooldowns:    d.battleCooldowns    ?? {},
       battleWinStreak:    typeof d.battleWinStreak === 'number' ? d.battleWinStreak : 0,
       battleStats:        d.battleStats        ?? {},

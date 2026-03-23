@@ -12,6 +12,7 @@ export interface AchievementProgressData {
   categoryStats: Record<AchievementCategoryId, { completed: number; total: number }>;
   totalEarned: number;
   totalAchievements: number;
+  uncollectedCount: number;
 }
 
 export function useAchievementProgress(): AchievementProgressData {
@@ -46,12 +47,13 @@ export function useAchievementProgress(): AchievementProgressData {
     };
 
     const earnedIds = new Set(gs.earnedAchievements);
+    const collectedIds = new Set(gs.collectedAchievements);
 
     const familiesByCategory = {} as Record<AchievementCategoryId, AchievementFamily[]>;
     const categoryStats = {} as Record<AchievementCategoryId, { completed: number; total: number }>;
 
     for (const cat of ACHIEVEMENT_CATEGORIES) {
-      const families = getFamiliesForCategory(cat.id, ACHIEVEMENTS, earnedIds, ctx);
+      const families = getFamiliesForCategory(cat.id, ACHIEVEMENTS, earnedIds, collectedIds, ctx);
       familiesByCategory[cat.id] = families;
 
       let completed = 0;
@@ -70,10 +72,11 @@ export function useAchievementProgress(): AchievementProgressData {
       categoryStats,
       totalEarned: gs.earnedAchievements.length,
       totalAchievements: ACHIEVEMENTS.length,
+      uncollectedCount: gs.uncollectedCount,
     };
   }, [
-    gs.earnedAchievements, gs.collection, gs.cardRoster,
+    gs.earnedAchievements, gs.collectedAchievements, gs.collection, gs.cardRoster,
     gs.packsOpened, gs.level, gs.totalTrades, gs.ownedAvatars,
-    gs.battleStats,
+    gs.battleStats, gs.uncollectedCount,
   ]);
 }
