@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeroCards Style Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050508;
+    color: #c8cad0;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 40px 20px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    color: #ffffff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #ffffff 0%, #00FFAA 50%, #B14EFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    color: #00FFAA;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 56px;
+    margin-bottom: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid;
+    border-image: linear-gradient(90deg, #00FFAA44, #B14EFF44, transparent) 1;
+  }
+
+  h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 36px;
+    margin-bottom: 16px;
+  }
+
+  p { margin-bottom: 12px; max-width: 720px; }
+  strong { color: #ffffff; }
+  code {
+    font-family: monospace;
+    font-size: 13px;
+    background: #0a0b10;
+    color: #00FFAA;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #1e2030;
+  }
+
+  .subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    color: #6e7191;
+    margin-bottom: 32px;
+  }
+
+  .warning {
+    background: #ff980018;
+    border: 1px solid #ff980044;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #ff9800;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    max-width: 720px;
+  }
+
+  /* -- Swatch grids -- */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .swatch-grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .swatch {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .swatch-color {
+    height: 56px;
+    position: relative;
+  }
+  .swatch-color.tall { height: 72px; }
+  .swatch-color.short { height: 40px; }
+  .swatch-info {
+    padding: 10px 12px;
+  }
+  .swatch-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .swatch-hex {
+    font-family: monospace;
+    font-size: 12px;
+    color: #6e7191;
+    margin-top: 2px;
+  }
+  .swatch-usage {
+    font-size: 12px;
+    color: #6e7191;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* -- Inline swatch (small square next to text) -- */
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
+  /* -- Typography specimens -- */
+  .type-specimen {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .type-specimen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .type-specimen .label {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    color: #00FFAA;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .type-specimen .sample {
+    color: #ffffff;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .type-specimen .meta {
+    font-family: monospace;
+    font-size: 11px;
+    color: #6e7191;
+    position: relative;
+  }
+
+  /* -- Component demos -- */
+  .demo-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: flex-start;
+  }
+  .demo-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 20px;
+    flex: 1;
+    min-width: 280px;
+    position: relative;
+    overflow: hidden;
+  }
+  .demo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .demo-label {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    color: #00FFAA;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  /* -- Premium Buttons -- */
+  .btn-primary {
+    display: inline-block;
+    background: linear-gradient(180deg, #00FFCC 0%, #00FFAA 50%, #00DD88 100%);
+    color: #050508;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 8px #00FFAA44, 0 0 20px #00FFAA66, 0 0 40px #00FFAA22, inset 0 1px 0 rgba(255,255,255,0.3);
+    transform: skewX(-3deg);
+    transition: transform 100ms, box-shadow 100ms;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: btnShimmer 3s ease-in-out infinite;
+  }
+  @keyframes btnShimmer {
+    0%, 70%, 100% { left: -100%; }
+    40% { left: 150%; }
+  }
+  .btn-primary span {
+    display: inline-block;
+    transform: skewX(3deg);
+    position: relative;
+    z-index: 1;
+  }
+  .btn-primary:active {
+    transform: skewX(-3deg) scale(0.96);
+    box-shadow: 0 0 4px #00FFAA44, 0 0 10px #00FFAA44, inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .btn-primary.pulsing {
+    animation: btnPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes btnPulse {
+    0%, 100% { box-shadow: 0 0 8px #00FFAA44, 0 0 20px #00FFAA44, 0 0 40px #00FFAA11, inset 0 1px 0 rgba(255,255,255,0.3); }
+    50% { box-shadow: 0 0 12px #00FFAA66, 0 0 30px #00FFAA88, 0 0 60px #00FFAA33, inset 0 1px 0 rgba(255,255,255,0.3); }
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    background: transparent;
+    color: #00FFAA;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background-image: linear-gradient(#0a0b10, #0a0b10), linear-gradient(135deg, #00FFAA66, #00FFAA22);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    cursor: pointer;
+    transform: skewX(-3deg);
+    transition: transform 100ms, box-shadow 100ms;
+  }
+  .btn-secondary span {
+    display: inline-block;
+    transform: skewX(3deg);
+  }
+  .btn-secondary:active {
+    transform: skewX(-3deg) scale(0.97);
+    box-shadow: 0 0 12px #00FFAA22;
+  }
+
+  .btn-destructive {
+    display: inline-block;
+    background: transparent;
+    color: #FF4757;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background-image: linear-gradient(#0a0b10, #0a0b10), linear-gradient(135deg, #FF475766, #FF475722);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    cursor: pointer;
+    transform: skewX(-3deg);
+    transition: transform 100ms, background 100ms;
+  }
+  .btn-destructive span {
+    display: inline-block;
+    transform: skewX(3deg);
+  }
+  .btn-destructive:active {
+    transform: skewX(-3deg) scale(0.97);
+    box-shadow: 0 0 12px #FF475722;
+  }
+
+  .btn-disabled {
+    display: inline-block;
+    background: linear-gradient(180deg, #00FFCC 0%, #00FFAA 50%, #00DD88 100%);
+    color: #050508;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border-radius: 12px;
+    border: none;
+    opacity: 0.3;
+    transform: skewX(-3deg);
+    cursor: default;
+  }
+  .btn-disabled span {
+    display: inline-block;
+    transform: skewX(3deg);
+  }
+
+  .chip {
+    display: inline-block;
+    background: #00FFAA11;
+    border: 1px solid #00FFAA44;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    color: #00FFAA;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: #111218;
+    border: 1px solid #1e2030;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  .input-demo {
+    width: 100%;
+    background: #0a0b10;
+    border: 1px solid transparent;
+    background-image: linear-gradient(#0a0b10, #0a0b10), linear-gradient(135deg, #1e2030, #1e2030);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #c8cad0;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    outline: none;
+  }
+  .input-demo:focus {
+    background-image: linear-gradient(#0a0b10, #0a0b10), linear-gradient(135deg, #00FFAA88, #00FFAA33);
+    box-shadow: 0 0 8px #00FFAA22, 0 0 20px #00FFAA11;
+  }
+  .input-demo::placeholder { color: #6e7191; }
+
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: #fff;
+  }
+
+  /* -- Rarity tier cards -- */
+  .rarity-tier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .rarity-tier-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .rarity-tier-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .rarity-tier-card .rarity-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 12px;
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .rarity-tier-card .rarity-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  /* -- Wow moment cards -- */
+  .wow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .wow-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wow-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .wow-card .wow-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .wow-card .wow-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  /* -- Elevation drama cards -- */
+  .elevation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .elevation-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    transition: transform 300ms, box-shadow 300ms;
+    position: relative;
+    overflow: hidden;
+  }
+  .elevation-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .elevation-card .elev-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .elevation-card .elev-props {
+    font-family: monospace;
+    font-size: 11px;
+    color: #00FFAA;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .elevation-card .elev-desc {
+    font-size: 12px;
+    color: #6e7191;
+    position: relative;
+  }
+  .elevation-card.hovered {
+    transform: scale(1.02);
+    box-shadow: 0 0 8px #00FFAA33, 0 0 20px #00FFAA22;
+  }
+  .elevation-card.lifted {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px #00FFAA44, 0 0 20px #00FFAA44, 0 0 40px #00FFAA22;
+  }
+  .elevation-card.heroic {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px #B14EFF66, 0 0 24px #B14EFF66, 0 0 48px #B14EFF44, 0 0 80px #B14EFF22;
+    border-color: #B14EFF66;
+  }
+
+  /* -- Notes / callouts -- */
+  .note {
+    background: #0a0b10;
+    border-left: 3px solid #00FFAA;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    max-width: 720px;
+  }
+  .note code { background: #050508; }
+
+  .note-violet {
+    background: #0a0b10;
+    border-left: 3px solid #B14EFF;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    max-width: 720px;
+  }
+  .note-violet code { background: #050508; }
+
+  .note-gold {
+    background: #0a0b10;
+    border-left: 3px solid #FFB800;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    max-width: 720px;
+  }
+  .note-gold code { background: #050508; }
+
+  ul {
+    margin-bottom: 12px;
+    padding-left: 20px;
+    max-width: 720px;
+  }
+  li { margin-bottom: 4px; }
+
+  /* -- Animations -- */
+  @keyframes pulse { from { opacity: 0.3; } to { opacity: 1; } }
+  @keyframes energyFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+  @keyframes scanLine {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  /* -- Material demo cards -- */
+  .material-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .material-card {
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .material-card .mat-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 12px;
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .material-card .mat-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+  .material-card .mat-usage {
+    font-family: monospace;
+    font-size: 11px;
+    color: #6e7191;
+    margin-top: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* -- Screen identity cards -- */
+  .screen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .screen-card {
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #1e2030;
+  }
+  .screen-card .screen-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    color: #ffffff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .screen-card .screen-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.5;
+    position: relative;
+  }
+  .screen-card .screen-tokens {
+    font-family: monospace;
+    font-size: 11px;
+    color: #6e7191;
+    margin-top: 10px;
+    position: relative;
+    line-height: 1.6;
+  }
+
+  /* -- Motion personality cards -- */
+  .motion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .motion-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .motion-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .motion-card .name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .motion-card .char {
+    font-size: 13px;
+    color: #00FFAA;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .motion-card .used-for {
+    font-size: 12px;
+    color: #6e7191;
+    position: relative;
+  }
+
+  /* -- Timing grid -- */
+  .timing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .timing-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .timing-card .name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    color: #00FFAA;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .timing-card .range {
+    font-family: monospace;
+    font-size: 14px;
+    color: #ffffff;
+    margin-bottom: 6px;
+  }
+  .timing-card .desc {
+    font-size: 12px;
+    color: #c8cad0;
+    margin-bottom: 4px;
+  }
+  .timing-card .usage {
+    font-size: 12px;
+    color: #6e7191;
+  }
+  .timing-bar {
+    height: 4px;
+    background: #00FFAA;
+    border-radius: 2px;
+    margin-top: 10px;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-timing-function: ease-in-out;
+  }
+
+  /* -- Texture demos -- */
+  .texture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .texture-card {
+    height: 120px;
+    border-radius: 14px;
+    border: 1px solid #1e2030;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+  }
+  .texture-card .tex-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+  .texture-card .tex-desc {
+    font-size: 11px;
+    color: #6e7191;
+    position: relative;
+    z-index: 1;
+    margin-top: 2px;
+  }
+
+  /* -- Glow layer demos -- */
+  .glow-grid {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .glow-box {
+    width: 140px;
+    text-align: center;
+  }
+  .glow-sample {
+    width: 100px;
+    height: 70px;
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .glow-box .label {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .glow-box .desc {
+    font-size: 11px;
+    color: #6e7191;
+  }
+
+  /* -- Ambient / idle demos -- */
+  .ambient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .ambient-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ambient-card .amb-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .ambient-card .amb-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.5;
+    position: relative;
+  }
+  .ambient-card .amb-impl {
+    font-family: monospace;
+    font-size: 11px;
+    color: #6e7191;
+    margin-top: 8px;
+    position: relative;
+  }
+
+  /* -- Micro-interaction cards -- */
+  .micro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .micro-card {
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .micro-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+  .micro-card .micro-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: #00FFAA;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .micro-card .micro-trigger {
+    font-family: monospace;
+    font-size: 11px;
+    color: #ffffff;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .micro-card .micro-desc {
+    font-size: 13px;
+    color: #c8cad0;
+    line-height: 1.5;
+    position: relative;
+  }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<h1>HeroCards Style Guide</h1>
+<p class="subtitle">Surface materials, emotional color system, texture language, motion personality, and screen identity for a premium mobile card game.</p>
+
+<!-- ================================================================ -->
+<h2>Design Philosophy</h2>
+<p>HeroCards is built on a <strong>void-black stage</strong> where every pixel of color is earned. The UI is not a flat dark theme &mdash; it is a world made of <strong>physical materials</strong>: brushed dark metal panels, holographic foil cards, frosted glass overlays, cracked obsidian battle arenas. Light does not illuminate surfaces evenly; it bleeds through cracks, pulses along edges, and erupts during moments of power.</p>
+
+<p>Three emotional registers define the visual language:</p>
+<ul>
+  <li><strong style="color:#00FFAA">Neon Mint</strong> &mdash; the heartbeat of interaction. Buttons, progress, navigation, active states. Cool, precise, always-on.</li>
+  <li><strong style="color:#B14EFF">Electric Violet</strong> &mdash; raw power moments. Legendary reveals, level ups, achievement earned, XP rewards, critical abilities. Violet is the emotional spike.</li>
+  <li><strong style="color:#FFB800">Forge Gold</strong> &mdash; value and prestige. Currency, premium rewards, legendary rarity accents, store highlights, rank achievements. Gold communicates worth.</li>
+</ul>
+
+<p>The app is <strong>never still</strong>. Even at rest, energy flows through panel borders, cards breathe with faint scale pulses, and ambient particles drift behind headers. Stillness is death &mdash; life is motion. Every screen has its own visual temperature and signature, so navigating the app feels like moving through distinct zones of a living world.</p>
+
+<div class="warning">ALL TEXT IS WHITE OR LIGHT &mdash; NEVER GRAY ON DARK BACKGROUNDS, WHICH IS UNREADABLE.</div>
+
+<!-- ================================================================ -->
+<h2>Surface Materials</h2>
+<p>Every surface in HeroCards is a <strong>material</strong>, not a color. Materials have texture, edge behavior, light response, and physical weight. A panel should feel like you could touch it.</p>
+
+<!-- ---- BRUSHED DARK METAL ---- -->
+<div style="background:#0a0b10;border:1px solid #1e2030;border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden">
+  <!-- live demo noise -->
+  <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none"><svg width="100%" height="100%"><filter id="n1"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n1)"/></svg></div>
+  <div style="position:absolute;inset:0;opacity:0.02;pointer-events:none;background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 3px)"></div>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
+    <!-- Left: description -->
+    <div style="flex:1;min-width:260px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Brushed Dark Metal</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">The primary panel material. Subtle directional grain with noise texture creates a tactile, industrial feel. Used for every standard panel, card, modal, and list container in the app.</div>
+      <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: panels, cards, modals, quest rows, list containers, bottom sheets</div>
+    </div>
+    <!-- Right: layer stack diagram -->
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Base gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient View</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Noise texture</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Brush grain</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Content</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">children</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Implementation recipe -->
+  <div style="margin-top:20px;background:#050508;border:1px solid #1e2030;border-radius:10px;padding:16px;position:relative">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
+    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// Wrapper component — use instead of plain View for all panels</span>
+<span style="color:#00FFAA">&lt;View</span> style={[styles.panel, style]}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#6e7191">{/* Layer 1: Base gradient */}</span>
+  <span style="color:#00FFAA">&lt;LinearGradient</span>
+    colors={['#0c0d14', '#0a0b10']}
+    style={StyleSheet.absoluteFill}
+  <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Layer 2: Noise texture — tiled 64x64 PNG, fractal noise */}</span>
+  <span style="color:#00FFAA">&lt;Image</span>
+    source={require('../assets/textures/noise-64.png')}
+    style={[StyleSheet.absoluteFill, { opacity: 0.04 }]}
+    resizeMode="repeat"
+  <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Layer 3: Horizontal brush grain — tiled 128x4 PNG */}</span>
+  <span style="color:#00FFAA">&lt;Image</span>
+    source={require('../assets/textures/brush-grain-128x4.png')}
+    style={[StyleSheet.absoluteFill, { opacity: 0.02 }]}
+    resizeMode="repeat"
+  <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Layer 4: Content */}</span>
+  {children}
+<span style="color:#00FFAA">&lt;/View&gt;</span>
+
+<span style="color:#6e7191">// styles</span>
+panel: {
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: '#1e2030',
+  overflow: 'hidden',
+  padding: 16,
+}</pre>
+    <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
+      <strong style="color:#ffffff">Texture assets needed:</strong><br>
+      &bull; <code>noise-64.png</code> &mdash; 64&times;64 fractal noise grayscale PNG. Generate in Photoshop: Filter &rarr; Noise &rarr; Add Noise (Gaussian, 40%, mono) on solid gray.<br>
+      &bull; <code>brush-grain-128x4.png</code> &mdash; 128&times;4 horizontal grain PNG. Generate: 1px white lines at 3% opacity on transparent, spaced 2&ndash;3px apart.<br>
+      &bull; Both use <code>resizeMode="repeat"</code> which tiles the image across the full View. RN's Image component handles this natively on iOS.
+    </div>
+  </div>
+</div>
+
+<!-- ---- FROSTED GLASS ---- -->
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;opacity:0.03;pointer-events:none"><svg width="100%" height="100%"><filter id="n2"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n2)"/></svg></div>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
+    <div style="flex:1;min-width:260px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Frosted Glass</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Translucent overlays that blur the content beneath. Creates depth by letting the previous layer show through dimly. Used when overlaying active content without fully obscuring it.</div>
+      <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: modal backdrops, card preview overlays, battle info panels, tooltip backgrounds</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Blur backdrop</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">View + blurRadius</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Tint overlay</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">View (rgba fill)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Noise texture</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Content</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">children</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;background:#050508;border:1px solid #1e2030;border-radius:10px;padding:16px;position:relative">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
+    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// RN does not have native backdrop-filter. Use this pattern:</span>
+
+<span style="color:#6e7191">{/* Layer 1: Blurred snapshot of content behind */}</span>
+<span style="color:#00FFAA">&lt;View</span> style={[StyleSheet.absoluteFill, styles.blurLayer]}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#6e7191">{/* On iOS: use @react-native-community/blur */}</span>
+  <span style="color:#00FFAA">&lt;BlurView</span>
+    blurType="dark"
+    blurAmount={20}
+    style={StyleSheet.absoluteFill}
+  <span style="color:#00FFAA">/&gt;</span>
+<span style="color:#00FFAA">&lt;/View&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 2: Semi-transparent tint */}</span>
+<span style="color:#00FFAA">&lt;View</span> style={[StyleSheet.absoluteFill, {
+  backgroundColor: 'rgba(10, 11, 16, 0.6)',
+}]} <span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 3: Noise for frosted texture */}</span>
+<span style="color:#00FFAA">&lt;Image</span>
+  source={require('../assets/textures/noise-64.png')}
+  style={[StyleSheet.absoluteFill, { opacity: 0.03 }]}
+  resizeMode="repeat"
+<span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 4: Frosted border (white at low opacity) */}</span>
+<span style="color:#6e7191">// Container border:</span>
+borderWidth: 1,
+borderColor: 'rgba(255, 255, 255, 0.06)',
+borderRadius: 14,
+
+<span style="color:#6e7191">{/* Content */}</span>
+{children}</pre>
+    <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
+      <strong style="color:#ffffff">Dependencies:</strong> <code>@react-native-community/blur</code> for iOS BlurView. This is an Expo-compatible library.<br>
+      <strong style="color:#ffffff">Alternative (no extra dep):</strong> Capture a snapshot of the content behind, apply Skia blur filter, render as Image. More complex but zero dependencies.<br>
+      <strong style="color:#ffffff">Performance:</strong> BlurView is GPU-accelerated on iOS. Limit to 1&ndash;2 active blur layers per screen. Do not nest BlurViews.
+    </div>
+  </div>
+</div>
+
+<!-- ---- HOLOGRAPHIC FOIL ---- -->
+<div style="background:linear-gradient(135deg, #0a0b10 0%, #12101e 50%, #0a0b10 100%);border:1px solid #B14EFF33;border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none"><svg width="100%" height="100%"><filter id="n3"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="5" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n3)"/></svg></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(105deg, transparent 40%, rgba(177,78,255,0.06) 45%, rgba(0,255,170,0.04) 50%, transparent 55%);animation:energyFlow 4s linear infinite;background-size:200% 100%;pointer-events:none"></div>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
+    <div style="flex:1;min-width:260px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Holographic Foil</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Prismatic surface that shifts hue as the shimmer sweep passes. The foil effect is entirely Skia-driven &mdash; a LinearGradient with animated offset creates the color shift, while a noise layer adds foil grain.</div>
+      <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: HeroCard shimmer (Rare+), legendary card borders, reward banners, premium badge backgrounds</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (inside Skia Canvas)</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Card base</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia RoundedRect</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Shimmer gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia LinearGradient</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Foil noise grain</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia Image (tiled)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Hue rotation pass</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia ColorMatrix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;background:#050508;border:1px solid #1e2030;border-radius:10px;padding:16px;position:relative">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe (Skia)</div>
+    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// Inside &lt;Canvas&gt; on HeroCard — this is the shimmer/foil layer</span>
+<span style="color:#6e7191">// Runs ONLY for Rare, Epic, Legendary cards</span>
+
+<span style="color:#6e7191">// Animated shared value drives the sweep position</span>
+const shimmerX = useSharedValue(0);
+useEffect(() => {
+  shimmerX.value = withRepeat(
+    withTiming(1, {
+      duration: shimmerSpeed, <span style="color:#6e7191">// Rare=2000, Epic=1500, Legendary=1200</span>
+      easing: Easing.inOut(Easing.ease),
+    }),
+    -1, <span style="color:#6e7191">// infinite</span>
+    true  <span style="color:#6e7191">// reverse</span>
+  );
+}, []);
+
+<span style="color:#6e7191">// Layer 2: Shimmer gradient sweep</span>
+<span style="color:#00FFAA">&lt;Rect</span> x={0} y={0} width={300} height={433}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#00FFAA">&lt;LinearGradient</span>
+    start={vec(shimmerX.value * 600 - 200, 0)}
+    end={vec(shimmerX.value * 600, 433)}
+    colors={[
+      'transparent',
+      'rgba(177, 78, 255, 0.06)', <span style="color:#6e7191">// violet tint</span>
+      'rgba(255, 255, 255, 0.12)', <span style="color:#6e7191">// white highlight</span>
+      'rgba(0, 255, 170, 0.06)',   <span style="color:#6e7191">// mint tint</span>
+      'transparent',
+    ]}
+  <span style="color:#00FFAA">/&gt;</span>
+<span style="color:#00FFAA">&lt;/Rect&gt;</span>
+
+<span style="color:#6e7191">// Layer 3: Foil noise grain (reuse noise-64.png)</span>
+<span style="color:#00FFAA">&lt;Image</span>
+  image={noiseImage}
+  x={0} y={0}
+  width={300} height={433}
+  fit="repeat"
+  opacity={0.04}
+<span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">// Layer 4: Hue rotation (Legendary only)</span>
+<span style="color:#6e7191">// Rotates the entire shimmer hue over time for prismatic effect</span>
+<span style="color:#00FFAA">&lt;Group</span> layer={
+  <span style="color:#00FFAA">&lt;Paint&gt;&lt;ColorMatrix</span>
+    matrix={hueRotationMatrix(hueAngle.value)}
+  <span style="color:#00FFAA">/&gt;&lt;/Paint&gt;</span>
+}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#6e7191">{/* shimmer layers above */}</span>
+<span style="color:#00FFAA">&lt;/Group&gt;</span></pre>
+    <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
+      <strong style="color:#ffffff">Rarity-specific behavior:</strong><br>
+      &bull; <strong>Rare:</strong> single sweep direction, 2s cycle, no hue rotation<br>
+      &bull; <strong>Epic:</strong> dual sweep (two gradient passes, 90&deg; offset), 1.5s cycle, no hue rotation<br>
+      &bull; <strong>Legendary:</strong> dual sweep + continuous hue rotation (full 360&deg; over 6s) + particle edge dots<br>
+      <strong style="color:#ffffff">Performance:</strong> Skia renders on GPU. The shimmer is a single <code>&lt;Rect&gt;</code> with animated gradient positions &mdash; very cheap. Hue rotation uses a <code>ColorMatrix</code> filter which is also GPU-native. Total overhead: &lt;1ms/frame.
+    </div>
+  </div>
+</div>
+
+<!-- ---- CRACKED OBSIDIAN ---- -->
+<div style="background:linear-gradient(180deg, #08060a 0%, #0d0810 100%);border:1px solid #2a1520;border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;opacity:0.05;pointer-events:none"><svg width="100%" height="100%"><filter id="n4"><feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="6" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n4)"/></svg></div>
+  <div style="position:absolute;inset:0;opacity:0.06;pointer-events:none;background:linear-gradient(37deg, transparent 48%, rgba(239,83,80,0.3) 49%, rgba(239,83,80,0.3) 49.5%, transparent 50%), linear-gradient(143deg, transparent 52%, rgba(239,83,80,0.2) 52.5%, rgba(239,83,80,0.2) 53%, transparent 53.5%)"></div>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
+    <div style="flex:1;min-width:260px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Cracked Obsidian</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Volcanic dark surface with faint red fissure lines glowing beneath. Heavy, ominous, and hot. Used exclusively for battle and combat contexts &mdash; the visual shift signals danger.</div>
+      <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: BattleScreen background, damage flash overlays, boss encounter UI, forfeit confirmation modal</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Dark base gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient View</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Heavy noise</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Fissure crack lines</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia Path + glow</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Red vignette pulse</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Animated View</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">5. Content</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">children</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;background:#050508;border:1px solid #1e2030;border-radius:10px;padding:16px;position:relative">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
+    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// BattleScreen background wrapper</span>
+
+<span style="color:#6e7191">{/* Layer 1: Dark warm base */}</span>
+<span style="color:#00FFAA">&lt;LinearGradient</span>
+  colors={['#08060a', '#0d0810']}
+  style={StyleSheet.absoluteFill}
+<span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 2: Heavy noise (higher opacity than Brushed Metal) */}</span>
+<span style="color:#00FFAA">&lt;Image</span>
+  source={require('../assets/textures/noise-64.png')}
+  style={[StyleSheet.absoluteFill, { opacity: 0.05 }]}
+  resizeMode="repeat"
+<span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 3: Fissure crack lines — pre-rendered PNG overlay */}</span>
+<span style="color:#6e7191">// Option A (simple): A pre-rendered 375x812 PNG of red crack</span>
+<span style="color:#6e7191">// lines on transparent. Fastest, no Skia overhead.</span>
+<span style="color:#00FFAA">&lt;Image</span>
+  source={require('../assets/textures/obsidian-cracks.png')}
+  style={[StyleSheet.absoluteFill, { opacity: 0.06 }]}
+  resizeMode="cover"
+<span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">// Option B (dynamic): Skia Path for animated crack glow</span>
+<span style="color:#00FFAA">&lt;Canvas</span> style={StyleSheet.absoluteFill}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#00FFAA">&lt;Path</span>
+    path={crackPath} <span style="color:#6e7191">// pre-defined SVG path string</span>
+    color="transparent"
+    style="stroke"
+    strokeWidth={1.5}
+  <span style="color:#00FFAA">&gt;</span>
+    <span style="color:#00FFAA">&lt;Shadow</span> dx={0} dy={0} blur={6}
+      color="rgba(255, 71, 87, 0.3)" <span style="color:#00FFAA">/&gt;</span>
+  <span style="color:#00FFAA">&lt;/Path&gt;</span>
+  <span style="color:#00FFAA">&lt;Path</span> path={crackPath}
+    color="rgba(255, 71, 87, 0.15)"
+    style="stroke" strokeWidth={0.5} <span style="color:#00FFAA">/&gt;</span>
+<span style="color:#00FFAA">&lt;/Canvas&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 4: Red vignette — pulses during combat */}</span>
+<span style="color:#00FFAA">&lt;Animated.View</span> style={[StyleSheet.absoluteFill, {
+  background: 'radial-gradient(...)' <span style="color:#6e7191">// not supported in RN</span>
+}]} <span style="color:#00FFAA">/&gt;</span>
+<span style="color:#6e7191">// Use expo-linear-gradient with radial approximation:</span>
+<span style="color:#6e7191">// A centered radial vignette = transparent center + dark red edges</span>
+<span style="color:#6e7191">// Animate opacity with Reanimated: 0.3 &rarr; 0.5 over 3s loop</span>
+const vignetteOpacity = useSharedValue(0.3);
+useEffect(() => {
+  vignetteOpacity.value = withRepeat(
+    withTiming(0.5, { duration: 3000 }),
+    -1, true
+  );
+}, []);</pre>
+    <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
+      <strong style="color:#ffffff">Texture assets needed:</strong><br>
+      &bull; <code>noise-64.png</code> &mdash; same asset as Brushed Metal, just at higher opacity (0.05)<br>
+      &bull; <code>obsidian-cracks.png</code> &mdash; 375&times;812 (iPhone screen) red crack lines on transparent. Generate in Photoshop/Illustrator: jagged branching paths in #FF4757 at 15% opacity, 1&ndash;2px stroke. Or use Skia Path (Option B) for animated glow.<br>
+      <strong style="color:#ffffff">Recommended:</strong> Option A (PNG) for the static cracks + Skia Shadow on a simplified Path for the animated glow during damage events. This gives you the best of both: cheap static texture + dramatic animated glow when hits land.
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Shared texture assets:</strong> All four materials share <code>noise-64.png</code>. Only Brushed Metal adds the <code>brush-grain-128x4.png</code>. Only Cracked Obsidian adds <code>obsidian-cracks.png</code>. Total new assets: 3 small PNGs (&lt;10KB combined). Store in <code>assets/textures/</code>.
+</div>
+
+<!-- ================================================================ -->
+<h2>Color System</h2>
+
+<h3>Background Layers</h3>
+<p>Four depth layers provide spatial hierarchy. Surfaces use subtle gradients, not flat colors.</p>
+<div class="swatch-grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:linear-gradient(180deg, #050508 0%, #07070c 100%)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Root</div>
+      <div class="swatch-hex">#050508</div>
+      <div class="swatch-usage">Screen backgrounds. Always a subtle gradient, never flat.</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:linear-gradient(180deg, #0c0d14 0%, #0a0b10 100%)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Surface</div>
+      <div class="swatch-hex">#0a0b10</div>
+      <div class="swatch-usage">Panels, modals, inputs. Apply Brushed Metal material.</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:linear-gradient(180deg, #131420 0%, #111218 100%)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Elevated</div>
+      <div class="swatch-hex">#111218</div>
+      <div class="swatch-usage">Raised headers, nested elements, section dividers.</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#1e2030"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Border</div>
+      <div class="swatch-hex">#1e2030</div>
+      <div class="swatch-usage">Default 1px separator. Use gradient borders for interactive elements.</div>
+    </div>
+  </div>
+</div>
+<div class="note">
+  <strong>Border rule:</strong> Static containers get flat <code>#1e2030</code> borders. Interactive or highlighted elements get <strong>gradient borders</strong> using <code>border: 1px solid transparent</code> + dual background-clip technique. The gradient shifts toward the element's accent color.
+</div>
+
+<h3>Text Colors</h3>
+<div class="swatch-grid">
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#ffffff"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Primary</div>
+      <div class="swatch-hex">#ffffff</div>
+      <div class="swatch-usage">Headings, important labels, stat values, card names</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#c8cad0"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Body</div>
+      <div class="swatch-hex">#c8cad0</div>
+      <div class="swatch-usage">Body copy, descriptions, ability text, quest flavor</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#6e7191"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Muted</div>
+      <div class="swatch-hex">#6e7191</div>
+      <div class="swatch-usage">Inactive tabs, secondary labels, hints, timestamps</div>
+    </div>
+  </div>
+</div>
+
+<h3>Three Accent System</h3>
+<p>Every color on screen maps to one of three emotional registers. If a color doesn't serve one of these three roles, it probably shouldn't be there.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px;margin-bottom:24px">
+  <!-- Mint -->
+  <div style="background:linear-gradient(180deg, #0a0b10 0%, #0a0e10 100%);border:1px solid transparent;background-image:linear-gradient(#0a0b10,#0a0b10),linear-gradient(135deg,#00FFAA44,#00FFAA11);background-origin:border-box;background-clip:padding-box,border-box;border-radius:14px;padding:20px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,#00FFAA11 0%,transparent 70%);pointer-events:none"></div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#00FFAA;letter-spacing:2px;margin-bottom:10px;position:relative">NEON MINT</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;position:relative">
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#00FFAA"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#00FFAA66"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#00FFAA33"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#00FFAA11"></span>
+    </div>
+    <div style="font-size:13px;color:#c8cad0;line-height:1.5;position:relative">
+      <strong style="color:#00FFAA">Role:</strong> Interaction &amp; navigation.<br>
+      Buttons, links, progress bars, active indicators, quest completion, selected states, input focus.<br>
+      <span style="font-family:monospace;font-size:11px;color:#6e7191">Solid #00FFAA &bull; Muted #00FFAA44 &bull; Faint #00FFAA11</span>
+    </div>
+  </div>
+
+  <!-- Violet -->
+  <div style="background:linear-gradient(180deg, #0a0b10 0%, #0d0a12 100%);border:1px solid transparent;background-image:linear-gradient(#0a0b10,#0a0b10),linear-gradient(135deg,#B14EFF44,#B14EFF11);background-origin:border-box;background-clip:padding-box,border-box;border-radius:14px;padding:20px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,#B14EFF11 0%,transparent 70%);pointer-events:none"></div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#B14EFF;letter-spacing:2px;margin-bottom:10px;position:relative">ELECTRIC VIOLET</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;position:relative">
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#B14EFF"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#B14EFF66"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#B14EFF33"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#B14EFF11"></span>
+    </div>
+    <div style="font-size:13px;color:#c8cad0;line-height:1.5;position:relative">
+      <strong style="color:#B14EFF">Role:</strong> Power &amp; emotion.<br>
+      Legendary reveals, level ups, achievement earned, XP bars, ability activations, amp triggers, boss encounters.<br>
+      <span style="font-family:monospace;font-size:11px;color:#6e7191">Solid #B14EFF &bull; Muted #B14EFF44 &bull; Faint #B14EFF11</span>
+    </div>
+  </div>
+
+  <!-- Gold -->
+  <div style="background:linear-gradient(180deg, #0a0b10 0%, #100e0a 100%);border:1px solid transparent;background-image:linear-gradient(#0a0b10,#0a0b10),linear-gradient(135deg,#FFB80044,#FFB80011);background-origin:border-box;background-clip:padding-box,border-box;border-radius:14px;padding:20px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,#FFB80011 0%,transparent 70%);pointer-events:none"></div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#FFB800;letter-spacing:2px;margin-bottom:10px;position:relative">FORGE GOLD</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;position:relative">
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#FFB800"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#FFB80066"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#FFB80033"></span>
+      <span style="display:inline-block;width:40px;height:24px;border-radius:4px;background:#FFB80011"></span>
+    </div>
+    <div style="font-size:13px;color:#c8cad0;line-height:1.5;position:relative">
+      <strong style="color:#FFB800">Role:</strong> Value &amp; prestige.<br>
+      Coin/credit displays, store prices, premium offers, legendary rarity borders, rank badges, daily reward highlights.<br>
+      <span style="font-family:monospace;font-size:11px;color:#6e7191">Solid #FFB800 &bull; Muted #FFB80044 &bull; Faint #FFB80011</span>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Mint = cool precision.</strong> The player's hand on the controls.<br>
+  <strong>Violet = hot power.</strong> The game rewarding and surprising the player.<br>
+  <strong>Gold = earned worth.</strong> The player's collection, rank, and treasure.
+</div>
+
+<h3>Status Colors</h3>
+<p>Custom-tuned for dark OLED backgrounds &mdash; these are <strong>not</strong> stock Material palette values. Each has been shifted to feel more vivid and game-appropriate.</p>
+<div class="swatch-grid compact">
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#FF4757"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Danger</div>
+      <div class="swatch-hex">#FF4757</div>
+      <div class="swatch-usage">Damage numbers, HP critical, errors, forfeit, destructive actions</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#2ED573"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Vitality</div>
+      <div class="swatch-hex">#2ED573</div>
+      <div class="swatch-usage">HP healthy, new card acquired, healing, positive outcomes</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color short" style="background:#FFBE0B"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Caution</div>
+      <div class="swatch-hex">#FFBE0B</div>
+      <div class="swatch-usage">HP medium, warnings, dupe credits, God Mode indicator</div>
+    </div>
+  </div>
+</div>
+
+<h3>Stat Pill Colors</h3>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px">
+  <div class="stat-pill" style="background:#e8445a33;border:1px solid #e8445a66">
+    <span class="dot" style="background:#e8445a"></span>
+    <span style="font-size:10px;letter-spacing:1px">ATK</span>
+    <span style="font-family:monospace;font-size:10px;color:#e8445a">#e8445a</span>
+  </div>
+  <div class="stat-pill" style="background:#8b5cf633;border:1px solid #8b5cf666">
+    <span class="dot" style="background:#8b5cf6"></span>
+    <span style="font-size:10px;letter-spacing:1px">DEF</span>
+    <span style="font-family:monospace;font-size:10px;color:#8b5cf6">#8b5cf6</span>
+  </div>
+  <div class="stat-pill" style="background:#f59e0b33;border:1px solid #f59e0b66">
+    <span class="dot" style="background:#f59e0b"></span>
+    <span style="font-size:10px;letter-spacing:1px">SPD</span>
+    <span style="font-family:monospace;font-size:10px;color:#f59e0b">#f59e0b</span>
+  </div>
+  <div class="stat-pill" style="background:#4DD0E133;border:1px solid #4DD0E166">
+    <span class="dot" style="background:#4DD0E1"></span>
+    <span style="font-size:10px;letter-spacing:1px">STA</span>
+    <span style="font-family:monospace;font-size:10px;color:#4DD0E1">#4DD0E1</span>
+  </div>
+</div>
+
+<h3>Domain Colors</h3>
+<p>Game-data-driven colors that live in <code>src/data/constants.ts</code>. Never duplicate into the theme.</p>
+
+<p><strong>Type Colors</strong> (9 battle types)</p>
+<div class="swatch-grid compact">
+  <div class="swatch"><div class="swatch-color short" style="background:#E53935"></div><div class="swatch-info"><div class="swatch-name">Blaster</div><div class="swatch-hex">#E53935</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#9C27B0"></div><div class="swatch-info"><div class="swatch-name">Magic</div><div class="swatch-hex">#9C27B0</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#F48FB1"></div><div class="swatch-info"><div class="swatch-name">Psychic</div><div class="swatch-hex">#F48FB1</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#37474F"></div><div class="swatch-info"><div class="swatch-name">Shadow</div><div class="swatch-hex">#37474F</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#8D6E63"></div><div class="swatch-info"><div class="swatch-name">Tank</div><div class="swatch-hex">#8D6E63</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#FFC107"></div><div class="swatch-info"><div class="swatch-name">Speedster</div><div class="swatch-hex">#FFC107</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#4CAF50"></div><div class="swatch-info"><div class="swatch-name">Nature</div><div class="swatch-hex">#4CAF50</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#1565C0"></div><div class="swatch-info"><div class="swatch-name">Tech</div><div class="swatch-hex">#1565C0</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#E0E0E0"></div><div class="swatch-info"><div class="swatch-name">Cosmic</div><div class="swatch-hex">#E0E0E0</div></div></div>
+</div>
+
+<p><strong>Rarity Colors</strong> (5 tiers)</p>
+<div class="swatch-grid compact">
+  <div class="swatch"><div class="swatch-color short" style="background:#b0b8c8"></div><div class="swatch-info"><div class="swatch-name">Common</div><div class="swatch-hex">#b0b8c8</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#5ddb6a"></div><div class="swatch-info"><div class="swatch-name">Uncommon</div><div class="swatch-hex">#5ddb6a</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#5ab4ff"></div><div class="swatch-info"><div class="swatch-name">Rare</div><div class="swatch-hex">#5ab4ff</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#cc6dff"></div><div class="swatch-info"><div class="swatch-name">Epic</div><div class="swatch-hex">#cc6dff</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#ffc04a"></div><div class="swatch-info"><div class="swatch-name">Legendary</div><div class="swatch-hex">#ffc04a</div></div></div>
+</div>
+
+<p><strong>Achievement Category Colors</strong> (6 categories)</p>
+<div class="swatch-grid compact">
+  <div class="swatch"><div class="swatch-color short" style="background:#26C6DA"></div><div class="swatch-info"><div class="swatch-name">Collector</div><div class="swatch-hex">#26C6DA</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#FBBF24"></div><div class="swatch-info"><div class="swatch-name">Progression</div><div class="swatch-hex">#FBBF24</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#F87171"></div><div class="swatch-info"><div class="swatch-name">Combat</div><div class="swatch-hex">#F87171</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#60A5FA"></div><div class="swatch-info"><div class="swatch-name">Strategy</div><div class="swatch-hex">#60A5FA</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#A78BFA"></div><div class="swatch-info"><div class="swatch-name">Amp &amp; Abilities</div><div class="swatch-hex">#A78BFA</div></div></div>
+  <div class="swatch"><div class="swatch-color short" style="background:#34D399"></div><div class="swatch-info"><div class="swatch-name">Feats</div><div class="swatch-hex">#34D399</div></div></div>
+</div>
+
+<!-- ================================================================ -->
+<h2>Texture Language</h2>
+<p>Textures prevent the UI from feeling like flat CSS divs. Every texture serves a purpose &mdash; grain adds physical tactility, scan lines add sci-fi atmosphere, hex grids suggest technology, and circuit traces imply connectivity.</p>
+
+<div class="texture-grid">
+  <div class="texture-card" style="background:#0a0b10">
+    <div style="position:absolute;inset:0;opacity:0.05;pointer-events:none"><svg width="100%" height="100%"><filter id="tn1"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#tn1)"/></svg></div>
+    <div>
+      <div class="tex-name">Film Grain Noise</div>
+      <div class="tex-desc">3&ndash;5% opacity. All Surface + Elevated layers.</div>
+    </div>
+  </div>
+
+  <div class="texture-card" style="background:#0a0b10">
+    <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none;background:repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(0,255,170,0.08) 3px, rgba(0,255,170,0.08) 4px)"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:60px;opacity:0.06;pointer-events:none;background:linear-gradient(180deg, rgba(0,255,170,0.15), transparent);animation:scanLine 6s linear infinite"></div>
+    <div>
+      <div class="tex-name">Scan Lines</div>
+      <div class="tex-desc">Faint horizontal lines + sweeping gradient. Headers, battle UI.</div>
+    </div>
+  </div>
+
+  <div class="texture-card" style="background:#0a0b10">
+    <!-- hex grid pattern approximation -->
+    <div style="position:absolute;inset:0;opacity:0.03;pointer-events:none;background-image:radial-gradient(circle, rgba(0,255,170,0.4) 1px, transparent 1px);background-size:24px 24px"></div>
+    <div>
+      <div class="tex-name">Hex Dot Grid</div>
+      <div class="tex-desc">2&ndash;3% opacity dot pattern. Career screen, collection vault.</div>
+    </div>
+  </div>
+
+  <div class="texture-card" style="background:#0a0b10">
+    <!-- circuit trace approximation -->
+    <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none;background:
+      linear-gradient(90deg, transparent 49%, rgba(0,255,170,0.15) 49%, rgba(0,255,170,0.15) 51%, transparent 51%),
+      linear-gradient(0deg, transparent 49%, rgba(0,255,170,0.1) 49%, rgba(0,255,170,0.1) 51%, transparent 51%);
+      background-size: 40px 40px"></div>
+    <div>
+      <div class="tex-name">Circuit Traces</div>
+      <div class="tex-desc">Faint grid lines with junctions. Store screen, tech-type backgrounds.</div>
+    </div>
+  </div>
+
+  <div class="texture-card" style="background:#0a0b10">
+    <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none;background:repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(177,78,255,0.08) 10px, rgba(177,78,255,0.08) 11px)"></div>
+    <div>
+      <div class="tex-name">Diagonal Hatch</div>
+      <div class="tex-desc">Angled lines at 135&deg;. Caution zones, locked content, disabled states.</div>
+    </div>
+  </div>
+
+  <div class="texture-card" style="background:linear-gradient(180deg, #08060a, #0d0810)">
+    <div style="position:absolute;inset:0;opacity:0.06;pointer-events:none;background:linear-gradient(37deg, transparent 48%, rgba(239,83,80,0.25) 49%, rgba(239,83,80,0.25) 49.5%, transparent 50%), linear-gradient(143deg, transparent 52%, rgba(239,83,80,0.15) 52.5%, rgba(239,83,80,0.15) 53%, transparent 53.5%)"></div>
+    <div>
+      <div class="tex-name">Obsidian Fissures</div>
+      <div class="tex-desc">Red crack lines on dark volcanic surface. Battle backgrounds only.</div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Rule:</strong> No texture should be clearly visible at normal viewing distance. If you can distinctly see the pattern, dial it back. Textures create a subliminal sense of material, not a visible overlay.
+</div>
+
+<!-- ================================================================ -->
+<h2>Layered Glow System</h2>
+<p>On OLED screens, traditional drop shadows vanish against near-black. Instead, every emphasis effect uses a <strong>three-layer glow stack</strong>: a tight inner core, a medium halo, and a wide ambient bloom. Single box-shadows look flat; layered glows look radiant.</p>
+
+<div class="glow-grid">
+  <div class="glow-box">
+    <div class="glow-sample" style="box-shadow: 0 0 4px #00FFAAaa, 0 0 16px #00FFAA66, 0 0 40px #00FFAA22; border-color: #00FFAA44">
+      <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#00FFAA;letter-spacing:1px">MINT</span>
+    </div>
+    <div class="label">Interactive Glow</div>
+    <div class="desc">Buttons, progress, active nodes, selected items</div>
+  </div>
+
+  <div class="glow-box">
+    <div class="glow-sample" style="box-shadow: 0 0 4px #B14EFFaa, 0 0 16px #B14EFF66, 0 0 40px #B14EFF22; border-color: #B14EFF44">
+      <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#B14EFF;letter-spacing:1px">VIOLET</span>
+    </div>
+    <div class="label">Power Glow</div>
+    <div class="desc">Rewards, level up, legendary, achievements</div>
+  </div>
+
+  <div class="glow-box">
+    <div class="glow-sample" style="box-shadow: 0 0 4px #FFB800aa, 0 0 16px #FFB80066, 0 0 40px #FFB80022; border-color: #FFB80044">
+      <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#FFB800;letter-spacing:1px">GOLD</span>
+    </div>
+    <div class="label">Value Glow</div>
+    <div class="desc">Currency, store, legendary borders, premium</div>
+  </div>
+
+  <div class="glow-box">
+    <div class="glow-sample" style="box-shadow: 0 0 4px #FF4757aa, 0 0 16px #FF475766, 0 0 40px #FF475722; border-color: #FF475744">
+      <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#FF4757;letter-spacing:1px">DANGER</span>
+    </div>
+    <div class="label">Damage Glow</div>
+    <div class="desc">HP critical, damage dealt, errors</div>
+  </div>
+
+  <div class="glow-box">
+    <div class="glow-sample" style="box-shadow: 0 0 4px #2ED573aa, 0 0 16px #2ED57366, 0 0 40px #2ED57322; border-color: #2ED57344">
+      <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#2ED573;letter-spacing:1px">VITAL</span>
+    </div>
+    <div class="label">Health Glow</div>
+    <div class="desc">HP healthy, success, healing, completion</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Three-layer formula:</strong><br>
+  <code>0 0 4px {color}aa</code> &mdash; tight core (inner edge definition)<br>
+  <code>0 0 16px {color}66</code> &mdash; medium halo (visible glow ring)<br>
+  <code>0 0 40px {color}22</code> &mdash; wide bloom (ambient atmosphere)<br>
+  Scale all three radii proportionally for larger/smaller elements. For maximum-drama moments (legendary reveal, level up), add a fourth layer: <code>0 0 80px {color}11</code> for environmental wash.
+</div>
+
+<!-- ================================================================ -->
+<h2>Rarity Visual Tiers</h2>
+<p>Each rarity tier has escalating visual treatments. Higher rarity = more visual energy. The card should feel increasingly alive as rarity increases.</p>
+
+<div class="rarity-tier-grid">
+  <div class="rarity-tier-card" style="border-color:#b0b8c833">
+    <div class="rarity-name" style="color:#b0b8c8">Common</div>
+    <div class="rarity-desc">Static card, no effects. Clean brushed metal surface. The absence of effects makes rarer cards feel special by contrast. Material: Brushed Dark Metal only.</div>
+  </div>
+  <div class="rarity-tier-card" style="border-color:#5ddb6a44">
+    <div class="rarity-name" style="color:#5ddb6a">Uncommon</div>
+    <div class="rarity-desc">Subtle single-sweep shimmer (2s cycle), faint border glow (1-layer). The first hint of energy &mdash; a gentle pulse of light that says this card has a spark.</div>
+  </div>
+  <div class="rarity-tier-card" style="border-color:#5ab4ff44;box-shadow:0 0 4px #5ab4ff22, 0 0 12px #5ab4ff11">
+    <div class="rarity-name" style="color:#5ab4ff">Rare</div>
+    <div class="rarity-desc">Dual-sweep shimmer (1.5s), animated foil grain, border uses 2-layer glow, gradient border shifts blue. The card catches light as if made of polished metal with a chrome finish.</div>
+  </div>
+  <div class="rarity-tier-card" style="border-color:#cc6dff44;box-shadow:0 0 4px #cc6dff33, 0 0 16px #cc6dff22, 0 0 32px #cc6dff11">
+    <div class="rarity-name" style="color:#cc6dff">Epic</div>
+    <div class="rarity-desc">Continuous shimmer + particle edges (floating dots along border), 3-layer glow, faint ambient energy particles around card bounds. The card feels energized &mdash; alive with contained power.</div>
+  </div>
+  <div class="rarity-tier-card" style="border:1px solid transparent;background-image:linear-gradient(#0a0b10,#0a0b10),linear-gradient(135deg,#ffc04a66,#B14EFF44,#ffc04a66);background-origin:border-box;background-clip:padding-box,border-box;box-shadow:0 0 4px #ffc04a44, 0 0 16px #ffc04a33, 0 0 40px #ffc04a22, 0 0 80px #B14EFF11">
+    <div class="rarity-name" style="color:#ffc04a">Legendary</div>
+    <div class="rarity-desc">Holographic prismatic shimmer with hue rotation, living gradient border (gold&harr;violet shift), 4-layer glow with environmental bloom, energy particle shower, screen-shake on reveal. The card is barely containing its own power.</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Implementation:</strong> Shimmer uses Skia LinearGradient sweep. Particle edges use Reanimated + absolute-positioned dots. Holographic effect layers multiple gradient passes with hue rotation. Gradient borders use the dual background-clip technique. Screen shake uses <code>Vibration.vibrate()</code> + Reanimated translateX/Y jitter.
+</div>
+
+<!-- ================================================================ -->
+<h2>Typography</h2>
+
+<h3>Font Families</h3>
+
+<div class="type-specimen">
+  <div class="label">Orbitron 900 Black &mdash; FONTS.orbitronBlack</div>
+  <div class="sample" style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:28px;letter-spacing:3px;text-shadow:0 0 20px #00FFAA33">HEROCARDS BATTLE ARENA</div>
+  <div class="sample" style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;color:#00FFAA;text-shadow:0 0 12px #00FFAA44">LV 42 &bull; 12,450 XP</div>
+  <div class="meta">Headings, hero numbers, stat values, screen titles</div>
+</div>
+
+<div class="type-specimen">
+  <div class="label">Orbitron 700 Bold &mdash; FONTS.orbitronBold</div>
+  <div class="sample" style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.5px">DAILY QUESTS &bull; COLLECTION &bull; BATTLE</div>
+  <div class="sample" style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;color:#6e7191">SECTION HEADER &bull; BADGE LABEL &bull; FILTER CHIP</div>
+  <div class="meta">Labels, buttons, badges, section headers, navigation</div>
+</div>
+
+<div class="type-specimen">
+  <div class="label">Rajdhani 600 SemiBold &mdash; FONTS.rajdhaniSemiBold</div>
+  <div class="sample" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:16px">A powerful hero emerges from the cosmic void, wielding ancient energy that bends reality itself.</div>
+  <div class="sample" style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:#6e7191">Defeat 5 opponents using type advantage to earn bonus rewards and climb the ranks.</div>
+  <div class="meta">Body text, descriptions, quest text, card ability descriptions</div>
+</div>
+
+<h3>Text Impact Treatments</h3>
+<p>Headings and hero numbers don't just display text &mdash; they convey force. Use these treatments to make key text feel <strong>stamped, etched, or radiating power</strong>.</p>
+
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Glow Text (Active Headers)</div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;color:#ffffff;letter-spacing:2px;text-shadow:0 0 8px #00FFAA44, 0 0 20px #00FFAA22;margin-bottom:12px;position:relative">COLLECTION</div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      <code>text-shadow: 0 0 8px #00FFAA44, 0 0 20px #00FFAA22</code><br>
+      Used for: active screen titles, selected tab labels, section headers with mint accent
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Embossed Text (Stat Values)</div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:32px;color:#ffffff;letter-spacing:3px;text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 0 12px #B14EFF33;margin-bottom:12px;position:relative">42</div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      <code>text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 12px #B14EFF33</code><br>
+      Used for: level numbers, large stat displays, XP totals. The drop shadow creates a stamped-into-metal effect.
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Gradient Text (Legendary Moments)</div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:24px;letter-spacing:3px;background:linear-gradient(135deg,#ffc04a 0%,#ffffff 40%,#B14EFF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;position:relative">LEGENDARY</div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      <code>background: linear-gradient(135deg, #ffc04a, #ffffff, #B14EFF)</code> + <code>background-clip: text</code><br>
+      Used for: legendary card name reveals, rank-up text, premium banners. Pair with a behind-text glow View.
+    </div>
+  </div>
+</div>
+
+<h3>Font Size Scale</h3>
+<p>Sizes are tuned for mobile screens at arm's length. Orbitron is used exclusively for labels and headings (always uppercase). Rajdhani handles all readable body text.</p>
+<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">XS</span>
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#fff;flex:1">FILTER CHIP</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">10px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Orbitron &mdash; chips, tags, badges</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">SM</span>
+    <span style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:#fff;flex:1">Quest descriptions and hints</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">12px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Rajdhani &mdash; secondary body</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">Body</span>
+    <span style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;color:#fff;flex:1">Primary body text for descriptions</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">14px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Rajdhani &mdash; primary body</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">MD</span>
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#fff;flex:1">BUTTON LABEL</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">14px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Orbitron &mdash; buttons, labels</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">LG</span>
+    <span style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:18px;letter-spacing:2px;text-transform:uppercase;color:#fff;text-shadow:0 0 8px rgba(255,255,255,0.1);flex:1">SECTION HEADER</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">18px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Orbitron &mdash; section headers</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">XL</span>
+    <span style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;letter-spacing:2px;text-transform:uppercase;color:#fff;text-shadow:0 0 12px #00FFAA22;flex:1">SCREEN TITLE</span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">22px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Orbitron &mdash; screen titles</span>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:16px;background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:14px 18px">
+    <span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px;text-transform:uppercase;min-width:40px;flex-shrink:0">XXL</span>
+    <span style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:32px;letter-spacing:3px;text-shadow:0 2px 4px rgba(0,0,0,0.8),0 0 16px #B14EFF33;flex:1"><span style="background:linear-gradient(135deg,#B14EFF,#ffffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">LV 42</span></span>
+    <span style="font-family:monospace;font-size:11px;color:#00FFAA;min-width:35px;text-align:right">32px</span>
+    <span style="font-size:12px;color:#6e7191;min-width:180px">Orbitron &mdash; hero numbers, splash</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<h2>Spacing &amp; Radii</h2>
+<p>Base unit: <strong>4px</strong>. Spacing creates breathing room; radii create material feel. Larger radii = softer, more premium surfaces. Sharper radii = technical, data-driven elements.</p>
+
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Spacing System</div>
+    <div style="font-size:13px;color:#c8cad0;line-height:1.8;position:relative">
+      <strong>4px</strong> &mdash; tight gaps (icon+text, badge internals, stat pill content)<br>
+      <strong>8px</strong> &mdash; grid gaps, list item internal spacing, compact card padding<br>
+      <strong>12px</strong> &mdash; panel internal padding, section row gaps<br>
+      <strong>16px</strong> &mdash; screen edge padding, standard card/panel padding<br>
+      <strong>20px</strong> &mdash; generous screen edge padding, section breaks<br>
+      <strong>32px</strong> &mdash; major section separators, dramatic breathing room
+    </div>
+    <div style="font-family:monospace;font-size:11px;color:#6e7191;margin-top:12px;position:relative">
+      Rule: screen edges 16&ndash;20 &bull; panel interiors 12&ndash;16 &bull; list gaps 8&ndash;12 &bull; scroll overflow 40&ndash;60
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Border Radii</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;position:relative">
+      <div style="text-align:center">
+        <div style="width:50px;height:34px;background:#00FFAA22;border:2px solid #00FFAA44;border-radius:6px;margin:0 auto 6px"></div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px">6px</div>
+        <div style="font-size:11px;color:#6e7191">Badges, pills, chips</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:50px;height:34px;background:#00FFAA22;border:2px solid #00FFAA44;border-radius:10px;margin:0 auto 6px"></div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px">10px</div>
+        <div style="font-size:11px;color:#6e7191">Inputs, stat boxes</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:50px;height:34px;background:#00FFAA22;border:2px solid #00FFAA44;border-radius:14px;margin:0 auto 6px"></div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px">14px</div>
+        <div style="font-size:11px;color:#6e7191">Panels, modals</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:50px;height:34px;background:#00FFAA22;border:2px solid #00FFAA44;border-radius:20px;margin:0 auto 6px"></div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1px">20px</div>
+        <div style="font-size:11px;color:#6e7191">Profile card, pills</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">Larger radii create a softer, more premium feel. Use 14px for primary surfaces. Use 6px for compact data elements.</div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<h2>Elevation Drama</h2>
+<p>Elevation is a multi-property transformation &mdash; scale, glow intensity, border treatment, and background dimming all shift together. Each level adds more visual energy and physical presence.</p>
+
+<div class="elevation-grid">
+  <div class="elevation-card">
+    <div class="elev-name">Resting</div>
+    <div class="elev-props">scale(1.0) &bull; flat border</div>
+    <div style="width:50px;height:50px;background:#111218;border:1px solid #1e2030;border-radius:10px;margin:12px auto;position:relative"></div>
+    <div class="elev-desc">Base state. No glow, no animation. Static and grounded.</div>
+  </div>
+  <div class="elevation-card hovered">
+    <div class="elev-name">Hovered</div>
+    <div class="elev-props">scale(1.02) &bull; 2-layer glow</div>
+    <div style="width:50px;height:50px;background:#111218;border:1px solid #00FFAA33;border-radius:10px;margin:12px auto;box-shadow:0 0 4px #00FFAA33, 0 0 16px #00FFAA22;position:relative"></div>
+    <div class="elev-desc">Subtle lift + faint accent glow. 200ms spring. Tappable cards, interactive list items.</div>
+  </div>
+  <div class="elevation-card lifted">
+    <div class="elev-name">Lifted</div>
+    <div class="elev-props">scale(1.05) &bull; 3-layer glow + gradient border</div>
+    <div style="width:50px;height:50px;background:#111218;border:1px solid transparent;background-image:linear-gradient(#111218,#111218),linear-gradient(135deg,#00FFAA66,#00FFAA22);background-origin:border-box;background-clip:padding-box,border-box;border-radius:10px;margin:12px auto;box-shadow:0 0 4px #00FFAA44, 0 0 16px #00FFAA44, 0 0 40px #00FFAA22;position:relative"></div>
+    <div class="elev-desc">Strong glow + gradient border shift. 300ms spring. Selected card, active element, card preview.</div>
+  </div>
+  <div class="elevation-card heroic">
+    <div class="elev-name">Heroic</div>
+    <div class="elev-props">scale(1.1) &bull; 4-layer glow + particles + bg dim</div>
+    <div style="width:50px;height:50px;background:#111218;border:1px solid transparent;background-image:linear-gradient(#111218,#111218),linear-gradient(135deg,#B14EFF88,#ffc04a44);background-origin:border-box;background-clip:padding-box,border-box;border-radius:10px;margin:12px auto;box-shadow:0 0 4px #B14EFF66, 0 0 16px #B14EFF66, 0 0 40px #B14EFF44, 0 0 80px #B14EFF22;position:relative"></div>
+    <div class="elev-desc">Maximum drama. Full 4-layer glow halo, gradient border animates, particle ring, background dims. 500ms dramatic ease. Legendary reveal, featured card, boss encounter.</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Implementation:</strong> Use Reanimated <code>useAnimatedStyle</code> with spring configs. Depth blur on background elements uses RN <code>blurRadius</code> on an overlay View. Particle ring is a Skia path animation around element bounds. Gradient borders animate via interpolating the gradient stops.
+</div>
+
+<!-- ================================================================ -->
+<h2>Ambient Life</h2>
+<p>A premium game UI is <strong>never fully still</strong>. Even at rest, the world breathes. These idle-state animations run continuously at low intensity, creating a subliminal sense of a living interface. They should be subtle enough to be felt, not watched.</p>
+
+<div class="ambient-grid">
+  <div class="ambient-card">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg, transparent, #00FFAA44, #B14EFF44, transparent);background-size:200% 100%;animation:energyFlow 4s linear infinite;pointer-events:none"></div>
+    <div class="amb-name">Border Energy Flow</div>
+    <div class="amb-desc">A slow gradient pulse travels along panel top edges. Mint blends into violet. Creates a sense of power flowing through the UI.</div>
+    <div class="amb-impl">4s linear infinite &bull; Top border of key panels only &bull; opacity 0.3&ndash;0.5</div>
+  </div>
+
+  <div class="ambient-card">
+    <div class="amb-name">Card Breathing</div>
+    <div class="amb-desc">Cards in grids/hands have a faint scale pulse: <code>1.0 &rarr; 1.005 &rarr; 1.0</code> over 3s. Barely perceptible, but makes the collection feel alive rather than a static grid.</div>
+    <div class="amb-impl">3s ease-in-out infinite &bull; scale amplitude 0.5% &bull; Stagger start times per card</div>
+  </div>
+
+  <div class="ambient-card">
+    <div class="amb-name">Glow Pulse</div>
+    <div class="amb-desc">Active buttons and progress fills slowly modulate their glow radius: tight core steady, outer bloom breathes 0.3&ndash;0.6 opacity over 2s. Creates a heartbeat rhythm.</div>
+    <div class="amb-impl">2s ease-in-out infinite &bull; Only the outermost shadow layer pulses &bull; Primary action buttons, progress fills</div>
+  </div>
+
+  <div class="ambient-card">
+    <div class="amb-name">Particle Drift</div>
+    <div class="amb-desc">2&ndash;4 faint particles drift slowly upward behind screen headers. Tiny dots (2&ndash;3px) at 0.1&ndash;0.2 opacity. Colored to match the screen's accent (mint for most, violet for Career, gold for Store).</div>
+    <div class="amb-impl">8&ndash;15s travel time &bull; Reanimated translateY &bull; randomized X, size, opacity &bull; max 4 particles at once</div>
+  </div>
+
+  <div class="ambient-card">
+    <div class="amb-name">Shimmer Sweep</div>
+    <div class="amb-desc">A very faint diagonal light sweep passes across the screen title text every 6s. Like light catching a metallic surface. Applies to Orbitron screen titles only.</div>
+    <div class="amb-impl">6s linear infinite &bull; 45&deg; gradient mask &bull; 0.05 opacity &bull; Skia or RN MaskedView</div>
+  </div>
+
+  <div class="ambient-card">
+    <div class="amb-name">Background Vignette Pulse</div>
+    <div class="amb-desc">Screen backgrounds have a radial vignette that subtly breathes, expanding and contracting the dark edges. Creates depth without any moving elements.</div>
+    <div class="amb-impl">5s ease-in-out infinite &bull; radial-gradient center opacity 0 &rarr; 0.03 &bull; edges rgba(0,0,0,0.4&ndash;0.5)</div>
+  </div>
+</div>
+
+<div class="note-violet">
+  <strong>Performance rule:</strong> Ambient animations should use <code>useNativeDriver: true</code> or Reanimated shared values exclusively. Never animate layout properties (width, height, padding) for ambient effects &mdash; only transform and opacity. Total ambient animation count per screen: max 6 simultaneous.
+</div>
+
+<!-- ================================================================ -->
+<h2>Screen Identity</h2>
+<p>Every major screen has a unique <strong>visual temperature</strong> and signature, so navigating the app feels like moving through distinct zones. The structural layout is consistent (panels, lists, buttons), but the ambient atmosphere shifts.</p>
+
+<div class="screen-grid">
+  <div class="screen-card" style="background:linear-gradient(180deg, #050508 0%, #060810 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top center, #00FFAA06 0%, transparent 60%);pointer-events:none"></div>
+    <div class="screen-name" style="color:#00FFAA">Home</div>
+    <div class="screen-desc">The command center. Cool mint glow from above, clean and inviting. The player's hub feels safe, organized, and ready for action. Ambient: gentle mint particle drift behind the battle button.</div>
+    <div class="screen-tokens">accent: mint &bull; vignette: top-center mint &bull; texture: grain only &bull; temperature: cool neutral</div>
+  </div>
+
+  <div class="screen-card" style="background:linear-gradient(180deg, #050508 0%, #080610 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, #B14EFF04 0%, transparent 60%);pointer-events:none"></div>
+    <div class="screen-name" style="color:#B14EFF">Career</div>
+    <div class="screen-desc">The achievement vault. Faint violet ambient glow creates a sense of accomplishment and legacy. Hex dot grid texture beneath the skill tree. Each completed node adds a faint glow to the atmosphere.</div>
+    <div class="screen-tokens">accent: violet &bull; vignette: center violet &bull; texture: grain + hex dots &bull; temperature: warm purple</div>
+  </div>
+
+  <div class="screen-card" style="background:linear-gradient(180deg, #08060a 0%, #0d0810 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at bottom center, #FF475708 0%, transparent 50%);pointer-events:none;opacity:0.5"></div>
+    <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none;background:linear-gradient(37deg, transparent 48%, rgba(239,83,80,0.2) 49%, rgba(239,83,80,0.2) 49.5%, transparent 50%)"></div>
+    <div class="screen-name" style="color:#FF4757">Battle</div>
+    <div class="screen-desc">The arena. Hot, dangerous, high-contrast. Cracked Obsidian material with red fissure undertones. The screen feels physically different from the rest of the app &mdash; heavier, darker, more intense. Ambient: slow red pulse on the edges during combat.</div>
+    <div class="screen-tokens">accent: danger red &bull; vignette: bottom red &bull; texture: obsidian fissures &bull; temperature: hot dark</div>
+  </div>
+
+  <div class="screen-card" style="background:linear-gradient(180deg, #050508 0%, #06080a 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right, #00FFAA04 0%, transparent 50%);pointer-events:none"></div>
+    <div style="position:absolute;inset:0;opacity:0.02;pointer-events:none;background-image:radial-gradient(circle, rgba(0,255,170,0.3) 1px, transparent 1px);background-size:28px 28px"></div>
+    <div class="screen-name" style="color:#26C6DA">Collection</div>
+    <div class="screen-desc">The vault. Cool, ordered, and reverent. Faint hex dot grid texture suggests a secure database. Cards feel like precious artifacts being browsed in a gallery. Ambient: very subtle grid shimmer.</div>
+    <div class="screen-tokens">accent: cyan/mint &bull; vignette: top-right mint &bull; texture: grain + hex dots &bull; temperature: cool blue</div>
+  </div>
+
+  <div class="screen-card" style="background:linear-gradient(180deg, #050508 0%, #0a0806 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top center, #FFB80006 0%, transparent 60%);pointer-events:none"></div>
+    <div style="position:absolute;inset:0;opacity:0.03;pointer-events:none;background:linear-gradient(90deg, transparent 49%, rgba(255,184,0,0.1) 49%, rgba(255,184,0,0.1) 51%, transparent 51%),linear-gradient(0deg, transparent 49%, rgba(255,184,0,0.06) 49%, rgba(255,184,0,0.06) 51%, transparent 51%);background-size:44px 44px"></div>
+    <div class="screen-name" style="color:#FFB800">Store</div>
+    <div class="screen-desc">The marketplace. Warm gold undertones make everything feel desirable and valuable. Circuit trace texture suggests a connected trading network. Ambient: gold particle drift near featured offers.</div>
+    <div class="screen-tokens">accent: gold &bull; vignette: top-center gold &bull; texture: grain + circuit traces &bull; temperature: warm gold</div>
+  </div>
+
+  <div class="screen-card" style="background:linear-gradient(180deg, #050508 0%, #06070c 100%)">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top center, #ffffff04 0%, transparent 40%);pointer-events:none"></div>
+    <div class="screen-name">Profile</div>
+    <div class="screen-desc">The player's identity card. Neutral temperature with minimal ambient effects. Clean, informational, and personal. The player's stats and collection progress are presented clearly without competing visual noise.</div>
+    <div class="screen-tokens">accent: white/mint &bull; vignette: top-center subtle &bull; texture: grain only &bull; temperature: neutral cool</div>
+  </div>
+</div>
+
+<div class="note-gold">
+  <strong>Implementation:</strong> Each screen wrapper View gets a unique <code>style</code> with its background gradient + a positioned radial vignette View. Texture overlays are screen-specific Image or SVG components at fixed low opacity. Accent particles are spawned by a shared <code>AmbientParticles</code> component that takes a color prop.
+</div>
+
+<!-- ================================================================ -->
+<h2>Motion Personality</h2>
+<p>Motion has <strong>character</strong>, not just duration. Every animation communicates the weight and energy of what is happening. A card slamming into place should feel heavy; a reward appearing should feel explosive; idle elements should feel alive but calm.</p>
+
+<h3>Motion Types</h3>
+<div class="motion-grid">
+  <div class="motion-card">
+    <div class="name">Slam</div>
+    <div class="char">Fast overshoot (1.15x) then settle</div>
+    <div class="used-for">UI elements entering, panels appearing, battle results, VICTORY text</div>
+  </div>
+  <div class="motion-card">
+    <div class="name">Snap</div>
+    <div class="char">Instant lock into position, no ease-out</div>
+    <div class="used-for">Cards into hand, deck positioning, grid layouts, tab switches</div>
+  </div>
+  <div class="motion-card">
+    <div class="name">Impact</div>
+    <div class="char">Screen shake (2&ndash;4px, 150ms) + white flash (50ms)</div>
+    <div class="used-for">Damage dealt, card destruction, heavy attacks, legendary reveal</div>
+  </div>
+  <div class="motion-card">
+    <div class="name">Float</div>
+    <div class="char">Gentle ease-in-out, continuous loop</div>
+    <div class="used-for">Idle card bob, achievement node pulse, ambient particles, breathing UI</div>
+  </div>
+  <div class="motion-card">
+    <div class="name">Burst</div>
+    <div class="char">Rapid scale 0 &rarr; 1.2 &rarr; 1.0 (200ms)</div>
+    <div class="used-for">Number popups, reward reveals, badge earned, coin collection</div>
+  </div>
+  <div class="motion-card">
+    <div class="name">Charge</div>
+    <div class="char">Slow build 0 &rarr; 0.9 (hold) &rarr; 1.3 snap (release)</div>
+    <div class="used-for">Long-press actions, amp meter filling, pack about to open, power building</div>
+  </div>
+</div>
+
+<h3>Timing Tiers</h3>
+<div class="timing-grid">
+  <div class="timing-card">
+    <div class="name">Quick</div>
+    <div class="range">220 &ndash; 300ms</div>
+    <div class="desc">Snappy, immediate feedback.</div>
+    <div class="usage">Slide in/out, toggles, micro-interactions, button press</div>
+    <div class="timing-bar" style="width:20%;animation:pulse 0.26s infinite alternate ease-in-out"></div>
+  </div>
+  <div class="timing-card">
+    <div class="name">Standard</div>
+    <div class="range">380 &ndash; 500ms</div>
+    <div class="desc">Smooth, readable transitions.</div>
+    <div class="usage">Fade, scale transitions, modal open/close, screen transitions</div>
+    <div class="timing-bar" style="width:40%;animation:pulse 0.44s infinite alternate ease-in-out"></div>
+  </div>
+  <div class="timing-card">
+    <div class="name">Long</div>
+    <div class="range">800 &ndash; 1200ms</div>
+    <div class="desc">Atmospheric, builds anticipation.</div>
+    <div class="usage">Pulse cycles, shimmer sweeps, elevation transitions</div>
+    <div class="timing-bar" style="width:65%;animation:pulse 1s infinite alternate ease-in-out"></div>
+  </div>
+  <div class="timing-card">
+    <div class="name">Slow</div>
+    <div class="range">1400 &ndash; 3000ms</div>
+    <div class="desc">Dramatic, ceremonial moments.</div>
+    <div class="usage">Rarity shimmer speed, ambient breathing, energy flow</div>
+    <div class="timing-bar" style="width:90%;animation:pulse 2.2s infinite alternate ease-in-out"></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Common easings:</strong><br>
+  <code>Easing.inOut(Easing.ease)</code> &mdash; general transitions<br>
+  <code>Easing.out(Easing.cubic)</code> &mdash; enter animations (slam, burst)<br>
+  <code>Easing.in(Easing.quad)</code> &mdash; exit animations<br>
+  <code>{ damping: 8-16, stiffness: 120-220 }</code> &mdash; spring / bouncy interactions
+</div>
+
+<!-- ================================================================ -->
+<h2>Micro-Interactions</h2>
+<p>Every touchable element should respond with more than a scale bounce. These micro-interactions layer together to create a UI that feels physically responsive &mdash; like operating real controls in a cockpit, not tapping flat rectangles.</p>
+
+<div class="micro-grid">
+  <div class="micro-card">
+    <div class="micro-name">Button Shimmer</div>
+    <div class="micro-trigger">Trigger: idle primary buttons</div>
+    <div class="micro-desc">A diagonal light sweep passes across the button surface every 3s. Creates a "catch the light" effect that draws the eye to available actions. The sweep is a 60% width gradient mask moving left to right.</div>
+  </div>
+  <div class="micro-card">
+    <div class="micro-name">Press Ripple</div>
+    <div class="micro-trigger">Trigger: onPressIn on any interactive surface</div>
+    <div class="micro-desc"><code>scale(0.96)</code> + glow contracts to tight core only + a radial ripple emanates from the touch point (0.1 opacity, expands over 300ms, then fades). The ripple color matches the element's accent.</div>
+  </div>
+  <div class="micro-card">
+    <div class="micro-name">Glow Trail on Drag</div>
+    <div class="micro-trigger">Trigger: drag gesture on cards</div>
+    <div class="micro-desc">As a card is dragged (e.g., battle attack gesture), it leaves a faint trailing glow in its wake. The trail is 3&ndash;4 positions behind, each at decreasing opacity (0.3, 0.2, 0.1). Color matches the card's type color.</div>
+  </div>
+  <div class="micro-card">
+    <div class="micro-name">Success Burst</div>
+    <div class="micro-trigger">Trigger: quest complete, achievement earned, card collected</div>
+    <div class="micro-desc">A rapid particle burst (8&ndash;12 particles) explodes outward from the element using the Burst motion type. Particles are small (3&ndash;5px) circles in the accent color, travelling 30&ndash;60px outward over 400ms, fading to 0. Paired with a haptic tap.</div>
+  </div>
+  <div class="micro-card">
+    <div class="micro-name">Number Tick-Up</div>
+    <div class="micro-trigger">Trigger: coin/XP value changes</div>
+    <div class="micro-desc">Numbers don't jump &mdash; they rapidly tick through intermediate values over 300&ndash;500ms. Each digit rolls like an odometer. The text glows briefly at the final value (matching accent: gold for coins, violet for XP, mint for stats).</div>
+  </div>
+  <div class="micro-card">
+    <div class="micro-name">Tab Switch Energy</div>
+    <div class="micro-trigger">Trigger: bottom tab navigation</div>
+    <div class="micro-desc">When switching tabs, the active indicator doesn't just move &mdash; it leaves a brief energy trail between the old and new positions. The trail is a 2px line in mint that stretches, then snaps to the new tab and fades.</div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<h2>Wow Moments</h2>
+<p>Peak emotional moments define the game's identity. These are the sequences players remember and share. Every wow moment is a choreographed <strong>EVENT</strong> that layers visual, motion, haptic, and timing into one unified experience.</p>
+
+<div class="wow-grid">
+  <div class="wow-card">
+    <div class="wow-title" style="color:#00FFAA">Pack Opening</div>
+    <div style="background:#050508;border:1px solid #1e2030;border-radius:10px;height:120px;margin-bottom:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.6)"></div>
+      <div style="position:relative;width:40px;height:56px;background:linear-gradient(135deg,#B14EFF44,#ffc04a44);border:2px solid #ffc04a;border-radius:6px;box-shadow:0 0 8px #ffc04a44, 0 0 24px #ffc04a33, 0 0 48px #ffc04a11"></div>
+      <div style="position:absolute;top:0;bottom:0;left:50%;width:2px;background:linear-gradient(180deg,transparent,#ffffff,transparent);opacity:0.7"></div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#6e7191;letter-spacing:1px">DIM &rarr; GLOW &rarr; CRACK &rarr; REVEAL</div>
+    </div>
+    <div class="wow-desc">Screen dims to near-black. Pack glows with rarity color of best card (3-layer glow builds over 800ms). A crack of light splits the pack. Cards fly out with trail effects, staggered 200ms. Legendary pulls trigger a full-screen violet energy burst + haptic pattern before reveal.</div>
+  </div>
+  <div class="wow-card">
+    <div class="wow-title" style="color:#00FFAA">Victory</div>
+    <div style="background:#050508;border:1px solid #1e2030;border-radius:10px;height:120px;margin-bottom:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:50%;background:linear-gradient(90deg,#00FFAA08,#00FFAA18)"></div>
+      <div style="position:absolute;right:0;top:0;bottom:0;width:50%;background:rgba(0,0,0,0.5)"></div>
+      <div style="position:relative;font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;color:#ffffff;letter-spacing:4px;text-shadow:0 0 8px #00FFAA44, 0 0 20px #00FFAA22">VICTORY</div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#6e7191;letter-spacing:1px">MINT PULSE &rarr; SLAM TEXT &rarr; CASCADE STATS</div>
+    </div>
+    <div class="wow-desc">Player side pulses mint, opponent fades to darkness. "VICTORY" slams in with Impact motion + screen shake. Stats cascade in with staggered 150ms Burst animations. Each number tick-ups with gold accent glow for rewards earned.</div>
+  </div>
+  <div class="wow-card">
+    <div class="wow-title" style="color:#ffc04a">Legendary Pull</div>
+    <div style="background:#050508;border:1px solid #1e2030;border-radius:10px;height:120px;margin-bottom:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at center,#B14EFF33 0%,#B14EFF11 40%,transparent 70%)"></div>
+      <div style="position:relative;width:36px;height:50px;background:linear-gradient(135deg,#ffc04a,#ffc04a88);border:2px solid #ffc04a;border-radius:4px;box-shadow:0 0 8px #ffc04a66, 0 0 24px #ffc04a44, 0 0 48px #B14EFF33"></div>
+      <div style="position:absolute;top:8px;right:12px;width:4px;height:4px;background:#ffc04a;border-radius:50%;box-shadow:8px 12px 0 #ffc04a, -6px 20px 0 #B14EFF, 12px 24px 0 #ffc04a, -10px 8px 0 #B14EFF"></div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#6e7191;letter-spacing:1px">BURST &rarr; SPIN &rarr; PARTICLES &rarr; HAPTIC</div>
+    </div>
+    <div class="wow-desc">Full-screen violet energy explosion from card center (4-layer glow, max bloom). Holographic card spins 360&deg; Y rotation (800ms). Gold + violet particle shower rains down. Haptic burst fires. Card name rendered in gradient text treatment. This is THE moment.</div>
+  </div>
+  <div class="wow-card">
+    <div class="wow-title" style="color:#B14EFF">Level Up</div>
+    <div style="background:#050508;border:1px solid #1e2030;border-radius:10px;height:120px;margin-bottom:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at center,#B14EFF22 0%,transparent 60%)"></div>
+      <div style="position:relative;font-family:'Orbitron',sans-serif;font-weight:900;font-size:36px;background:linear-gradient(135deg,#B14EFF,#ffffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none">42</div>
+      <div style="position:absolute;bottom:20px;left:20px;right:20px;height:4px;background:#111218;border-radius:2px;overflow:hidden"><div style="width:65%;height:100%;background:linear-gradient(90deg,#B14EFF,#00FFAA);border-radius:2px;box-shadow:0 0 8px #B14EFF66"></div></div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#6e7191;letter-spacing:1px">BURST &rarr; SLAM NUMBER &rarr; SHATTER BAR &rarr; CASCADE</div>
+    </div>
+    <div class="wow-desc">Violet burst from center. Level number rendered in gradient text, Slam motion (overshoot 1.3x, settle 1.0). XP bar shatters with particle effect, reforms at new position. Reward items cascade in with Float + number tick-up. Gold accent on any credit rewards.</div>
+  </div>
+  <div class="wow-card">
+    <div class="wow-title" style="color:#B14EFF">Achievement Earned</div>
+    <div style="background:#050508;border:1px solid #1e2030;border-radius:10px;height:120px;margin-bottom:12px;position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;padding-top:12px">
+      <div style="background:#111218;border:1px solid transparent;background-image:linear-gradient(#111218,#111218),linear-gradient(135deg,#B14EFF66,#B14EFF22);background-origin:border-box;background-clip:padding-box,border-box;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 0 4px #B14EFF44, 0 0 16px #B14EFF33, 0 0 32px #B14EFF11">
+        <div style="width:28px;height:28px;border-radius:50%;background:#B14EFF22;border:2px solid #B14EFF;display:flex;align-items:center;justify-content:center;font-size:14px;color:#B14EFF">&#x2605;</div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#B14EFF;letter-spacing:1px">ACHIEVEMENT EARNED</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;color:#c8cad0">First Victory</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:8px;color:#6e7191;letter-spacing:1px">SLIDE IN &rarr; BURST ICON &rarr; PARTICLE POP</div>
+    </div>
+    <div class="wow-desc">Toast slides in from top with gradient violet border + 3-layer glow. Icon pulses with Burst motion. Success Burst particle explosion from the icon. Tapping navigates to Career page. Haptic: light impact.</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Haptic pairing:</strong> Every wow moment pairs visual with physical. Pack crack = medium impact. Legendary reveal = heavy impact + pattern burst. Victory = notification tap. Level up = success tap. Achievement = light impact. Numbers ticking up = soft taps per digit.
+</div>
+
+<!-- ================================================================ -->
+<h2>Component Patterns</h2>
+
+<h3>Buttons</h3>
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Primary (Action) Button</div>
+    <div style="margin-bottom:16px;position:relative">
+      <button class="btn-primary pulsing"><span>OPEN PACK</span></button>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Gradient fill with shimmer sweep overlay (3s loop)<br>
+      3-layer glow: <code>0 0 8px, 0 0 20px, 0 0 40px</code><br>
+      Idle: outer glow layer pulses (2s breathe)<br>
+      Press: <code>scale(0.96)</code> + glow contracts + ripple from touch point<br>
+      Skew: <code>-3deg</code> container / <code>3deg</code> inner text
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Secondary Button</div>
+    <div style="margin-bottom:16px;position:relative">
+      <button class="btn-secondary"><span>FILTER</span></button>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Transparent fill with gradient border (mint, 135deg shift)<br>
+      Press: inner fill to <code>#00FFAA15</code>, <code>scale(0.97)</code>, faint glow<br>
+      Gradient border &gt; flat border for premium feel
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Destructive Button</div>
+    <div style="margin-bottom:16px;position:relative">
+      <button class="btn-destructive"><span>FORFEIT</span></button>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Same gradient border technique in <code>#FF4757</code><br>
+      Press: inner fill to <code>#FF475715</code>, <code>scale(0.97)</code><br>
+      Used for: forfeit, logout, destructive actions
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Disabled Button</div>
+    <div style="margin-bottom:16px;position:relative">
+      <button class="btn-disabled"><span>LOCKED</span></button>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Primary gradient at 0.3 opacity<br>
+      No glow, no shimmer, no press response, no pulse
+    </div>
+  </div>
+</div>
+
+<h3>Chips &amp; Badges</h3>
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Chips &amp; Badges</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;position:relative">
+      <span class="chip">BLASTER</span>
+      <span class="chip" style="background:#ff980011;border-color:#ff980044;color:#ff9800">EPIC</span>
+      <span class="chip" style="background:#2ED57311;border-color:#2ED57344;color:#2ED573">OWNED</span>
+      <span class="badge" style="background:#5ab4ff22;border:1px solid #5ab4ff66;color:#5ab4ff;border-radius:20px">RARE</span>
+      <span class="badge" style="background:#cc6dff22;border:1px solid #cc6dff66;color:#cc6dff;border-radius:20px">EPIC</span>
+      <span class="badge" style="background:#ffc04a22;border:1px solid #ffc04a66;color:#ffc04a;border-radius:20px">LEGENDARY</span>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Radius: 20px &bull; Font: Orbitron 700, 9px &bull; Padding: 4px 12px<br>
+      Color matches domain (type, rarity, status) with faint tinted background
+    </div>
+  </div>
+</div>
+
+<h3>Panel / Card</h3>
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Standard Panel</div>
+    <div style="background:linear-gradient(180deg,#0c0d14,#0a0b10);border:1px solid #1e2030;border-radius:14px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;opacity:0.03;pointer-events:none"><svg width="100%" height="100%"><filter id="pn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#pn)"/></svg></div>
+      <!-- energy flow top border -->
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#00FFAA22,#B14EFF22,transparent);background-size:200% 100%;animation:energyFlow 6s linear infinite;pointer-events:none"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:16px;color:#fff;letter-spacing:2px;margin-bottom:8px;text-shadow:0 0 8px #00FFAA22;position:relative">DAILY QUESTS</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:14px;color:#c8cad0;position:relative">Complete 3 battles using Nature-type cards to earn bonus XP and credits.</div>
+      <div class="progress-track" style="margin-top:12px;position:relative">
+        <div class="progress-fill" style="width:60%;background:#00FFAA;box-shadow:0 0 4px #00FFAA88, 0 0 12px #00FFAA44"></div>
+      </div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#6e7191;letter-spacing:1px;margin-top:4px;position:relative">2 / 3 COMPLETE</div>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Brushed Metal material &bull; noise overlay &bull; energy flow top border<br>
+      Progress fill uses 2-layer glow (tight + halo)
+    </div>
+  </div>
+</div>
+
+<h3>Progress Bars</h3>
+<div class="demo-row">
+  <div class="demo-card" style="flex:2">
+    <div class="demo-label">Progress Bar Variants</div>
+    <div style="margin-bottom:12px;position:relative">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#6e7191;letter-spacing:1px;margin-bottom:4px">QUEST PROGRESS (MINT)</div>
+      <div class="progress-track"><div class="progress-fill" style="width:72%;background:#00FFAA;box-shadow:0 0 4px #00FFAA88, 0 0 12px #00FFAA44"></div></div>
+    </div>
+    <div style="margin-bottom:12px;position:relative">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#6e7191;letter-spacing:1px;margin-bottom:4px">HP HIGH (VITALITY)</div>
+      <div class="progress-track"><div class="progress-fill" style="width:85%;background:#2ED573;box-shadow:0 0 4px #2ED57388, 0 0 12px #2ED57344"></div></div>
+    </div>
+    <div style="margin-bottom:12px;position:relative">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#6e7191;letter-spacing:1px;margin-bottom:4px">HP MEDIUM (CAUTION)</div>
+      <div class="progress-track"><div class="progress-fill" style="width:45%;background:#FFBE0B;box-shadow:0 0 4px #FFBE0B88, 0 0 12px #FFBE0B44"></div></div>
+    </div>
+    <div style="margin-bottom:12px;position:relative">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#6e7191;letter-spacing:1px;margin-bottom:4px">HP CRITICAL (DANGER)</div>
+      <div class="progress-track"><div class="progress-fill" style="width:15%;background:#FF4757;box-shadow:0 0 4px #FF475788, 0 0 12px #FF475744"></div></div>
+    </div>
+    <div style="margin-bottom:12px;position:relative">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#6e7191;letter-spacing:1px;margin-bottom:4px">XP / REWARD (VIOLET)</div>
+      <div class="progress-track"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,#B14EFF,#cc6dff);box-shadow:0 0 4px #B14EFF88, 0 0 12px #B14EFF44"></div></div>
+    </div>
+    <div style="font-size:12px;color:#6e7191;margin-top:12px;position:relative">
+      Track: <code>#111218</code> &bull; Height: 4&ndash;8px &bull; Fill uses 2-layer glow<br>
+      XP bar uses a gradient fill (violet &rarr; light violet) for extra richness
+    </div>
+  </div>
+</div>
+
+<h3>Input Field</h3>
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Text Input</div>
+    <div style="position:relative">
+      <input class="input-demo" type="text" placeholder="Search cards..." readonly>
+    </div>
+    <div style="font-size:12px;color:#6e7191;margin-top:12px;position:relative">
+      Default: flat border <code>#1e2030</code><br>
+      Focus: gradient border shifts to mint + 2-layer glow<br>
+      Uses dual background-clip technique for gradient border
+    </div>
+  </div>
+</div>
+
+<h3>Toasts &amp; Overlays</h3>
+<div class="demo-row">
+  <div class="demo-card">
+    <div class="demo-label">Achievement Toast</div>
+    <div style="background:#111218;border:1px solid transparent;background-image:linear-gradient(#111218,#111218),linear-gradient(135deg,#B14EFF66,#B14EFF22);background-origin:border-box;background-clip:padding-box,border-box;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:12px;box-shadow:0 0 4px #B14EFF44, 0 0 16px #B14EFF33, 0 0 32px #B14EFF11;position:relative">
+      <div style="width:36px;height:36px;border-radius:50%;background:#B14EFF22;border:2px solid #B14EFF;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#B14EFF">&#x2606;</div>
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;color:#B14EFF;letter-spacing:1px;text-transform:uppercase">Achievement Earned</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;color:#c8cad0">First Victory</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Gradient border (violet) &bull; 3-layer glow &bull; Radius: 14px<br>
+      Slide in from top + Burst on icon + particle pop
+    </div>
+  </div>
+  <div class="demo-card">
+    <div class="demo-label">Modal Backdrop</div>
+    <div style="background:rgba(0,0,0,0.75);border-radius:14px;padding:24px;margin-bottom:12px;position:relative">
+      <div style="background:linear-gradient(180deg,#0c0d14,#0a0b10);border:1px solid #1e2030;border-radius:14px;padding:20px;text-align:center;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;opacity:0.03;pointer-events:none"><svg width="100%" height="100%"><filter id="mn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#mn)"/></svg></div>
+        <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:1px;margin-bottom:8px;position:relative">FORFEIT MATCH?</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;color:#6e7191;margin-bottom:16px;position:relative">This will count as a loss.</div>
+        <div style="display:flex;gap:8px;justify-content:center;position:relative">
+          <button class="btn-secondary" style="font-size:10px;padding:8px 16px"><span>CANCEL</span></button>
+          <button class="btn-destructive" style="font-size:10px;padding:8px 16px"><span>FORFEIT</span></button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#6e7191;position:relative">
+      Backdrop: <code>rgba(0,0,0,0.75)</code> with blur<br>
+      Modal: Brushed Metal material + noise
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<h2>Iconography</h2>
+<p>All icons from <code>@expo/vector-icons (MaterialCommunityIcons)</code>. Use the <strong>filled</strong> variant by default &mdash; outlined icons feel thin against dark backgrounds.</p>
+
+<div class="note">
+  <strong>Icon color rules:</strong><br>
+  &bull; Primary context (headings, active labels) &rarr; <code>#ffffff</code><br>
+  &bull; Muted context (inactive, hints) &rarr; <code>#6e7191</code><br>
+  &bull; Interactive context (buttons, links) &rarr; <code>#00FFAA</code><br>
+  &bull; Domain context (type icons on cards) &rarr; use the type color<br>
+  &bull; Sizes: 16px (inline), 20px (list items), 28px (tab bar, empty states)
+</div>
+
+<div class="warning">ALWAYS USE ICONS (MaterialCommunityIcons or custom) &mdash; NEVER EMOJIS. Emojis render inconsistently across devices and do not support color theming.</div>
+
+<!-- ================================================================ -->
+<h2>Tokens File</h2>
+<p>Centralized design tokens will live in <code>src/theme/theme.ts</code> (to be created during code consolidation). Import as:</p>
+<div style="background:#0a0b10;border:1px solid #1e2030;border-radius:10px;padding:16px;margin-bottom:16px;max-width:500px">
+  <code style="background:none;border:none;padding:0;font-size:14px">import { T, FONTS } from '../theme/theme';</code>
+</div>
+<p>The tokens cover general UI values (backgrounds, text colors, spacing, radii, glows, materials). Game-specific colors (types, rarities, achievements) remain in <code>src/data/constants.ts</code>.</p>
+
+</body>
+</html>

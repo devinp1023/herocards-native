@@ -113,7 +113,7 @@ const FeatsPage = React.memo(function FeatsPage({
       <View style={fpStyles.headerRow}>
         <Text style={[fpStyles.catLabel, { color: category.color }]}>{category.label}</Text>
         <Text style={[fpStyles.catCount, {
-          color: categoryStats.completed === categoryStats.total ? '#4caf50' : '#606480',
+          color: categoryStats.completed === categoryStats.total ? '#2ED573' : '#606480',
         }]}>
           {categoryStats.completed}/{categoryStats.total}
         </Text>
@@ -292,7 +292,7 @@ const StandardPage = React.memo(function StandardPage({
       <View style={spStyles.headerRow}>
         <Text style={[spStyles.catLabel, { color: category.color }]}>{category.label}</Text>
         <Text style={[spStyles.catCount, {
-          color: categoryStats.completed === categoryStats.total ? '#4caf50' : '#606480',
+          color: categoryStats.completed === categoryStats.total ? '#2ED573' : '#606480',
         }]}>
           {categoryStats.completed}/{categoryStats.total}
         </Text>
@@ -594,7 +594,7 @@ export default function CareerScreen() {
                 <View style={bsStyles.rewardValueRow}>
                   <Text style={bsStyles.rewardValue}>+{selectedTier.achievement.xp.toLocaleString()}</Text>
                   {selectedTier.status === 'completed' && (
-                    <MaterialCommunityIcons name="check-circle" size={14} color="#4caf50" style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="check-circle" size={14} color="#2ED573" style={{ marginLeft: 4 }} />
                   )}
                 </View>
                 <Text style={bsStyles.rewardLabel}>XP</Text>
@@ -604,7 +604,7 @@ export default function CareerScreen() {
                 <View style={bsStyles.rewardValueRow}>
                   <Text style={bsStyles.rewardValue}>+{selectedTier.achievement.credits.toLocaleString()}</Text>
                   {selectedTier.status === 'completed' && (
-                    <MaterialCommunityIcons name="check-circle" size={14} color="#4caf50" style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="check-circle" size={14} color="#2ED573" style={{ marginLeft: 4 }} />
                   )}
                 </View>
                 <Text style={bsStyles.rewardLabel}>CREDITS</Text>
@@ -613,7 +613,7 @@ export default function CareerScreen() {
 
             {/* Status / action */}
             {selectedTier.status === 'completed' && (
-              <Text style={[bsStyles.statusText, { color: '#4caf50' }]}>COMPLETED</Text>
+              <Text style={[bsStyles.statusText, { color: '#2ED573' }]}>COMPLETED</Text>
             )}
             {selectedTier.status === 'earned' && (
               <Pressable

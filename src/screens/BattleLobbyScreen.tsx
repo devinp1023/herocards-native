@@ -234,7 +234,7 @@ const DeckCardCell = React.memo(function DeckCardCell({ card, inDeck, canAdd, co
 
       {/* Selected overlay — green border + check badge */}
       {inDeck && (
-        <View style={[grid.overlay, { borderColor: '#4caf50', borderWidth: 2, borderRadius: 6 }]}>
+        <View style={[grid.overlay, { borderColor: '#2ED573', borderWidth: 2, borderRadius: 6 }]}>
           <View style={grid.checkBadge}>
             <Text style={grid.checkText}>✓</Text>
           </View>
@@ -262,13 +262,13 @@ const DeckCardCell = React.memo(function DeckCardCell({ card, inDeck, canAdd, co
 const grid = StyleSheet.create({
   cell:         { width: CARD_DISPLAY_W, alignItems: 'center' },
   overlay:      { position:'absolute', top:0, left:0, width:CARD_DISPLAY_W, height:CARD_DISPLAY_H, borderRadius:6, alignItems:'center', justifyContent:'center' },
-  checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:'#4caf50', alignItems:'center', justifyContent:'center' },
+  checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:'#2ED573', alignItems:'center', justifyContent:'center' },
   checkText:    { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#fff' },
   cdOverlay:    { backgroundColor:'rgba(0,0,0,0.65)', flexDirection:'column', gap:4 },
-  cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:'#ef5350' },
-  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:'#ef535088', letterSpacing:1 },
+  cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:'#FF4757' },
+  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:'#FF475788', letterSpacing:1 },
   limitOverlay: { backgroundColor:'rgba(0,0,0,0.0)' },
-  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#ff9800', letterSpacing:1, backgroundColor:'#ff980022', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:'#ff980055' },
+  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FFBE0B', letterSpacing:1, backgroundColor:'#FFBE0B22', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:'#FFBE0B55' },
 });
 
 // ── OpponentCard ──────────────────────────────────────────────────────────────
@@ -463,7 +463,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {/* Title row */}
         <View style={s.titleRow}>
           <Text style={s.screenTitle}>BUILD YOUR DECK</Text>
-          <Text style={[s.deckCount, { color: deckFull ? '#4caf50' : '#606480' }]}>
+          <Text style={[s.deckCount, { color: deckFull ? '#2ED573' : '#606480' }]}>
             {battleDeck.length}/{DECK_SIZE}
           </Text>
         </View>
@@ -658,7 +658,7 @@ const s = StyleSheet.create({
 
   // Footer CTA
   footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'#060610', borderTopWidth:1, borderTopColor:'#10102a', paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
-  cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#ef5350', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
+  cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FF4757', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
   ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:'#1e1e38', backgroundColor:'#0a0a1e' },
   ctaBtnReady:     { backgroundColor:'#4fc3f7', borderColor:'#4fc3f7' },
   ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:'#303050', letterSpacing:1.5 },

@@ -205,19 +205,19 @@ export default function StoreScreen() {
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleBuyAvatar = (av: PurchasableAvatar, price: number) => {
     const ok = gs.purchaseAvatar(av.id, price);
-    if (!ok) { showToast('Not enough credits!', '#ef5350'); return; }
+    if (!ok) { showToast('Not enough credits!', '#FF4757'); return; }
     const tc = AVATAR_TIER_COLORS[av.tier];
     showToast(`${av.name} unlocked!`, tc.color);
   };
 
   const handleEquipAvatar = (id: string) => {
     gs.equipAvatar(id);
-    showToast('Avatar equipped!', '#ff9800');
+    showToast('Avatar equipped!', '#FFBE0B');
   };
 
   const handleBuyCard = (card: Card, price: number) => {
     const ok = gs.spendCoins(price);
-    if (!ok) { showToast('Not enough credits!', '#ef5350'); return; }
+    if (!ok) { showToast('Not enough credits!', '#FF4757'); return; }
     gs.addCards([card.id]);
     showToast(`${card.name} added!`, RC[card.rarity].color);
   };
@@ -262,8 +262,8 @@ export default function StoreScreen() {
         {activeTab === 'avatars' && (
           <>
             {/* Featured deal */}
-            <SectionDivider label="FEATURED DEAL" color="#ff9800" />
-            <View style={[styles.featuredCard, { borderColor: '#ff980077' }]}>
+            <SectionDivider label="FEATURED DEAL" color="#FFBE0B" />
+            <View style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
               <AvatarCircle symbol={featured.symbol} color={featured.color} size={68} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
@@ -300,14 +300,14 @@ export default function StoreScreen() {
                     <TouchableOpacity
                       style={[
                         styles.featuredBuyBtn,
-                        { borderColor: gs.coins >= salePrice ? '#ff980088' : '#1a1a30' },
+                        { borderColor: gs.coins >= salePrice ? '#FFBE0B88' : '#1a1a30' },
                       ]}
                       onPress={() => handleBuyAvatar(featured, salePrice)}
                       activeOpacity={0.85}
                     >
                       <Text style={[
                         styles.featuredBuyText,
-                        { color: gs.coins >= salePrice ? '#ff9800' : '#404060' },
+                        { color: gs.coins >= salePrice ? '#FFBE0B' : '#404060' },
                       ]}>
                         {gs.coins >= salePrice
                           ? `BUY  ${salePrice.toLocaleString()} CR`
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: '#060610',
   },
-  storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#ff9800', letterSpacing: 3 },
+  storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#FFBE0B', letterSpacing: 3 },
   creditsChip: {
     flexDirection: 'row', alignItems: 'baseline',
     backgroundColor: '#0a0a1e', borderRadius: 10,
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tab:          { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabActive:    { backgroundColor: '#ff9800' },
+  tabActive:    { backgroundColor: '#FFBE0B' },
   tabText:      { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 1 },
   tabTextActive:{ color: '#060610' },
 
@@ -494,10 +494,10 @@ const styles = StyleSheet.create({
   featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#fff', letterSpacing: 0.5 },
   tierBadge:        { borderRadius: 5, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2 },
   tierText:         { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 1 },
-  salePrice:        { fontFamily: 'Orbitron_900Black', fontSize: 15, color: '#ff9800' },
+  salePrice:        { fontFamily: 'Orbitron_900Black', fontSize: 15, color: '#FFBE0B' },
   origPrice:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#404060', textDecorationLine: 'line-through' },
-  discountBadge:    { backgroundColor: '#ff980022', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#ff980055' },
-  discountText:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ff9800', letterSpacing: 1 },
+  discountBadge:    { backgroundColor: '#FFBE0B22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#FFBE0B55' },
+  discountText:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#FFBE0B', letterSpacing: 1 },
   resetLabel:       { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#506070' },
   activeChip:       { alignSelf: 'flex-start', borderRadius: 7, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   activeChipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 1 },
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
 
   // Card store
   cardStoreSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: '#8090a0', marginBottom: 4 },
-  resetTimer:   { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ff9800', letterSpacing: 1, marginBottom: 20 },
+  resetTimer:   { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#FFBE0B', letterSpacing: 1, marginBottom: 20 },
 
   cardOffer: {
     flexDirection: 'row', gap: 14, alignItems: 'flex-start',

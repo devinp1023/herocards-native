@@ -206,7 +206,7 @@ function RevealSlot({ drawn, onRevealed, autoReveal }: RevealSlotProps) {
             <Text style={[slot.rarityText, { color: cfg.color }]}>{drawn.card.rarity.toUpperCase()}</Text>
           </View>
           <View style={[slot.statusBadge, drawn.isDupe ? slot.dupeBadge : slot.newBadge]}>
-            <Text style={[slot.statusText, { color: drawn.isDupe ? '#ff9800' : '#4caf50' }]}>
+            <Text style={[slot.statusText, { color: drawn.isDupe ? '#FFBE0B' : '#2ED573' }]}>
               {drawn.isDupe ? 'DUPE' : 'NEW'}
             </Text>
           </View>
@@ -223,8 +223,8 @@ const slot = StyleSheet.create({
   rarityBadge: { paddingHorizontal: 14, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1.5 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  newBadge:    { backgroundColor: '#4caf5022', borderColor: '#4caf5066' },
-  dupeBadge:   { backgroundColor: '#ff980022', borderColor: '#ff980066' },
+  newBadge:    { backgroundColor: '#2ED57322', borderColor: '#2ED57366' },
+  dupeBadge:   { backgroundColor: '#FFBE0B22', borderColor: '#FFBE0B66' },
   statusText:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 1 },
 });
 
@@ -257,10 +257,10 @@ const sum = StyleSheet.create({
   cardName:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.3, textAlign: 'center' },
   rarityBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5, borderWidth: 1 },
   rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.8 },
-  newBadge:    { backgroundColor: '#4caf5022', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#4caf5055' },
-  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#4caf50', letterSpacing: 1 },
-  dupeBadge:   { backgroundColor: '#ff980018', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#ff980055' },
-  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#ff9800', letterSpacing: 1 },
+  newBadge:    { backgroundColor: '#2ED57322', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#2ED57355' },
+  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#2ED573', letterSpacing: 1 },
+  dupeBadge:   { backgroundColor: '#FFBE0B18', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#FFBE0B55' },
+  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#FFBE0B', letterSpacing: 1 },
 });
 
 // ── PackOpeningScreen ─────────────────────────────────────────────────────────
@@ -463,12 +463,12 @@ export default function PackOpeningScreen({ navigation }: Props) {
             </View>
             <View style={s.totalRow}>
               <Text style={s.totalLabel}>NEW CARDS</Text>
-              <Text style={[s.totalVal, { color: '#4caf50' }]}>{newCount} / 5</Text>
+              <Text style={[s.totalVal, { color: '#2ED573' }]}>{newCount} / 5</Text>
             </View>
             {dupeCount > 0 && (
               <View style={s.totalRow}>
                 <Text style={s.totalLabel}>DUPES</Text>
-                <Text style={[s.totalVal, { color: '#ff9800' }]}>{dupeCount}</Text>
+                <Text style={[s.totalVal, { color: '#FFBE0B' }]}>{dupeCount}</Text>
               </View>
             )}
           </View>
@@ -533,7 +533,7 @@ const s = StyleSheet.create({
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
   tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#303050', letterSpacing: 2 },
   nextBtn:        { backgroundColor: '#4fc3f7', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
-  nextBtnGreen:   { backgroundColor: '#4caf50' },
+  nextBtnGreen:   { backgroundColor: '#2ED573' },
   nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: '#060610', letterSpacing: 2 },
 
   // ── Summary ──

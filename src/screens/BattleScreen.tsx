@@ -231,7 +231,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
   }
   return (
     <View style={aas.row}>
-      <AmpBar amp={amp} baseColor="#ef5350" side="ai" />
+      <AmpBar amp={amp} baseColor="#FF4757" side="ai" />
       {/* lungeStyle moves the whole card+shake together toward the player */}
       <ReAnimated.View style={lungeStyle}>
         <ReAnimated.View style={shakeStyle}>
@@ -284,7 +284,7 @@ const aas = StyleSheet.create({
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
   cardGlow:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, borderWidth: 2, borderColor: '#ff5722dd', backgroundColor: '#ff572220' },
-  flashOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#ef5350' },
+  flashOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#FF4757' },
 });
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
@@ -426,7 +426,7 @@ const pas = StyleSheet.create({
   emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: '#4fc3f744', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   emptyActiveTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f718' },
   emptyActiveHint:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f766', letterSpacing: 0.5, textAlign: 'center', lineHeight: 11 },
-  flashOverlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#ef5350' },
+  flashOverlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#FF4757' },
 });
 
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
@@ -620,7 +620,7 @@ function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
       if (ev.missed) return <Text key={idx} style={evs.miss}>{ev.attacker} missed!</Text>;
       const mult = ev.typeMultiplier;
       const adv  = mult >= 2.0 ? ' (adv)' : mult <= 0.5 ? ' (weak)' : '';
-      return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? '#4fc3f7' : '#ef5350' }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
+      return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? '#4fc3f7' : '#FF4757' }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
     case 'ABILITY':   return <Text key={idx} style={evs.ability}>{ev.ability}: {ev.effect}</Text>;
     case 'DEFEAT':    return <Text key={idx} style={evs.defeat}>{ev.card} defeated</Text>;
     case 'CARD_ENTER':return <Text key={idx} style={evs.enter}>{ev.side === 'player' ? 'Your' : 'AI'} {ev.card} enters</Text>;
@@ -646,7 +646,7 @@ const evs = StyleSheet.create({
   miss:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#606480', lineHeight: 16 },
   ability: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#cc6dff', lineHeight: 15 },
   defeat:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ff4060', lineHeight: 16 },
-  enter:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4caf50', lineHeight: 16 },
+  enter:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#2ED573', lineHeight: 16 },
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffeb3b', lineHeight: 16 },
   draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#8890b0', lineHeight: 15 },
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4fc3f7', lineHeight: 16 },
@@ -686,7 +686,7 @@ function AmpBar({ amp, baseColor, side, canTrigger, canSpend, onTrigger, onSpend
   onTrigger?: () => void; onSpend?: () => void;
 }) {
   const pct   = Math.min(1, amp / 100);
-  const color = pct >= 1 ? '#ff9800' : baseColor;
+  const color = pct >= 1 ? '#FFBE0B' : baseColor;
   return (
     <View style={ab.wrap}>
       <Canvas style={{ width: AMP_ARCH_W, height: AMP_ARCH_H }}>
@@ -714,8 +714,8 @@ function AmpBar({ amp, baseColor, side, canTrigger, canSpend, onTrigger, onSpend
       {/* Number underneath the curve */}
       <Text style={[ab.pct, { color }]}>{amp}</Text>
       {side === 'player' && canTrigger && onTrigger && (
-        <TouchableOpacity style={[ab.ampBtn, { borderColor: '#ff980088', backgroundColor: '#ff980020' }]} onPress={onTrigger} activeOpacity={0.75}>
-          <Text style={[ab.ampBtnText, { color: '#ff9800' }]}>TRIGGER</Text>
+        <TouchableOpacity style={[ab.ampBtn, { borderColor: '#FFBE0B88', backgroundColor: '#FFBE0B20' }]} onPress={onTrigger} activeOpacity={0.75}>
+          <Text style={[ab.ampBtnText, { color: '#FFBE0B' }]}>TRIGGER</Text>
         </TouchableOpacity>
       )}
       {side === 'player' && canSpend && !canTrigger && onSpend && (
@@ -798,7 +798,7 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
   const attacks: { weight: AttackWeight; label: string; cost: string; mult: string; minSp: number; colors: [string, string]; border: string }[] = [
     { weight: 'light',  label: 'LIGHT',  cost: '−1 SP', mult: '×0.8', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: '#4fc3f766' },
     { weight: 'medium', label: 'MEDIUM', cost: '−3 SP', mult: '×1.0', minSp: 3, colors: ['#4a3000', '#2a1a00'], border: '#ffa72666' },
-    { weight: 'heavy',  label: 'HEAVY',  cost: '−5 SP', mult: '×1.5', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: '#ef535066' },
+    { weight: 'heavy',  label: 'HEAVY',  cost: '−5 SP', mult: '×1.5', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: '#FF475766' },
   ];
   return (
     <View style={atb.wrap}>
@@ -832,7 +832,7 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
           onPress={() => { onRest(); setShowMenu(false); }}
           disabled={!ready}
           colors={['#1a4a2a', '#0a2a14']}
-          borderColor="#4caf5066"
+          borderColor="#2ED57366"
           label="REST"
           sub="+5 SP"
         />
@@ -840,7 +840,7 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
           onPress={() => setShowMenu(!showMenu)}
           disabled={!ready}
           colors={showMenu ? ['#6a1a28', '#4a0e18'] : ['#5a1520', '#3a0a10']}
-          borderColor={showMenu ? '#ef5350aa' : '#ef535066'}
+          borderColor={showMenu ? '#FF4757aa' : '#FF475766'}
           label="ATTACK"
           sub={`${stamina} SP`}
         />
@@ -870,7 +870,7 @@ function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
   tierColor: string; tierName: string; onBack: () => void;
 }) {
   const outcomeText  = winner === 'player' ? 'VICTORY' : winner === 'tie' ? 'TIE' : 'DEFEAT';
-  const outcomeColor = winner === 'player' ? '#4caf50' : winner === 'tie' ? '#ffa726' : '#ef5350';
+  const outcomeColor = winner === 'player' ? '#2ED573' : winner === 'tie' ? '#ffa726' : '#FF4757';
   return (
     <View style={rs.root}>
       <Text style={[rs.outcome, { color: outcomeColor }]}>{outcomeText}</Text>
@@ -1090,8 +1090,8 @@ const s = StyleSheet.create({
   headerCenter: { alignItems: 'center', paddingHorizontal: 8 },
   roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 2 },
   roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: 20, letterSpacing: 1, marginTop: -2 },
-  forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#ef535066', backgroundColor: '#ef535018' },
-  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#ef5350', letterSpacing: 1 },
+  forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#FF475766', backgroundColor: '#FF475718' },
+  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#FF4757', letterSpacing: 1 },
 
   combatZone: { flex: 1, paddingVertical: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },

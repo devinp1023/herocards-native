@@ -274,9 +274,9 @@ const styles = StyleSheet.create({
   },
 
   ownedRow:        { marginBottom: 10 },
-  ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: '#4caf5018', borderColor: '#4caf5055' },
+  ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: '#2ED57318', borderColor: '#2ED57355' },
   ownedBadgeMulti: { backgroundColor: '#4fc3f718', borderColor: '#4fc3f755' },
-  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#4caf50', letterSpacing: 1 },
+  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#2ED573', letterSpacing: 1 },
   ownedTextMulti:  { color: '#4fc3f7' },
 
   metaRow: {

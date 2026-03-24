@@ -20,6 +20,7 @@ import { ALL_CARDS } from '../data/cards';
 import { RC, PACK_COST } from '../data/constants';
 import { PACKS, AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -118,13 +119,13 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
   const diffColor = DIFF_COLOR[quest.diff] ?? '#4fc3f7';
 
   return (
-    <View style={[qStyles.card, done && qStyles.cardDone]}>
+    <MaterialSurface style={[qStyles.card, done && qStyles.cardDone]}>
       <View style={qStyles.top}>
         <View style={[qStyles.iconBox, { borderColor: quest.color + '55', backgroundColor: quest.color + '14' }]}>
           <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[qStyles.task, done && { color: '#4caf5099' }]}>{quest.task}</Text>
+          <Text style={[qStyles.task, done && { color: '#2ED57399' }]}>{quest.task}</Text>
           <View style={qStyles.metaRow}>
             <View style={[qStyles.diffBadge, { borderColor: diffColor + '66', backgroundColor: diffColor + '18' }]}>
               <Text style={[qStyles.diffText, { color: diffColor }]}>{quest.diff.toUpperCase()}</Text>
@@ -141,16 +142,16 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
         <View style={[
           qStyles.barFill,
           { width: `${Math.round(pct * 100)}%` as any },
-          { backgroundColor: done ? '#4caf50' : diffColor },
+          { backgroundColor: done ? '#2ED573' : diffColor },
         ]} />
       </View>
-    </View>
+    </MaterialSurface>
   );
 }
 
 const qStyles = StyleSheet.create({
-  card:         { backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:14, marginBottom:10 },
-  cardDone:     { borderColor:'#4caf5033', backgroundColor:'#4caf5008' },
+  card:         { borderRadius:12, padding:14, marginBottom:10 },
+  cardDone:     { borderColor:'#2ED57333', backgroundColor:'#2ED57308' },
   top:          { flexDirection:'row', alignItems:'center', gap:12, marginBottom:10 },
   iconBox:      { width:34, height:34, borderRadius:8, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   iconSymbol:   { fontSize:16, lineHeight:20 },
@@ -159,8 +160,8 @@ const qStyles = StyleSheet.create({
   diffBadge:    { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
   diffText:     { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
   reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070' },
-  checkBox:     { backgroundColor:'#4caf5022', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#4caf5066' },
-  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#4caf50', letterSpacing:1 },
+  checkBox:     { backgroundColor:'#2ED57322', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#2ED57366' },
+  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#2ED573', letterSpacing:1 },
   progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#606480' },
   barTrack:     { height:4, backgroundColor:'#0d0d20', borderRadius:2, overflow:'hidden' },
   barFill:      { height:'100%', borderRadius:2 },
@@ -227,7 +228,7 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.xpLabel}>{gs.xpInLevel.toLocaleString()} / {gs.xpNeeded.toLocaleString()} XP</Text>
               {!isMaxLevel
                 ? <Text style={styles.xpNextLabel}>LVL {gs.level + 1}</Text>
-                : <Text style={[styles.xpNextLabel, { color: '#ff9800' }]}>MAX</Text>
+                : <Text style={[styles.xpNextLabel, { color: '#FFBE0B' }]}>MAX</Text>
               }
             </View>
           </View>
@@ -264,7 +265,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.questSection}>
           <View style={styles.questHeader}>
             <Text style={styles.sectionTitle}>— DAILY QUESTS</Text>
-            <Text style={[styles.questDoneLabel, { color: doneCount >= 3 ? '#4caf50' : '#606480' }]}>
+            <Text style={[styles.questDoneLabel, { color: doneCount >= 3 ? '#2ED573' : '#606480' }]}>
               {doneCount}/3 COMPLETE
             </Text>
           </View>
