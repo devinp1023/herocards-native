@@ -28,6 +28,7 @@ import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
@@ -128,7 +129,7 @@ const es = StyleSheet.create({
 });
 
 const cb = StyleSheet.create({
-  card:    { borderRadius: 6, backgroundColor: '#0e0e22', borderWidth: 1, borderColor: '#ffffff44', alignItems: 'center', justifyContent: 'center' },
+  card:    { borderRadius: 6, backgroundColor: T.bg.elevated, borderWidth: 1, borderColor: '#ffffff44', alignItems: 'center', justifyContent: 'center' },
   diamond: { borderWidth: 1, borderColor: '#ffffff55', transform: [{ rotate: '45deg' }] },
 });
 
@@ -277,10 +278,10 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
 }
 const aas = StyleSheet.create({
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  empty:        { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: '#252540' },
+  empty:        { fontFamily: 'Orbitron_700Bold', fontSize: 18, color: T.bg.border },
   deckCol:      { alignItems: 'center', gap: 4 },
   deckWrap:     { position: 'relative' },
-  badge:        { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#12122e', borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
+  badge:        { position: 'absolute', bottom: -4, right: -4, backgroundColor: T.bg.elevated, borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
   badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#9966ff', lineHeight: 14 },
   abilityBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#cc6dff44', backgroundColor: '#cc6dff11' },
   abilityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#cc6dff', letterSpacing: 0.5, textAlign: 'center' },
@@ -644,15 +645,15 @@ function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
 }
 const evs = StyleSheet.create({
   base:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, lineHeight: 16 },
-  miss:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#606480', lineHeight: 16 },
+  miss:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.text.muted, lineHeight: 16 },
   ability: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#cc6dff', lineHeight: 15 },
   defeat:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ff4060', lineHeight: 16 },
   enter:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#2ED573', lineHeight: 16 },
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffeb3b', lineHeight: 16 },
-  draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#8890b0', lineHeight: 15 },
+  draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: T.text.muted, lineHeight: 15 },
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4fc3f7', lineHeight: 16 },
   amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffa726', lineHeight: 16 },
-  ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: '#505070', lineHeight: 15 },
+  ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: T.text.muted, lineHeight: 15 },
 });
 
 // ── Amp meter ─────────────────────────────────────────────────────────────────
@@ -766,7 +767,7 @@ function SkewButton({ onPress, disabled, colors, borderColor, label, sub, opacit
   colors: [string, string]; borderColor: string;
   label: string; sub?: string; opacity?: number;
 }) {
-  const disColors: [string, string] = ['#0a0a18', '#0e0e20'];
+  const disColors: [string, string] = [T.bg.surface, T.bg.elevated];
   return (
     <TouchableOpacity
       style={atb.btnOuter}
@@ -851,11 +852,11 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
 }
 const atb = StyleSheet.create({
   wrap:       { position: 'relative', zIndex: 10 },
-  row:        { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, gap: 8, backgroundColor: '#060610' },
+  row:        { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 6, gap: 8, backgroundColor: T.bg.root },
   btnOuter:   { flex: 1 },
   btnGrad:    { borderWidth: 1.5, borderRadius: 4, paddingVertical: 10, alignItems: 'center', transform: [{ skewX: SKEW }], overflow: 'hidden' },
   btnContent: { transform: [{ skewX: COUNTER_SKEW }], alignItems: 'center' },
-  label:      { fontFamily: 'Orbitron_900Black', fontSize: 14, letterSpacing: 1.5, color: '#ffffff' },
+  label:      { fontFamily: 'Orbitron_900Black', fontSize: 14, letterSpacing: 1.5, color: T.text.primary },
   labelDis:   { color: '#303050' },
   sub:        { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 0.5, marginTop: 2, color: '#ffffffaa' },
   subDis:     { color: '#303050' },
@@ -892,16 +893,16 @@ function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
   );
 }
 const rs = StyleSheet.create({
-  root:         { flex: 1, backgroundColor: '#060610', alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
+  root:         { flex: 1, backgroundColor: T.bg.root, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
   outcome:      { fontFamily: 'Orbitron_900Black', fontSize: 36, letterSpacing: 4 },
   tier:         { fontFamily: 'Orbitron_700Bold', fontSize: 12, letterSpacing: 2, marginBottom: 8 },
   rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
-  rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 2, marginBottom: 4 },
+  rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 2, marginBottom: 4 },
   rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
   streak:       { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ffa726', letterSpacing: 1, marginTop: 4 },
   backBtn:      { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, borderWidth: 1, marginTop: 8 },
   backText:     { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 1.5 },
-  tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: '#888aa8', textAlign: 'center', marginTop: -8 },
+  tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: T.text.muted, textAlign: 'center', marginTop: -8 },
 });
 
 // ── BattleScreen ──────────────────────────────────────────────────────────────
@@ -1081,15 +1082,15 @@ export default function BattleScreen({ navigation, route }: Props) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#060610' },
+  root: { flex: 1, backgroundColor: T.bg.root },
 
   header:       { paddingTop: Platform.OS === 'ios' ? 52 : 12, paddingHorizontal: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerSide:   { flex: 1, alignItems: 'flex-start', gap: 2 },
-  avatarCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a1e' },
+  avatarCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg.surface },
   avatarSymbol: { fontSize: 14, fontWeight: '700' },
-  playerName:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#c0c8dc', letterSpacing: 1 },
+  playerName:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.body, letterSpacing: 1 },
   headerCenter: { alignItems: 'center', paddingHorizontal: 8 },
-  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 2 },
+  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 2 },
   roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: 20, letterSpacing: 1, marginTop: -2 },
   forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: '#FF475766', backgroundColor: '#FF475718' },
   forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#FF4757', letterSpacing: 1 },
@@ -1097,7 +1098,7 @@ const s = StyleSheet.create({
   combatZone: { flex: 1, paddingVertical: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
   vsRow:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 },
-  vsDivider:  { flex: 1, height: 1, backgroundColor: '#14142a' },
+  vsDivider:  { flex: 1, height: 1, backgroundColor: T.bg.border },
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: 11, color: '#4fc3f744', letterSpacing: 4, paddingHorizontal: 10 },
   logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 

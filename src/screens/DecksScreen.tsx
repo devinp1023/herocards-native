@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { T } from '../theme/theme';
 
 export default function DecksScreen() {
   return (
@@ -17,8 +18,8 @@ export default function DecksScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#060610', alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1, backgroundColor: T.bg.root, alignItems: 'center', justifyContent: 'center' },
   content: { alignItems: 'center', gap: 12 },
-  title: { fontFamily: 'Orbitron_900Black', fontSize: 24, color: '#ffffff', letterSpacing: 3 },
-  sub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: '#ffffff' },
+  title: { fontFamily: 'Orbitron_900Black', fontSize: 24, color: T.text.primary, letterSpacing: 3 },
+  sub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: T.text.primary },
 });

@@ -25,6 +25,8 @@ import { isOwned } from '../hooks/useGameState';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { T } from '../theme/theme';
+import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'BattleLobby'>;
 type Phase = 'deck' | 'opponent';
@@ -98,13 +100,13 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
           <Text style={sb.sectionLabel}>RARITY</Text>
           {RARITIES.map(r => {
             const active = rarity === r;
-            const color  = r === 'All' ? '#4fc3f7' : (RC[r]?.color ?? '#fff');
+            const color  = r === 'All' ? '#4fc3f7' : (RC[r]?.color ?? T.text.primary);
             return (
               <TouchableOpacity key={r} style={sb.radioRow} onPress={() => onRarity(r)}>
-                <View style={[sb.radioOuter, { borderColor: active ? color : '#303050' }]}>
+                <View style={[sb.radioOuter, { borderColor: active ? color : T.bg.border }]}>
                   {active && <View style={[sb.radioInner, { backgroundColor: color }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? color : '#8890b0' }]}>{r}</Text>
+                <Text style={[sb.radioLabel, { color: active ? color : T.text.muted }]}>{r}</Text>
               </TouchableOpacity>
             );
           })}
@@ -115,10 +117,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = typeFilter === t;
             return (
               <TouchableOpacity key={t} style={sb.radioRow} onPress={() => onType(t)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : T.bg.border }]}>
                   {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{t}</Text>
+                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
@@ -129,10 +131,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = packFilter === p.value;
             return (
               <TouchableOpacity key={p.value} style={sb.radioRow} onPress={() => onPack(p.value)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : T.bg.border }]}>
                   {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{p.label}</Text>
+                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{p.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -143,10 +145,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = sortBy === opt.key;
             return (
               <TouchableOpacity key={opt.key} style={sb.radioRow} onPress={() => onSort(opt.key)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
+                <View style={[sb.radioOuter, { borderColor: active ? '#cc6dff' : T.bg.border }]}>
                   {active && <View style={[sb.radioInner, { backgroundColor: '#cc6dff' }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#cc6dff' : '#8890b0' }]}>{opt.label}</Text>
+                <Text style={[sb.radioLabel, { color: active ? '#cc6dff' : T.text.muted }]}>{opt.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -163,18 +165,18 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
 
 const sb = StyleSheet.create({
   backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor:'rgba(0,0,0,0.55)', zIndex:10 },
-  panel:      { position:'absolute', right:0, top:0, bottom:0, width:SIDEBAR_W, backgroundColor:'#0a0a18', borderLeftWidth:1, borderLeftColor:'#1e2040', zIndex:11, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
-  header:     { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingBottom:12, borderBottomWidth:1, borderBottomColor:'#1e2040' },
+  panel:      { position:'absolute', right:0, top:0, bottom:0, width:SIDEBAR_W, backgroundColor:T.bg.surface, borderLeftWidth:1, borderLeftColor:T.bg.border, zIndex:11, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
+  header:     { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingBottom:12, borderBottomWidth:1, borderBottomColor:T.bg.border },
   title:      { fontFamily:'Orbitron_700Bold', fontSize:14, color:'#4fc3f7', letterSpacing:2 },
   closeBtn:   { padding:4 },
-  closeText:  { color:'#606480', fontSize:16 },
+  closeText:  { color:T.text.muted, fontSize:16 },
   scroll:     { paddingHorizontal:20, paddingBottom:40, paddingTop:8 },
   sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:'#506070', letterSpacing:2, marginBottom:8, marginTop:4 },
   radioRow:   { flexDirection:'row', alignItems:'center', paddingVertical:8, gap:12 },
   radioOuter: { width:18, height:18, borderRadius:9, borderWidth:2, alignItems:'center', justifyContent:'center' },
   radioInner: { width:8, height:8, borderRadius:4 },
   radioLabel: { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:0.3 },
-  divider:    { height:1, backgroundColor:'#1a1a30', marginVertical:12 },
+  divider:    { height:1, backgroundColor:T.bg.border, marginVertical:12 },
   clearBtn:   { marginTop:8, paddingVertical:12, borderRadius:8, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011' },
   clearText:  { fontFamily:'Orbitron_700Bold', fontSize:10, color:'#ff6060', letterSpacing:1 },
 });
@@ -195,12 +197,12 @@ function DeckSlot({ card, onRemove }: { card: Card | undefined; onRemove: () => 
 }
 
 const slot = StyleSheet.create({
-  empty:     { width:64, height:88, borderRadius:8, borderWidth:1, borderColor:'#1e1e38', borderStyle:'dashed', alignItems:'center', justifyContent:'center' },
+  empty:     { width:64, height:88, borderRadius:8, borderWidth:1, borderColor:T.bg.border, borderStyle:'dashed', alignItems:'center', justifyContent:'center' },
   emptyText: { fontFamily:'Orbitron_700Bold', fontSize:18, color:'#2a2a48' },
-  filled:    { width:64, height:88, borderRadius:8, borderWidth:1, backgroundColor:'#0a0a1e', overflow:'hidden' },
+  filled:    { width:64, height:88, borderRadius:8, borderWidth:1, backgroundColor:T.bg.surface, overflow:'hidden' },
   rarityBar: { height:3, width:'100%' },
   cardNum:   { fontFamily:'Orbitron_700Bold', fontSize:7, letterSpacing:0.5, marginTop:4, marginHorizontal:5 },
-  cardName:  { fontFamily:'Orbitron_700Bold', fontSize:7.5, color:'#c0c8dc', letterSpacing:0.2, marginHorizontal:5, marginTop:2, lineHeight:10 },
+  cardName:  { fontFamily:'Orbitron_700Bold', fontSize:7.5, color:T.text.body, letterSpacing:0.2, marginHorizontal:5, marginTop:2, lineHeight:10 },
 });
 
 // ── DeckCardCell ─────────────────────────────────────────────────────────────
@@ -264,7 +266,7 @@ const grid = StyleSheet.create({
   cell:         { width: CARD_DISPLAY_W, alignItems: 'center' },
   overlay:      { position:'absolute', top:0, left:0, width:CARD_DISPLAY_W, height:CARD_DISPLAY_H, borderRadius:6, alignItems:'center', justifyContent:'center' },
   checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:'#2ED573', alignItems:'center', justifyContent:'center' },
-  checkText:    { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#fff' },
+  checkText:    { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.primary },
   cdOverlay:    { backgroundColor:'rgba(0,0,0,0.65)', flexDirection:'column', gap:4 },
   cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:'#FF4757' },
   cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:'#FF475788', letterSpacing:1 },
@@ -315,7 +317,7 @@ const opp = StyleSheet.create({
   name:      { fontFamily:'Orbitron_700Bold', fontSize:12, letterSpacing:0.5 },
   dots:      { flexDirection:'row', gap:3 },
   dot:       { width:6, height:6, borderRadius:3 },
-  desc:      { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#707898', lineHeight:16 },
+  desc:      { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, lineHeight:16 },
   rewards:   { flexDirection:'row', gap:12 },
   win:       { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#4fc3f7' },
   loss:      { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#404868' },
@@ -336,6 +338,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
   const [sortBy, setSortBy]             = useState<SortKey>('rarity');
   const [search, setSearch]             = useState('');
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const activeFilterCount = [rarity !== 'All', typeFilter !== 'All', packFilter !== 0, sortBy !== 'rarity'].filter(Boolean).length;
 
@@ -467,7 +470,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {/* Title row */}
         <View style={s.titleRow}>
           <Text style={s.screenTitle}>BUILD YOUR DECK</Text>
-          <Text style={[s.deckCount, { color: deckFull ? '#2ED573' : '#606480' }]}>
+          <Text style={[s.deckCount, { color: deckFull ? '#2ED573' : T.text.muted }]}>
             {battleDeck.length}/{DECK_SIZE}
           </Text>
         </View>
@@ -480,9 +483,9 @@ export default function BattleLobbyScreen({ navigation }: Props) {
             const color = RC[r].color;
             const atLimit = count >= limit;
             return (
-              <View key={r} style={[s.limitChip, { borderColor: atLimit ? color + '88' : '#1e1e38' }]}>
+              <View key={r} style={[s.limitChip, { borderColor: atLimit ? color + '88' : T.bg.border }]}>
                 <Text style={[s.limitRarity, { color: atLimit ? color : '#404458' }]}>{r.slice(0,3).toUpperCase()}</Text>
-                <Text style={[s.limitCount, { color: atLimit ? color : '#606480' }]}>{count}/{limit}</Text>
+                <Text style={[s.limitCount, { color: atLimit ? color : T.text.muted }]}>{count}/{limit}</Text>
               </View>
             );
           })}
@@ -530,23 +533,49 @@ export default function BattleLobbyScreen({ navigation }: Props) {
 
         {/* Search + filter row */}
         <View style={s.searchAndFilter}>
-          <View style={s.searchRow}>
-            <Text style={s.searchIcon}>⌕</Text>
-            <TextInput
-              style={s.searchInput}
-              placeholder="Search cards..."
-              placeholderTextColor="#303050"
-              value={search}
-              onChangeText={setSearch}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch('')}>
-                <Text style={s.searchClear}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {searchFocused ? (
+            <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={10} innerBackground={T.bg.elevated} style={{ flex: 1 }} innerStyle={{ flex: 1 }}>
+              <View style={[s.searchRow, { borderWidth: 0 }]}>
+                <Text style={s.searchIcon}>⌕</Text>
+                <TextInput
+                  style={s.searchInput}
+                  placeholder="Search cards..."
+                  placeholderTextColor={T.bg.border}
+                  value={search}
+                  onChangeText={setSearch}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearch('')}>
+                    <Text style={s.searchClear}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </GradientBorder>
+          ) : (
+            <View style={s.searchRow}>
+              <Text style={s.searchIcon}>⌕</Text>
+              <TextInput
+                style={s.searchInput}
+                placeholder="Search cards..."
+                placeholderTextColor={T.bg.border}
+                value={search}
+                onChangeText={setSearch}
+                autoCapitalize="none"
+                autoCorrect={false}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')}>
+                  <Text style={s.searchClear}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           <TouchableOpacity
             style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
             onPress={() => setSidebarOpen(true)}
@@ -622,15 +651,15 @@ export default function BattleLobbyScreen({ navigation }: Props) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root: { flex:1, backgroundColor:'#060610' },
+  root: { flex:1, backgroundColor:T.bg.root },
 
   // Header
-  header:      { backgroundColor:'#060610', paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:'#10102a' },
+  header:      { backgroundColor:T.bg.root, paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:T.bg.border },
   titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
-  screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:'#ffffff', letterSpacing:1.5 },
-  filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:'#252540', backgroundColor:'#0e0e1e' },
+  screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:T.text.primary, letterSpacing:1.5 },
+  filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.elevated },
   filterBtnActive: { borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
-  filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#8890b0', letterSpacing:0.5 },
+  filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.text.muted, letterSpacing:0.5 },
   deckCount:   { fontFamily:'Orbitron_900Black', fontSize:18 },
 
   limitsRow:   { flexDirection:'row', gap:6, marginBottom:8 },
@@ -645,10 +674,10 @@ const s = StyleSheet.create({
   chipText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#4fc3f7', letterSpacing:0.5 },
 
   searchAndFilter: { flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 },
-  searchRow:   { flex:1, flexDirection:'row', alignItems:'center', backgroundColor:'#0e0e1e', borderRadius:10, borderWidth:1, borderColor:'#252540', paddingHorizontal:10 },
+  searchRow:   { flex:1, flexDirection:'row', alignItems:'center', backgroundColor:T.bg.elevated, borderRadius:10, borderWidth:1, borderColor:T.bg.border, paddingHorizontal:10 },
   searchIcon:  { fontSize:16, color:'#404458', marginRight:4 },
-  searchInput: { flex:1, height:36, color:'#d8dcea', fontFamily:'Rajdhani_600SemiBold', fontSize:14 },
-  searchClear: { color:'#606480', fontSize:14, padding:4 },
+  searchInput: { flex:1, height:36, color:T.text.body, fontFamily:'Rajdhani_600SemiBold', fontSize:14 },
+  searchClear: { color:T.text.muted, fontSize:14, padding:4 },
   resultsText: { fontFamily:'monospace', fontSize:10, color:'#404458', marginBottom:2 },
 
   // Grid
@@ -657,22 +686,22 @@ const s = StyleSheet.create({
 
   // Empty state
   emptyState: { flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, gap:10 },
-  emptyTitle: { fontFamily:'Orbitron_700Bold', fontSize:14, color:'#606480', letterSpacing:1 },
-  emptySub:   { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:'#303050', textAlign:'center', lineHeight:20 },
+  emptyTitle: { fontFamily:'Orbitron_700Bold', fontSize:14, color:T.text.muted, letterSpacing:1 },
+  emptySub:   { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:T.bg.border, textAlign:'center', lineHeight:20 },
 
   // Footer CTA
-  footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'#060610', borderTopWidth:1, borderTopColor:'#10102a', paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
+  footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:T.bg.root, borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
   cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FF4757', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
-  ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:'#1e1e38', backgroundColor:'#0a0a1e' },
+  ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
   ctaBtnReady:     { backgroundColor:'#4fc3f7', borderColor:'#4fc3f7' },
-  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:'#303050', letterSpacing:1.5 },
-  ctaTextReady:    { color:'#060610' },
+  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:T.bg.border, letterSpacing:1.5 },
+  ctaTextReady:    { color:T.bg.root },
 
   // Opponent select
   oppScroll:        { paddingHorizontal:16, paddingBottom:48 },
   backBtn:          { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingBottom:16 },
   backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#4fc3f7', letterSpacing:1 },
-  oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:'#606480', marginBottom:16 },
+  oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:T.text.muted, marginBottom:16 },
   deckSummary:      { borderRadius:12, padding:12, marginBottom:16, gap:8 },
   deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#404458', letterSpacing:1.5 },
   deckSummaryChips: { flexDirection:'row', flexWrap:'wrap', gap:6 },

@@ -12,8 +12,10 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { FONTS } from '../theme/fonts';
+import { T } from '../theme/theme';
 import { STARTING_CREDITS } from '../data/constants';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 
 type Mode = 'login' | 'register';
 
@@ -42,6 +44,7 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const friendlyError = (code: string) => ERROR_MAP[code] ?? 'Something went wrong. Try again.';
 
@@ -118,51 +121,116 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
           {/* Inputs */}
           <View style={s.inputs}>
             {mode === 'register' && (
+              focusedField === 'username' ? (
+                <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={12} innerBackground={T.bg.surface}>
+                  <TextInput
+                    style={[s.input, { borderWidth: 0 }]}
+                    value={username}
+                    onChangeText={setUsername}
+                    placeholder="Username (shown in game)"
+                    placeholderTextColor={T.text.muted}
+                    autoCapitalize="none"
+                    returnKeyType="next"
+                    onFocus={() => setFocusedField('username')}
+                    onBlur={() => setFocusedField(null)}
+                  />
+                </GradientBorder>
+              ) : (
+                <TextInput
+                  style={s.input}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Username (shown in game)"
+                  placeholderTextColor={T.text.muted}
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onFocus={() => setFocusedField('username')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              )
+            )}
+            {focusedField === 'email' ? (
+              <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={12} innerBackground={T.bg.surface}>
+                <TextInput
+                  style={[s.input, { borderWidth: 0 }]}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Email address"
+                  placeholderTextColor={T.text.muted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </GradientBorder>
+            ) : (
               <TextInput
                 style={s.input}
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Username (shown in game)"
-                placeholderTextColor="#606480"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email address"
+                placeholderTextColor={T.text.muted}
                 autoCapitalize="none"
+                keyboardType="email-address"
                 returnKeyType="next"
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
               />
             )}
-            <TextInput
-              style={s.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email address"
-              placeholderTextColor="#606480"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              returnKeyType="next"
-            />
-            <TextInput
-              style={s.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder={mode === 'register' ? 'Password (min 6 chars)' : 'Password'}
-              placeholderTextColor="#606480"
-              secureTextEntry
-              returnKeyType="done"
-              onSubmitEditing={handle}
-            />
+            {focusedField === 'password' ? (
+              <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={12} innerBackground={T.bg.surface}>
+                <TextInput
+                  style={[s.input, { borderWidth: 0 }]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder={mode === 'register' ? 'Password (min 6 chars)' : 'Password'}
+                  placeholderTextColor={T.text.muted}
+                  secureTextEntry
+                  returnKeyType="done"
+                  onSubmitEditing={handle}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </GradientBorder>
+            ) : (
+              <TextInput
+                style={s.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder={mode === 'register' ? 'Password (min 6 chars)' : 'Password'}
+                placeholderTextColor={T.text.muted}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handle}
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
+              />
+            )}
             {!!error && <Text style={s.error}>{error}</Text>}
 
-            <TouchableOpacity
-              style={[s.submitBtn, loading && s.submitBtnDisabled]}
-              onPress={handle}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading
-                ? <ActivityIndicator color="#060610" size="small" />
-                : <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
+            {loading ? (
+              <TouchableOpacity
+                style={[s.submitBtn, s.submitBtnDisabled]}
+                onPress={handle}
+                disabled
+                activeOpacity={0.85}
+              >
+                <ActivityIndicator color={T.bg.root} size="small" />
+              </TouchableOpacity>
+            ) : (
+              <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={12} innerBackground="transparent">
+                <TouchableOpacity
+                  style={s.submitBtn}
+                  onPress={handle}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
                     {mode === 'login' ? 'ENTER' : 'CREATE ACCOUNT'}
                   </Text>
-              }
-            </TouchableOpacity>
+                </TouchableOpacity>
+              </GradientBorder>
+            )}
           </View>
         </MaterialSurface>
 
@@ -198,38 +266,38 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
 }
 
 const s = StyleSheet.create({
-  root:             { flex:1, backgroundColor:'#010004' },
+  root:             { flex:1, backgroundColor:T.bg.root },
   scroll:           { flexGrow:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, paddingVertical:24 },
 
-  logo:             { width:380, height:240, marginBottom:0, backgroundColor:'#010004' },
+  logo:             { width:380, height:240, marginBottom:0, backgroundColor:T.bg.root },
 
   card:             { width:'100%', maxWidth:360, borderRadius:22, padding:32 },
-  toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:'#12122a' },
+  toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:T.bg.elevated },
   toggleBtn:        { flex:1, paddingVertical:12, alignItems:'center', backgroundColor:'transparent' },
   toggleBtnActive:  { backgroundColor:'#4fc3f7' },
   toggleText:       { fontSize:14, color:'#d0d4e8', letterSpacing:1 },
-  toggleTextActive: { color:'#060610' },
+  toggleTextActive: { color:T.bg.root },
 
   inputs:           { gap:14 },
-  input:            { backgroundColor:'#0a0a20', borderWidth:1, borderColor:'#1e1e3a', borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:'#e0e4f4', fontSize:16, fontFamily:'monospace' },
+  input:            { backgroundColor:T.bg.surface, borderWidth:1, borderColor:T.bg.border, borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:T.text.body, fontSize:16, fontFamily:'monospace' },
   error:            { color:'#FF4757', fontSize:14, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
   submitBtn:        { backgroundColor:'#4fc3f7', borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
-  submitText:       { fontSize:16, fontWeight:'700', color:'#060610', letterSpacing:2 },
+  submitText:       { fontSize:16, fontWeight:'700', color:T.bg.root, letterSpacing:2 },
 
   tagline:          { marginTop:20, fontSize:13, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center' },
 
   // God Mode
-  godSection:       { marginTop:40, width:'100%', maxWidth:360, borderTopWidth:1, borderTopColor:'#0f0f24', paddingTop:24, alignItems:'center', gap:16 },
+  godSection:       { marginTop:40, width:'100%', maxWidth:360, borderTopWidth:1, borderTopColor:T.bg.elevated, paddingTop:24, alignItems:'center', gap:16 },
   godRow:           { flexDirection:'row', alignItems:'center', gap:16 },
   godLabel:         { fontSize:16, color:'#d0d4e8', letterSpacing:2 },
   toggle2:          { width:64, height:34, borderRadius:17, backgroundColor:'#a0a8c0', justifyContent:'center', paddingHorizontal:3 },
   toggle2Active:    { backgroundColor:'#FFBE0B' },
-  toggleKnob:       { width:28, height:28, borderRadius:14, backgroundColor:'#c8ccde' },
-  toggleKnobActive: { backgroundColor:'#060610', alignSelf:'flex-end' },
+  toggleKnob:       { width:28, height:28, borderRadius:14, backgroundColor:T.text.body },
+  toggleKnobActive: { backgroundColor:T.bg.root, alignSelf:'flex-end' },
   godState:         { fontSize:16, color:'#d0d4e8', letterSpacing:1 },
   godStateOn:       { color:'#FFBE0B' },
   enterGodBtn:      { backgroundColor:'#ff6b00', borderRadius:12, paddingVertical:16, paddingHorizontal:40 },
-  enterGodText:     { fontSize:16, fontWeight:'700', color:'#060610', letterSpacing:2 },
+  enterGodText:     { fontSize:16, fontWeight:'700', color:T.bg.root, letterSpacing:2 },
   godHint:          { fontSize:13, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center', lineHeight:20 },
 });

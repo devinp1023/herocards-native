@@ -1,6 +1,6 @@
 // HomeScreen — profile card, XP bar, credits, avatar, action buttons, pack stats.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Platform, Dimensions,
@@ -8,6 +8,7 @@ import {
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
 } from 'react-native-reanimated';
+import { useElevation, ElevationLevel } from '../theme/elevation';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,6 +22,8 @@ import { RC, PACK_COST } from '../data/constants';
 import { PACKS, AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import { T } from '../theme/theme';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -53,7 +56,7 @@ function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number })
 }
 
 const xpStyles = StyleSheet.create({
-  track: { height: 6, backgroundColor: '#0d0d22', borderRadius: 3, overflow: 'hidden', marginTop: 6 },
+  track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6 },
   fill:  { height: '100%', backgroundColor: '#4fc3f7', borderRadius: 3, shadowColor: '#4fc3f7', shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
 });
 
@@ -118,34 +121,45 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
   const pct       = Math.min(progress / target, 1);
   const diffColor = DIFF_COLOR[quest.diff] ?? '#4fc3f7';
 
+  const [pressed, setPressed] = useState(false);
+  const { animatedStyle: elevStyle } = useElevation(pressed ? 'hovered' : 'resting');
+
   return (
-    <MaterialSurface style={[qStyles.card, done && qStyles.cardDone]}>
-      <View style={qStyles.top}>
-        <View style={[qStyles.iconBox, { borderColor: quest.color + '55', backgroundColor: quest.color + '14' }]}>
-          <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[qStyles.task, done && { color: '#2ED57399' }]}>{quest.task}</Text>
-          <View style={qStyles.metaRow}>
-            <View style={[qStyles.diffBadge, { borderColor: diffColor + '66', backgroundColor: diffColor + '18' }]}>
-              <Text style={[qStyles.diffText, { color: diffColor }]}>{quest.diff.toUpperCase()}</Text>
+    <Animated.View style={elevStyle}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+      >
+        <MaterialSurface style={[qStyles.card, done && qStyles.cardDone]}>
+          <View style={qStyles.top}>
+            <View style={[qStyles.iconBox, { borderColor: quest.color + '55', backgroundColor: quest.color + '14' }]}>
+              <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
             </View>
-            <Text style={qStyles.reward}>+{quest.xp} XP  +{quest.credits} CR</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[qStyles.task, done && { color: '#2ED57399' }]}>{quest.task}</Text>
+              <View style={qStyles.metaRow}>
+                <View style={[qStyles.diffBadge, { borderColor: diffColor + '66', backgroundColor: diffColor + '18' }]}>
+                  <Text style={[qStyles.diffText, { color: diffColor }]}>{quest.diff.toUpperCase()}</Text>
+                </View>
+                <Text style={qStyles.reward}>+{quest.xp} XP  +{quest.credits} CR</Text>
+              </View>
+            </View>
+            {done
+              ? <View style={qStyles.checkBox}><Text style={qStyles.checkmark}>DONE</Text></View>
+              : <Text style={qStyles.progressText}>{progress}/{target}</Text>
+            }
           </View>
-        </View>
-        {done
-          ? <View style={qStyles.checkBox}><Text style={qStyles.checkmark}>DONE</Text></View>
-          : <Text style={qStyles.progressText}>{progress}/{target}</Text>
-        }
-      </View>
-      <View style={qStyles.barTrack}>
-        <View style={[
-          qStyles.barFill,
-          { width: `${Math.round(pct * 100)}%` as any },
-          { backgroundColor: done ? '#2ED573' : diffColor },
-        ]} />
-      </View>
-    </MaterialSurface>
+          <View style={qStyles.barTrack}>
+            <View style={[
+              qStyles.barFill,
+              { width: `${Math.round(pct * 100)}%` as any },
+              { backgroundColor: done ? '#2ED573' : diffColor },
+            ]} />
+          </View>
+        </MaterialSurface>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -155,15 +169,15 @@ const qStyles = StyleSheet.create({
   top:          { flexDirection:'row', alignItems:'center', gap:12, marginBottom:10 },
   iconBox:      { width:34, height:34, borderRadius:8, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   iconSymbol:   { fontSize:16, lineHeight:20 },
-  task:         { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#c0c8dc', letterSpacing:0.3, lineHeight:16 },
+  task:         { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.body, letterSpacing:0.3, lineHeight:16 },
   metaRow:      { flexDirection:'row', alignItems:'center', gap:8, marginTop:5 },
   diffBadge:    { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
   diffText:     { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
   reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070' },
   checkBox:     { backgroundColor:'#2ED57322', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#2ED57366' },
   checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#2ED573', letterSpacing:1 },
-  progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#606480' },
-  barTrack:     { height:4, backgroundColor:'#0d0d20', borderRadius:2, overflow:'hidden' },
+  progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.muted },
+  barTrack:     { height:4, backgroundColor:T.bg.elevated, borderRadius:2, overflow:'hidden' },
   barFill:      { height:'100%', borderRadius:2 },
 });
 
@@ -199,16 +213,22 @@ export default function HomeScreen({ navigation }: Props) {
   const avatarSymbol = avatarData?.symbol ?? username.charAt(0).toUpperCase();
   const avatarColor  = avatarData?.color  ?? '#4fc3f7';
 
+  const [profilePressed, setProfilePressed] = useState(false);
+  const { animatedStyle: profileElevStyle } = useElevation(profilePressed ? 'hovered' : 'resting');
+
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile card ── */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <MaterialSurface style={styles.profileCard} borderRadius={20}>
+        <Animated.View style={profileElevStyle}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Profile')}
+            onPressIn={() => setProfilePressed(true)}
+            onPressOut={() => setProfilePressed(false)}
+          >
+            <MaterialSurface style={styles.profileCard} borderRadius={20}>
             {/* Active avatar ring */}
             <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
               <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
@@ -240,27 +260,32 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
           </MaterialSurface>
         </TouchableOpacity>
+        </Animated.View>
 
         {/* ── Battle button ── */}
-        <TouchableOpacity
-          style={styles.battleBtn}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('BattleLobby')}
-        >
-          <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
-          <Text style={styles.battleBtnText}>BATTLE</Text>
-        </TouchableOpacity>
+        <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent" style={{ marginBottom: 16 }}>
+          <TouchableOpacity
+            style={styles.battleBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('BattleLobby')}
+          >
+            <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
+            <Text style={styles.battleBtnText}>BATTLE</Text>
+          </TouchableOpacity>
+        </GradientBorder>
 
         {/* ── Open Pack button ── */}
-        <TouchableOpacity
-          style={styles.packBtn}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('PackOpening' as never)}
-        >
-          <MaterialCommunityIcons name="cards" size={28} color="#fff" />
-          <Text style={styles.packBtnText}>OPEN PACK</Text>
-          <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
-        </TouchableOpacity>
+        <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent" style={{ marginBottom: 20 }}>
+          <TouchableOpacity
+            style={styles.packBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('PackOpening' as never)}
+          >
+            <MaterialCommunityIcons name="cards" size={28} color="#fff" />
+            <Text style={styles.packBtnText}>OPEN PACK</Text>
+            <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
+          </TouchableOpacity>
+        </GradientBorder>
 
         {/* ── Daily Quests ── */}
         <View style={styles.questSection}>
@@ -288,7 +313,7 @@ export default function HomeScreen({ navigation }: Props) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex:1, backgroundColor:'#060610' },
+  root:   { flex:1, backgroundColor:T.bg.root },
   scroll: { padding:20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom:40 },
 
   // Profile card
@@ -299,7 +324,7 @@ const styles = StyleSheet.create({
   },
   avatarRing: {
     width:64, height:64, borderRadius:32,
-    backgroundColor:'#12122e',
+    backgroundColor:T.bg.elevated,
     borderWidth:2, borderColor:'#4fc3f744',
     alignItems:'center', justifyContent:'center', flexShrink:0,
   },
@@ -307,7 +332,7 @@ const styles = StyleSheet.create({
   profileInfo: { flex:1, gap:2 },
   username: {
     fontFamily:'Orbitron_900Black', fontSize:16,
-    color:'#ffffff', letterSpacing:1,
+    color:T.text.primary, letterSpacing:1,
   },
   levelRow: { flexDirection:'row', alignItems:'center', gap:8, marginTop:4 },
   levelBadge: {
@@ -327,25 +352,25 @@ const styles = StyleSheet.create({
   // Battle button
   battleBtn: {
     flexDirection:'row', alignItems:'center', justifyContent:'center',
-    gap:12, marginBottom:16, paddingVertical:18,
-    backgroundColor:'#e8445a', borderRadius:16,
+    gap:12, paddingVertical:18,
+    backgroundColor:'#e8445a', borderRadius:14.5,
     shadowColor:'#e8445a', shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   battleBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:20,
-    color:'#ffffff', letterSpacing:3,
+    color:T.text.primary, letterSpacing:3,
   },
 
   // Open pack button
   packBtn: {
     flexDirection:'row', alignItems:'center', justifyContent:'center',
-    gap:12, marginBottom:20, paddingVertical:18,
-    backgroundColor:'#4fc3f7', borderRadius:16,
+    gap:12, paddingVertical:18,
+    backgroundColor:'#4fc3f7', borderRadius:14.5,
     shadowColor:'#4fc3f7', shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   packBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:20,
-    color:'#ffffff', letterSpacing:3,
+    color:T.text.primary, letterSpacing:3,
   },
   packBtnSub: {
     fontFamily:'Orbitron_700Bold', fontSize:12,

@@ -21,6 +21,7 @@ import { useAchievementProgress } from '../hooks/useAchievementProgress';
 import { useGameStateContext } from '../context/GameStateContext';
 import { AchievementNode, HubNode } from '../components/AchievementNode';
 import { BranchConnector } from '../components/BranchConnector';
+import { T } from '../theme/theme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const NODE_SIZE = 48;
@@ -184,7 +185,7 @@ const FeatsPage = React.memo(function FeatsPage({
                     transformOrigin: 'left center',
                   }}
                 >
-                  <View style={{ position: 'absolute', width: '100%', height: 2, backgroundColor: '#1a1a30' }} />
+                  <View style={{ position: 'absolute', width: '100%', height: 2, backgroundColor: T.bg.border }} />
                   <View style={{
                     position: 'absolute', height: 2,
                     width: bothCompleted ? '100%' : `${avgProgress * 100}%`,
@@ -671,14 +672,14 @@ const bsStyles = StyleSheet.create({
     textAlign: 'center', marginBottom: 16, lineHeight: 20,
   },
   progressTrack: {
-    height: 6, backgroundColor: '#0d0d20', borderRadius: 3,
+    height: 6, backgroundColor: T.bg.elevated, borderRadius: 3,
     overflow: 'hidden', marginBottom: 6,
   },
   progressFill: {
     height: '100%', borderRadius: 3,
   },
   progressLabel: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ffffff',
+    fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.primary,
     textAlign: 'center', marginBottom: 16, letterSpacing: 0.5,
   },
   rewardRow: {
@@ -695,10 +696,10 @@ const bsStyles = StyleSheet.create({
     fontFamily: 'Orbitron_900Black', fontSize: 14, color: '#4fc3f7', marginBottom: 2,
   },
   rewardLabel: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 1,
+    fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1,
   },
   rewardDivider: {
-    width: 1, height: 28, backgroundColor: '#1a1a30',
+    width: 1, height: 28, backgroundColor: T.bg.border,
   },
   statusText: {
     fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1,
@@ -710,11 +711,11 @@ const bsStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, elevation: 6,
   },
   collectBtnText: {
-    fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#ffffff',
+    fontFamily: 'Orbitron_900Black', fontSize: 13, color: T.text.primary,
     letterSpacing: 1.5,
   },
 });
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#060610' },
+  root: { flex: 1, backgroundColor: T.bg.root },
 });

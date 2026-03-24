@@ -5,6 +5,8 @@ import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Platform, Dimensions,
 } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useElevation } from '../theme/elevation';
 import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
 import { RC } from '../data/constants';
@@ -16,6 +18,8 @@ import { isOwned, getLevel } from '../hooks/useGameState';
 import { HeroCard } from '../components/HeroCard';
 import { CardWrapper } from '../components/CardWrapper';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import { T } from '../theme/theme';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -129,18 +133,22 @@ function AvatarCard({
         </View>
       )}
       {!isActive && owned && !locked && (
-        <TouchableOpacity
-          style={[avStyles.equipBtn, { backgroundColor: tc.color }]}
-          onPress={onEquip}
-          activeOpacity={0.8}
-        >
-          <Text style={avStyles.equipText}>EQUIP</Text>
-        </TouchableOpacity>
+        <GradientBorder colors={BORDER_COLORS.gold} borderWidth={1} borderRadius={6} innerBackground="transparent" style={{ width: '100%' }}>
+          <TouchableOpacity
+            style={[avStyles.equipBtn, { backgroundColor: tc.color }]}
+            onPress={onEquip}
+            activeOpacity={0.8}
+          >
+            <Text style={avStyles.equipText}>EQUIP</Text>
+          </TouchableOpacity>
+        </GradientBorder>
       )}
       {!owned && !locked && price !== undefined && (
-        <TouchableOpacity style={avStyles.buyBtn} onPress={onBuy} activeOpacity={0.8}>
-          <Text style={avStyles.buyText}>{price.toLocaleString()} CR</Text>
-        </TouchableOpacity>
+        <GradientBorder colors={BORDER_COLORS.gold} borderWidth={1} borderRadius={6} innerBackground="transparent" style={{ width: '100%' }}>
+          <TouchableOpacity style={avStyles.buyBtn} onPress={onBuy} activeOpacity={0.8}>
+            <Text style={avStyles.buyText}>{price.toLocaleString()} CR</Text>
+          </TouchableOpacity>
+        </GradientBorder>
       )}
     </MaterialSurface>
   );
@@ -153,8 +161,8 @@ const avStyles = StyleSheet.create({
   activeBadge: { borderRadius: 5, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
   activeText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 1 },
   equipBtn:    { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, width: '100%', alignItems: 'center' },
-  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#060610', letterSpacing: 1 },
-  buyBtn:      { backgroundColor: '#0d0d22', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 5, borderWidth: 1, borderColor: '#2a2a40', width: '100%', alignItems: 'center' },
+  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.bg.root, letterSpacing: 1 },
+  buyBtn:      { backgroundColor: '#0d0d22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 5, width: '100%', alignItems: 'center' },
   buyText:     { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#8090a0', letterSpacing: 0.3 },
 });
 
@@ -225,6 +233,9 @@ export default function StoreScreen() {
 
   const currentLevel = getLevel(gs.xp);
 
+  const [featuredPressed, setFeaturedPressed] = useState(false);
+  const { animatedStyle: featuredElevStyle } = useElevation(featuredPressed ? 'hovered' : 'resting', '#FFBE0B');
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.root}>
@@ -264,6 +275,12 @@ export default function StoreScreen() {
           <>
             {/* Featured deal */}
             <SectionDivider label="FEATURED DEAL" color="#FFBE0B" />
+            <Animated.View style={featuredElevStyle}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={() => setFeaturedPressed(true)}
+              onPressOut={() => setFeaturedPressed(false)}
+            >
             <MaterialSurface borderRadius={16} style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
               <AvatarCircle symbol={featured.symbol} color={featured.color} size={68} />
               <View style={{ flex: 1 }}>
@@ -319,6 +336,8 @@ export default function StoreScreen() {
                 </View>
               </View>
             </MaterialSurface>
+            </TouchableOpacity>
+            </Animated.View>
 
             {/* Level-Up Exclusive */}
             <SectionDivider label="LEVEL-UP EXCLUSIVE" color="#00e676" />
@@ -453,7 +472,7 @@ export default function StoreScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: '#060610' },
+  root:   { flex: 1, backgroundColor: T.bg.root },
   scroll: { paddingHorizontal: 16, paddingBottom: 40 },
 
   // Top bar
@@ -462,7 +481,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 12,
-    backgroundColor: '#060610',
+    backgroundColor: T.bg.root,
   },
   storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#FFBE0B', letterSpacing: 3 },
   creditsChip: {
@@ -475,22 +494,22 @@ const styles = StyleSheet.create({
   // Tab row
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: '#0a0a1e',
+    backgroundColor: T.bg.surface,
     marginHorizontal: 16, marginBottom: 16,
-    borderRadius: 12, borderWidth: 1, borderColor: '#14142a',
+    borderRadius: 12, borderWidth: 1, borderColor: T.bg.border,
     overflow: 'hidden',
   },
   tab:          { flex: 1, paddingVertical: 12, alignItems: 'center' },
   tabActive:    { backgroundColor: '#FFBE0B' },
   tabText:      { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 1 },
-  tabTextActive:{ color: '#060610' },
+  tabTextActive:{ color: T.bg.root },
 
   // Featured deal
   featuredCard: {
     flexDirection: 'row', gap: 12, alignItems: 'flex-start',
     padding: 16, marginBottom: 24,
   },
-  featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#fff', letterSpacing: 0.5 },
+  featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: 13, color: T.text.primary, letterSpacing: 0.5 },
   tierBadge:        { borderRadius: 5, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2 },
   tierText:         { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 1 },
   salePrice:        { fontFamily: 'Orbitron_900Black', fontSize: 15, color: '#FFBE0B' },
@@ -501,7 +520,7 @@ const styles = StyleSheet.create({
   activeChip:       { alignSelf: 'flex-start', borderRadius: 7, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   activeChipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 1 },
   featuredEquipBtn: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#060610', letterSpacing: 1 },
+  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.bg.root, letterSpacing: 1 },
   featuredBuyBtn:   { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, backgroundColor: 'transparent' },
   featuredBuyText:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 0.5 },
 
@@ -523,11 +542,11 @@ const styles = StyleSheet.create({
   offerRight:   { flex: 1, gap: 8, justifyContent: 'flex-start' },
   rarityPill:   { alignSelf: 'flex-start', borderRadius: 5, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
   rarityPillText: { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 1 },
-  offerName:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: '#c0c8dc', letterSpacing: 0.3, lineHeight: 18 },
+  offerName:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: T.text.body, letterSpacing: 0.3, lineHeight: 18 },
   offerPrice:   { fontFamily: 'Orbitron_900Black', fontSize: 18 },
   ownedBadge:   { backgroundColor: '#00e67620', borderRadius: 7, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#00e67640', alignItems: 'center' },
   ownedBadgeText: { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#00e676', letterSpacing: 1 },
   buyCardBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, backgroundColor: 'transparent' },
   buyCardBtnText: { fontFamily: 'Orbitron_700Bold', fontSize: 11, letterSpacing: 1 },
-  buyCardBtnDisabled: { borderColor: '#1a1a30' },
+  buyCardBtnDisabled: { borderColor: T.bg.border },
 });

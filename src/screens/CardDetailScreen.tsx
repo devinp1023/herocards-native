@@ -27,6 +27,7 @@ import { useGameStateContext } from '../context/GameStateContext';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MissingCard } from '../components/MissingCard';
+import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'CardDetail'>;
 
@@ -215,7 +216,7 @@ export default function CardDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#060610',
+    backgroundColor: T.bg.root,
     paddingTop: Platform.OS === 'ios' ? 56 : 16,
   },
 
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
   cardName: {
     fontFamily: 'Orbitron_900Black',
     fontSize: 28,
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 1,
     lineHeight: 34,
     marginBottom: 10,
@@ -293,13 +294,13 @@ const styles = StyleSheet.create({
   cardId: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 12,
-    color: '#606480',
+    color: T.text.muted,
     letterSpacing: 1,
   },
   packLabel: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 11,
-    color: '#606480',
+    color: T.text.muted,
     letterSpacing: 0.5,
   },
 
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
 
   divider: {
     height: 1,
-    backgroundColor: '#14142a',
+    backgroundColor: T.bg.border,
     marginVertical: 18,
   },
 
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
   desc: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 17,
-    color: '#c0c8dc',
+    color: T.text.body,
     lineHeight: 26,
   },
   readMoreBtn: {
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#252545',
+    borderColor: T.bg.border,
   },
   readMoreText: {
     fontFamily: 'Orbitron_700Bold',
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: 8,
-    backgroundColor: '#0f0f24',
+    backgroundColor: T.bg.elevated,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -419,8 +420,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1e2040',
-    backgroundColor: '#0c0c1e',
+    borderColor: T.bg.border,
+    backgroundColor: T.bg.surface,
   },
   abilityIcon: {
     fontSize: 28,
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
   abilityName: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 12,
-    color: '#606480',
+    color: T.text.muted,
     letterSpacing: 0.5,
     marginBottom: 2,
   },

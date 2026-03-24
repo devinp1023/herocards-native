@@ -194,28 +194,27 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 ### Phase 1 — Foundation
 
-**Sprint 1.1 — Theme tokens + motion presets**
-- Create `src/theme/theme.ts` with `T` tokens (1a)
-- Add `TIMING`, `MOTION`, `SPRING`, `EASE` presets (1b)
-- Add `TEXT_FX` helpers (1f)
-- Add `glowShadow()` and `skiaGlowLayers()` helpers (2c — defined here, used in Phase 2)
+**Sprint 1.1 — Theme tokens + motion presets** ✅ COMPLETE
+- Create `src/theme/theme.ts` with `T` tokens
+- Add `TIMING`, `MOTION`, `SPRING`, `EASE` presets
+- Add `TEXT_FX` helpers
+- Add `glowShadow()` and `skiaGlowLayers()` helpers
 - Add `caution` to `T.glow`
 - Re-export `FONTS` from the existing `fonts.ts`
 - **Verify:** `npx tsc --noEmit` passes. Import `T` from a test screen and confirm values resolve.
 - **Warnings to check:** None — this is pure code, no rendering.
 
-**Sprint 1.2 — Texture assets**
-- Create `assets/textures/` directory
-- Generate and add `noise-512.png` (512×512) and `brush-grain-128x4.png` (128×4) — **NOTE: these were generated but are NOT USED by `MaterialSurface`** due to iOS `resizeMode="repeat"` being broken. They remain in `assets/textures/` as dead assets.
-- Generate and add `obsidian-cracks.png` (375×812 or smaller with `@2x/@3x` variants) — **potentially used** for the BattleScreen obsidian material, pending testing in Sprint 2.3.
+**Sprint 1.2 — Texture assets** ✅ COMPLETE (partially obsolete)
+- Created `assets/textures/` directory
+- Generated `noise-512.png` and `brush-grain-128x4.png` — **dead assets** due to iOS `resizeMode="repeat"` bug. MaterialSurface uses pure gradients instead.
+- `obsidian-cracks.png` — **TBD**, pending testing on BattleScreen in Sprint 2.3
 - The existing `assets/noise.png` (256×256) is still used by `HeroCard.tsx`'s Skia Canvas — that is a separate system and works correctly.
-- **Verify:** `obsidian-cracks.png` loads in a test Image component with `resizeMode="cover"` on a real iOS device. Confirm it looks acceptable at full-screen size (not blurry).
 - **Warnings to check:** Texture Memory — confirm obsidian-cracks asset sizing strategy if we proceed with it.
 
-**Sprint 1.3 — Color migration**
-- Find-and-replace status colors: `#ef5350` → `#FF4757`, `#4caf50` → `#2ED573`, `#ff9800` → `#FFBE0B` (1c)
-- Find-and-replace background/text/accent colors to `T.*` references across all screens (1d)
+**Sprint 1.3 — Color migration** ✅ COMPLETE
+- Find-and-replace status colors: `#ef5350` → `#FF4757`, `#4caf50` → `#2ED573`, `#ff9800` → `#FFBE0B`
 - Do NOT touch domain colors (type, rarity, achievement) — those stay in `constants.ts`
+- **Note:** Background/text/accent migration to `T.*` references was deferred — screens still use hardcoded hex values for backgrounds. These will naturally migrate as `ScreenBackground` (Sprint 3.1) and `MaterialSurface` replace raw background colors.
 - **Verify:** `npx tsc --noEmit` passes. Visual spot-check every screen — colors should look identical or slightly more vivid (status colors).
 - **Warnings to check:** None — mechanical replacement only.
 
@@ -223,44 +222,51 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 ### Phase 2 — Materials, Glows & Elevation
 
-**Sprint 2.1 — MaterialSurface component**
-- Create `src/components/MaterialSurface.tsx` (2a)
-- Implement `brushedMetal` material: 4-stop LinearGradient (`#0e0f16` → `#0b0c12` → `#0a0b10` → `#090a0e`) + top-edge light catch (1px `View` at `rgba(255,255,255,0.06)`) + inner glow (40px gradient from `rgba(255,255,255,0.025)` → transparent). No image textures.
-- Implement `obsidian` material: warm 4-stop LinearGradient (`#0d080c` → `#0b0710` → `#09060a` → `#080508`) + red-tinted top edge (`rgba(255,71,87,0.06)`) + red inner glow (50px). No image textures. (Crack overlay PNG is TBD — tested in Sprint 2.3 on BattleScreen.)
-- Implement `frostedGlass` material: 2-stop semi-transparent LinearGradient + top-edge highlight (`rgba(255,255,255,0.08)`) + inner glow (30px). Check Expo Go compatibility for blur dependency. If blur works, use BlurView behind gradient. If not, use opaque dark fallback.
-- Add `energyBorder` prop (renders isolated `Animated.View` — but animation wiring comes in Sprint 3.3)
-- **Verify:** Drop `<MaterialSurface>` into HomeScreen for one panel. Confirm gradient renders correctly with visible light catch on top edge and subtle inner glow.
-- **Warnings to check:** Expo Go vs Custom Dev Client (blur dependency), Skia Canvas Nesting (confirm MaterialSurface is pure RN — no Canvas, no Image textures).
+**Sprint 2.1 — MaterialSurface component** ✅ COMPLETE
+- Created `src/components/MaterialSurface.tsx`
+- `brushedMetal` material: 4-stop LinearGradient + top-edge light catch (1px View) + inner glow (40px gradient). No image textures.
+- `obsidian` material: warm 4-stop LinearGradient + red-tinted top edge + red inner glow (50px). No image textures.
+- `frostedGlass` material: 2-stop semi-transparent LinearGradient + top-edge highlight + inner glow (30px). Pure gradient fallback (no blur dependency).
+- **Pivot:** Originally used tiled noise PNGs via `resizeMode="repeat"` — iOS tiling is broken. Rebuilt with pure RN gradients + edge highlights. Zero images, GPU-native.
+- **Warnings resolved:** Expo Go compatibility confirmed (no blur dependency). Skia Canvas Nesting avoided (pure RN).
 
-**Sprint 2.2 — Retrofit screens (batch 1: Home, Collection, Store)**
-- HomeScreen: wrap quest panels, profile card, and battle button container in `<MaterialSurface>`
-- CollectionScreen: wrap filter bar, card grid container, and card detail modal
-- StoreScreen: wrap offer panels, pack cards, avatar cards
-- Replace all `backgroundColor: T.bg.surface` flat Views with `<MaterialSurface material="brushedMetal">`
+**Sprint 2.2 — Retrofit Home, Collection, Store** ✅ COMPLETE
+- HomeScreen: profile card, quest cards, pack stat cards wrapped in `<MaterialSurface>`
+- CollectionScreen: filter sidebar — custom left-edge light catch + leftward inner glow (full-height panel, not suited for standard MaterialSurface top-edge treatment)
+- StoreScreen: credits chip, featured deal card, card offer panels, avatar grid cards wrapped
 - **Verify:** All three screens render correctly, no visual regressions, no Canvas nesting issues.
-- **Warnings to check:** Skia Canvas Nesting — CollectionScreen has MiniCards (no Skia, safe). StoreScreen also safe.
+- **Warnings resolved:** No Skia Canvas nesting — CollectionScreen uses MiniCards (pure RN). StoreScreen also safe.
 
-**Sprint 2.3 — Retrofit screens (batch 2: Career, Profile, Battle, Auth, PackOpening)**
-- CareerScreen: wrap category panels, bottom sheet, node containers
-- ProfileScreen: wrap stats grid, collection progress panels, avatar gallery
-- BattleScreen: root background → `<MaterialSurface material="obsidian">`, card preview modal → `<MaterialSurface material="frostedGlass">`
-  - **Obsidian cracks test:** Try adding `obsidian-cracks.png` as a `resizeMode="cover"` Image overlay on top of the obsidian gradient at full-screen size. If it looks good (cracks are crisp, adds visual depth), keep it. If it looks blurry or bad at this size, discard and keep the pure gradient approach.
-- BattleLobbyScreen: wrap deck selection panels
-- PackOpeningScreen: wrap pack container
-- AuthScreen: wrap login form container
-- **Verify:** All screens render correctly. BattleScreen specifically — confirm obsidian material doesn't conflict with existing Skia canvases. Evaluate obsidian cracks overlay quality.
-- **Warnings to check:** BattleScreen Performance (adding gradient layers + potential crack overlay), Skia Canvas Nesting (BattleScreen has Skia amp arcs), Texture Memory (obsidian-cracks loaded alongside battle assets — only if crack overlay is kept).
+**Sprint 2.3 — Retrofit Career, Profile, Battle, Auth, PackOpening, BattleLobby** ✅ COMPLETE
+- CareerScreen: reward row panel in bottom sheet wrapped
+- ProfileScreen: stat boxes (6), profile header, collection cards wrapped
+- BattleScreen: card preview modal (`frostedGlass`), AI hand zone, player hand zone, result rewards box, header bar (`brushedMetal`)
+- BattleLobbyScreen: deck summary panel, opponent tier cards wrapped
+- PackOpeningScreen: balance row, pack cards, odds box, totals box wrapped
+- AuthScreen: login form card wrapped
+- **Note:** Obsidian cracks overlay was not tested — BattleScreen uses `brushedMetal` for zones/header, `frostedGlass` for preview modal. Full obsidian screen background deferred to Sprint 3.1 (ScreenBackground).
+- **Verify:** All screens render correctly. BattleScreen confirmed — no Skia canvas conflicts.
+- **Warnings resolved:** BattleScreen performance stable. No Canvas nesting issues.
 
-**Sprint 2.4 — Gradient borders + elevation system**
-- Create `src/components/GradientBorder.tsx` (2d)
-- Create `src/theme/elevation.ts` with `ELEVATION` states and `useElevation()` hook (2e)
-- Apply gradient borders to: primary/secondary/destructive buttons, achievement toast, active input focus, selected list items
-- Apply elevation states to: tappable MiniCards (resting→hovered on press), quest list items (resting→hovered), primary buttons (hovered default→resting on press)
-- **Verify:** Tap a card in collection grid — confirm it lifts to `hovered` state with mint glow. Tap a button — confirm scale(0.96) press + glow contraction.
-- **Warnings to check:** Energy Border Memoization — if applying elevation to memoized FlatList items, confirm animations don't break `React.memo`.
+**Sprint 2.4 — GradientBorder component + elevation system** ✅ COMPLETE
+- Created `src/components/GradientBorder.tsx` with `BORDER_COLORS` presets (mint, violet, gold, danger, legendary)
+- Created `src/theme/elevation.ts` with `ELEVATION` states (resting/hovered/lifted/heroic) and `useElevation()` hook
+- Applied gradient border + violet glow to achievement toast (`AchievementPopup`)
+- **Remaining:** Broad GradientBorder and elevation application deferred to Sprint 2.4b (high-impact spots) and Sprints 3.3/4.2 (full rollout).
+- **Verify:** Earn an achievement — toast has violet gradient border + violet glow.
+- **Warnings to check:** Energy Border Memoization — when applying elevation to FlatList items in future sprints, confirm animations don't break `React.memo`.
+
+**Sprint 2.4b — Token migration + targeted GradientBorder/elevation**
+- **Color token migration:** Replace hardcoded background, border, and text hex values with `T.*` token references across all screens. Consolidate similar-but-different dark shades to canonical token values. Screen root backgrounds (`#060610` etc.) are left as-is — replaced by `ScreenBackground` in Sprint 3.1.
+- **GradientBorder — TextInputs:** Add gradient border on focus to AuthScreen inputs (username, email, password), CollectionScreen search, BattleLobbyScreen search. Track focus state, show mint gradient border when focused, default border when blurred.
+- **GradientBorder — Primary CTA buttons:** Apply to HomeScreen battle button, HomeScreen open pack button, AuthScreen submit button, StoreScreen buy/equip buttons. Use mint preset for positive actions, gold for purchase actions.
+- **useElevation — High-impact interactive elements:** Apply to HomeScreen quest items (resting→hovered on press), HomeScreen profile card (resting→hovered on press), StoreScreen featured deal card (resting→hovered on press).
+- **NOT included (deferred):** MiniCard elevation (→ Sprint 3.3 card breathing), all remaining buttons (→ Sprint 4.2 press ripple), selected list items (→ Sprint 4.2).
+- **Verify:** Focus an input on AuthScreen — mint gradient border appears. Tap battle button on Home — gradient border visible. Press a quest card — lifts with glow. `npx tsc --noEmit` passes.
+- **Warnings to check:** Energy Border Memoization — quest items are in a list, confirm elevation animation doesn't break memoization.
 
 **Sprint 2.5 — Progress bar treatments**
-- Update all progress bars with per-context colors and 2-layer glows (2f)
+- Update all progress bars with per-context colors and 2-layer glows
 - Quest progress: mint fill + mint glow
 - HP bars in battle: vitality/caution/danger based on percentage
 - XP bar: violet gradient fill (`#B14EFF → #cc6dff`) + violet glow
@@ -272,15 +278,16 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 ### Phase 3 — Screen Identity & Ambient Life
 
 **Sprint 3.1 — ScreenBackground component**
-- Create `src/components/ScreenBackground.tsx` (3a)
-- Implement per-screen base gradients (screen identity is achieved through unique base gradients + vignette colors + ambient particles — no texture overlay images)
+- Create `src/components/ScreenBackground.tsx`
+- Implement per-screen base gradients (screen identity through unique base gradients + vignette colors — no texture overlay images)
 - Implement vignette View with **breathing animation** (5s ease-in-out opacity pulse)
 - Wrap all screen root Views in `<ScreenBackground theme="...">` (Home, Collection, Store, Career, Battle, Profile)
+- Battle screen: test obsidian gradient as screen background here. If `obsidian-cracks.png` works at full-screen with `resizeMode="cover"`, layer it on. Otherwise keep pure gradient.
 - **Verify:** Navigate between screens — each should have a subtly different visual temperature. The vignette should breathe (barely perceptible at normal viewing).
 - **Warnings to check:** Reanimated Shared Value Count — each screen adds a vignette shared value. Confirm animations pause on screen blur via `useIsFocused()`.
 
 **Sprint 3.2 — Ambient particles**
-- Create `src/components/AmbientParticles.tsx` (3b)
+- Create `src/components/AmbientParticles.tsx`
 - Implement particle pool pattern: pre-allocate Views, randomize position/size/opacity/speed
 - Add to HomeScreen (mint particles behind battle button area) and StoreScreen (gold particles near featured offers)
 - Implement `useIsFocused()` pause — particles stop animating when screen is not visible
@@ -308,23 +315,23 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 ### Phase 4 — Micro-Interactions & Rarity Tiers
 
 **Sprint 4.1 — AnimatedNumber + SuccessBurst components**
-- Create `src/components/AnimatedNumber.tsx` (4a) — tick-up with glow flash and optional haptic
-- Create `src/components/SuccessBurst.tsx` (4d) — particle pool, imperative fire via ref, 20-particle hard cap
+- Create `src/components/AnimatedNumber.tsx` — tick-up with glow flash and optional haptic
+- Create `src/components/SuccessBurst.tsx` — particle pool, imperative fire via ref, 20-particle hard cap
 - Replace static coin display on Home/Store with `<AnimatedNumber>` (gold glow)
 - Replace static XP display on Home/Profile with `<AnimatedNumber>` (violet glow)
 - **Verify:** Buy something in Store — coin count ticks down with gold glow. Earn XP — XP ticks up with violet glow. Numbers don't jump.
 - **Warnings to check:** SuccessBurst Particle Cleanup — implement pool pattern with `cancelAnimation()` on recycle from day one.
 
 **Sprint 4.2 — Press ripple + button shimmer**
-- Create `useRipple()` hook (4c) — returns ripple View, onPressIn handler, press animated style
+- Create `useRipple()` hook — returns ripple View, onPressIn handler, press animated style
 - Apply to all buttons (primary, secondary, destructive), tappable MiniCards, quest list items
-- Add button shimmer sweep to primary action buttons (4b) — diagonal gradient, 3s cycle, pauses on press
+- Add button shimmer sweep to primary action buttons — diagonal gradient, 3s cycle, pauses on press
 - **Verify:** Tap any button — see ripple from touch point + scale(0.96). Primary buttons shimmer when idle. Tap — shimmer pauses, ripple fires, scale bounces.
 - **Warnings to check:** MaskedView Performance — if using MaskedView for button shimmer, limit to 2–3 buttons per screen. Energy Border Memoization — ripple hook must not break parent memo.
 
 **Sprint 4.3 — Tab energy trail + glow trail on drag**
-- Add tab switch energy trail to custom Skia tab bar in `App.tsx` (4e) — 2px mint line, `MOTION.snap` easing
-- Add glow trail to battle drag-to-attack gesture (4f) — 4 ghost Views, type-color tinted, circular position buffer
+- Add tab switch energy trail to custom Skia tab bar in `App.tsx` — 2px mint line, `MOTION.snap` easing
+- Add glow trail to battle drag-to-attack gesture — 4 ghost Views, type-color tinted, circular position buffer
 - **Verify:** Switch tabs — see a brief mint line stretch between old and new tab. Start a battle, drag a card to attack — see colored ghost trail behind the card.
 - **Warnings to check:** BattleScreen Performance — glow trail updates every gesture frame. If frames drop, this is the first cut. ColorMatrix Scope — trail uses type color, not hue rotation (safe).
 
@@ -345,31 +352,31 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 ### Phase 5 — Wow Moment Choreography & Haptics
 
 **Sprint 5.1 — Haptic pairing across existing moments**
-- Wire haptic calls to all existing moments per the haptic pairing map (5a)
+- Wire haptic calls to all existing moments per the haptic pairing map
 - Pack crack: Medium impact. Card reveals: Light impact (staggered). Victory: notification Success. Achievement earned: Light impact. Achievement collected: Medium impact. Damage dealt: Medium impact. Heavy attack: Heavy impact.
 - **Verify:** Play through a battle — feel haptics on attacks and victory. Open a pack — feel crack and card reveals. Earn an achievement — feel toast haptic.
 - **Warnings to check:** None — haptics are fire-and-forget, no performance concerns.
 
 **Sprint 5.2 — Pack opening choreography**
-- Upgrade PackOpeningScreen with full sequence (5b): dim → glow buildup (800ms) → crack + impact → staggered card reveals (200ms apart) using `MOTION.slam`
+- Upgrade PackOpeningScreen with full sequence: dim → glow buildup (800ms) → crack + impact → staggered card reveals (200ms apart) using `MOTION.slam`
 - Integrate `<SuccessBurst>` on each card reveal
 - **Verify:** Open a pack — screen dims, pack glows with rarity color, cracks open, cards fly in with overshoot + particles. Feels like an event, not a list appearing.
 - **Warnings to check:** SuccessBurst Particle Cleanup — staggered 200ms reveals will fire bursts in quick succession. Confirm particle pool recycles correctly.
 
 **Sprint 5.3 — Legendary pull choreography**
-- Implement the full legendary pull sequence within pack opening (5e): blackout → violet explosion → 360° card spin → particle shower (20+ particles) → gradient text card name → haptic sequence
+- Implement the full legendary pull sequence within pack opening: blackout → violet explosion → 360° card spin → particle shower (20+ particles) → gradient text card name → haptic sequence
 - This is the single most important visual moment in the app — take time to get the timing right
 - **Verify:** Force a legendary pull (God Mode or rigged pack). The reveal should feel unmistakably different from every other card. Screen shake, violet wash, holographic spin, gold+violet particle shower, gradient text name.
-- **Warnings to check:** SuccessBurst Particle Cleanup — 20+ particles in one burst, confirm pool handles it. Texture Memory — momentary spike with full-screen violet gradient + card textures + particles. BattleScreen Performance — not applicable here but similar GPU load pattern.
+- **Warnings to check:** SuccessBurst Particle Cleanup — 20+ particles in one burst, confirm pool handles it. Texture Memory — momentary spike with full-screen violet gradient + card textures + particles.
 
 **Sprint 5.4 — Victory + level up choreography**
-- Upgrade BattleScreen victory sequence (5c): side split → VICTORY slam + impact + embossed text → stat cascade with `<AnimatedNumber>` (staggered 150ms, `MOTION.burst`) → reward tally with gold/violet glow
-- Upgrade level-up moment (5d): violet burst → gradient text level number + slam (overshoot 1.3x) → XP bar shatter (`<SuccessBurst>`) → reward cascade with `<AnimatedNumber>`
+- Upgrade BattleScreen victory sequence: side split → VICTORY slam + impact + embossed text → stat cascade with `<AnimatedNumber>` (staggered 150ms, `MOTION.burst`) → reward tally with gold/violet glow
+- Upgrade level-up moment: violet burst → gradient text level number + slam (overshoot 1.3x) → XP bar shatter (`<SuccessBurst>`) → reward cascade with `<AnimatedNumber>`
 - **Verify:** Win a battle — victory sequence is choreographed and dramatic, not just a results screen appearing. Level up — number slams in, bar shatters, rewards cascade.
 - **Warnings to check:** BattleScreen Performance — victory sequence adds multiple simultaneous animations on an already heavy screen. Confirm >55fps during the cascade. Reanimated Shared Value Count — multiple AnimatedNumbers rendering simultaneously during stat cascade.
 
 **Sprint 5.5 — Achievement earned choreography + final polish**
-- Upgrade AchievementPopup with full sequence (5f): slam slide-in → gradient violet border + 3-layer glow → icon burst → particle pop → haptic
+- Upgrade AchievementPopup with full sequence: slam slide-in → gradient violet border + 3-layer glow → icon burst → particle pop → haptic
 - Final polish pass across all screens: spot-check every material, glow, ambient animation, and micro-interaction
 - Fix any visual inconsistencies found during the full walkthrough
 - **Verify:** Earn an achievement — toast feels impactful with burst and glow. Full app walkthrough: every screen has its identity, every surface is a material, every interaction has feedback.

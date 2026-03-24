@@ -5,6 +5,7 @@ import {
   View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity,
 } from 'react-native';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { T } from '../theme/theme';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned, isOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
@@ -31,7 +32,7 @@ const bStyles = StyleSheet.create({
     paddingVertical: 14, gap: 4,
   },
   statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
-  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#ffffff', letterSpacing: 1 },
+  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1 },
 });
 
 // ── PackBar ──────────────────────────────────────────────────────────────────
@@ -62,8 +63,8 @@ const pStyles = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   dot:      { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   name:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 0.5, width: 100 },
-  count:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#ffffff', width: 52, textAlign: 'right' },
-  barTrack: { flex: 1, height: 5, backgroundColor: '#0d0d20', borderRadius: 3, overflow: 'hidden' },
+  count:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.primary, width: 52, textAlign: 'right' },
+  barTrack: { flex: 1, height: 5, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden' },
   barFill:  { height: '100%', borderRadius: 3 },
   pct:      { fontFamily: 'Orbitron_900Black', fontSize: 11, width: 40, textAlign: 'right' },
 });
@@ -95,7 +96,7 @@ const AvatarItem = React.memo(function AvatarItem({ avatar, isActive, onPress }:
 const aStyles = StyleSheet.create({
   item: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#0a0a1e', borderWidth: 2,
+    backgroundColor: T.bg.surface, borderWidth: 2,
     alignItems: 'center', justifyContent: 'center',
     margin: 5,
   },
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
         {/* ── Collection ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>— COLLECTION</Text>
-          <Text style={[styles.sectionCount, { color: collPct === 100 ? '#2ED573' : '#606480' }]}>
+          <Text style={[styles.sectionCount, { color: collPct === 100 ? '#2ED573' : T.text.muted }]}>
             {uniqueOwned}/{totalCards}
           </Text>
         </View>
@@ -211,7 +212,7 @@ export default function ProfileScreen() {
         {/* ── Avatars ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>— AVATARS</Text>
-          <Text style={[styles.sectionCount, { color: ownedAvatars.length === ALL_AVATARS.length ? '#2ED573' : '#606480' }]}>
+          <Text style={[styles.sectionCount, { color: ownedAvatars.length === ALL_AVATARS.length ? '#2ED573' : T.text.muted }]}>
             {ownedAvatars.length}/{ALL_AVATARS.length} COLLECTED
           </Text>
         </View>
@@ -244,7 +245,7 @@ export default function ProfileScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: '#060610' },
+  root:   { flex: 1, backgroundColor: T.bg.root },
   scroll: { padding: 20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 50 },
 
   // Header
@@ -254,25 +255,25 @@ const styles = StyleSheet.create({
   },
   avatarRing: {
     width: 70, height: 70, borderRadius: 35,
-    backgroundColor: '#12122e',
+    backgroundColor: T.bg.elevated,
     borderWidth: 2, borderColor: '#4fc3f744',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: 26, color: '#4fc3f7' },
   username: {
     fontFamily: 'Orbitron_900Black', fontSize: 18,
-    color: '#ffffff', letterSpacing: 1, marginBottom: 10,
+    color: T.text.primary, letterSpacing: 1, marginBottom: 10,
   },
   statRow:     { flexDirection: 'row', alignItems: 'center' },
   hStatBox:    { alignItems: 'center', flex: 1 },
   hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: 12, color: '#4fc3f7' },
-  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#ffffff', letterSpacing: 1, marginTop: 2 },
-  statDivider: { width: 1, height: 24, backgroundColor: '#1a1a30', marginHorizontal: 4 },
+  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
+  statDivider: { width: 1, height: 24, backgroundColor: T.bg.border, marginHorizontal: 4 },
 
   // Sections
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: '#c0c8dc', letterSpacing: 1.5 },
-  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#ffffff', letterSpacing: 1 },
+  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: T.text.body, letterSpacing: 1.5 },
+  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.primary, letterSpacing: 1 },
 
   // Battle stats grid
   statsGrid:    { gap: 8, marginBottom: 24 },
@@ -283,19 +284,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16, marginBottom: 24,
   },
-  collBarTrack: { height: 8, backgroundColor: '#0d0d20', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  collBarTrack: { height: 8, backgroundColor: T.bg.elevated, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
   collBarFill:  { height: '100%', borderRadius: 4, backgroundColor: '#4fc3f7' },
   collPct: {
     fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#4fc3f7',
     letterSpacing: 1, marginBottom: 12, textAlign: 'center',
   },
-  dividerThin: { height: 1, backgroundColor: '#14142a', marginBottom: 12 },
+  dividerThin: { height: 1, backgroundColor: T.bg.border, marginBottom: 12 },
 
   // Avatars
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
 
   // Footer
-  divider: { height: 1, backgroundColor: '#12122a', marginVertical: 18 },
+  divider: { height: 1, backgroundColor: T.bg.border, marginVertical: 18 },
 
   logoutBtn: {
     alignItems: 'center', justifyContent: 'center',

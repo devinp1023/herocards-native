@@ -35,6 +35,8 @@ import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MissingCard } from '../components/MissingCard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { T } from '../theme/theme';
+import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
@@ -143,7 +145,7 @@ function FilterSidebar({
                   <View style={[styles.radioOuter, { borderColor: active ? color : '#303050' }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: color }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? color : '#8890b0' }]}>{r}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? color : T.text.muted }]}>{r}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -159,7 +161,7 @@ function FilterSidebar({
                   <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{t}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{t}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -175,7 +177,7 @@ function FilterSidebar({
                   <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{p.label}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{p.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -191,7 +193,7 @@ function FilterSidebar({
                   <View style={[styles.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: '#cc6dff' }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#cc6dff' : '#8890b0' }]}>{s.label}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? '#cc6dff' : T.text.muted }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -220,6 +222,7 @@ export default function CollectionScreen({ navigation }: Props) {
   const [packFilter,  setPackFilter]  = useState<number>(0);
   const [sortBy,      setSortBy]      = useState<SortKey>('rarity');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const activeFilterCount = [
     rarity !== 'All',
@@ -313,24 +316,51 @@ export default function CollectionScreen({ navigation }: Props) {
 
       {/* ── Search + filter ── */}
       <View style={styles.searchAndFilter}>
-        <View style={styles.searchRow}>
-          <Text style={styles.searchIcon}>⌕</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search cards…"
-            placeholderTextColor="#404458"
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-              <Text style={styles.clearText}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {searchFocused ? (
+          <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={10} innerBackground={T.bg.elevated} style={{ flex: 1 }} innerStyle={{ flex: 1 }}>
+            <View style={[styles.searchRow, { borderWidth: 0 }]}>
+              <Text style={styles.searchIcon}>⌕</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search cards…"
+                placeholderTextColor="#404458"
+                value={search}
+                onChangeText={setSearch}
+                returnKeyType="search"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
+                  <Text style={styles.clearText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </GradientBorder>
+        ) : (
+          <View style={styles.searchRow}>
+            <Text style={styles.searchIcon}>⌕</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search cards…"
+              placeholderTextColor="#404458"
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
+                <Text style={styles.clearText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         <TouchableOpacity
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setSidebarOpen(true)}
@@ -410,7 +440,7 @@ export default function CollectionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#060610',
+    backgroundColor: T.bg.root,
   },
 
   // Header
@@ -448,8 +478,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#252540',
-    backgroundColor: '#0e0e1e',
+    borderColor: T.bg.border,
+    backgroundColor: T.bg.elevated,
   },
   filterBtnActive: {
     borderColor: '#4fc3f7',
@@ -457,12 +487,12 @@ const styles = StyleSheet.create({
   },
   filterBtnIcon: {
     fontSize: 14,
-    color: '#8890b0',
+    color: T.text.muted,
   },
   filterBtnText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 10,
-    color: '#8890b0',
+    color: T.text.muted,
     letterSpacing: 0.5,
   },
 
@@ -471,10 +501,10 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0e0e1e',
+    backgroundColor: T.bg.elevated,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#252540',
+    borderColor: T.bg.border,
     paddingHorizontal: 12,
   },
   searchIcon: {
@@ -485,11 +515,11 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    color: '#d8dcea',
+    color: T.text.body,
     fontSize: 14,
   },
   clearBtn: { padding: 4 },
-  clearText: { color: '#606480', fontSize: 14 },
+  clearText: { color: T.text.muted, fontSize: 14 },
 
   // Active filter chips
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 6, marginBottom: 6 },
@@ -525,11 +555,11 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 6, right: 2,
     backgroundColor: '#4fc3f7', borderRadius: 6,
     paddingHorizontal: 5, paddingVertical: 2,
-    borderWidth: 1, borderColor: '#060610',
+    borderWidth: 1, borderColor: T.bg.root,
   },
   countText: {
     fontFamily: 'Orbitron_700Bold', fontSize: 8,
-    color: '#060610', letterSpacing: 0.5,
+    color: T.bg.root, letterSpacing: 0.5,
   },
 
   // Sidebar
@@ -544,9 +574,9 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SIDEBAR_W,
-    backgroundColor: '#0a0a18',
+    backgroundColor: T.bg.surface,
     borderLeftWidth: 1,
-    borderLeftColor: '#1e2040',
+    borderLeftColor: T.bg.border,
     zIndex: 11,
     paddingTop: Platform.OS === 'ios' ? 56 : 16,
     overflow: 'hidden',
@@ -573,7 +603,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e2040',
+    borderBottomColor: T.bg.border,
   },
   sidebarTitle: {
     fontFamily: 'Orbitron_700Bold',
@@ -582,7 +612,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   closeBtn: { padding: 4 },
-  closeText: { color: '#606480', fontSize: 16 },
+  closeText: { color: T.text.muted, fontSize: 16 },
 
   sidebarScroll: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 8 },
 
@@ -621,7 +651,7 @@ const styles = StyleSheet.create({
 
   divider: {
     height: 1,
-    backgroundColor: '#1a1a30',
+    backgroundColor: T.bg.border,
     marginVertical: 12,
   },
 

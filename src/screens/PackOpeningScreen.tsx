@@ -24,6 +24,7 @@ import { PACKS } from '../data/packs';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
 
@@ -431,7 +432,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen]} onPress={() => setPhase('summary')} activeOpacity={0.85}>
-                <Text style={[s.nextBtnText, { color: '#060610' }]}>SEE RESULTS</Text>
+                <Text style={[s.nextBtnText, { color: T.bg.root }]}>SEE RESULTS</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -488,12 +489,12 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root:     { flex: 1, backgroundColor: '#060610', paddingTop: Platform.OS === 'ios' ? 56 : 16 },
+  root:     { flex: 1, backgroundColor: T.bg.root, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
 
   backBtn:  { paddingHorizontal: 20, paddingVertical: 10 },
   backText: { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: '#4fc3f7', letterSpacing: 1.5 },
 
-  screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#ffffff', letterSpacing: 2, textAlign: 'center', marginBottom: 6 },
+  screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: 22, color: T.text.primary, letterSpacing: 2, textAlign: 'center', marginBottom: 6 },
   screenSub:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: '#506070', textAlign: 'center', marginBottom: 24 },
 
   // ── Select ──
@@ -522,23 +523,23 @@ const s = StyleSheet.create({
   oddsRow:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   oddsDot:    { width: 8, height: 8, borderRadius: 4 },
   oddsRarity: { fontFamily: 'Orbitron_700Bold', fontSize: 11, flex: 1, letterSpacing: 0.5 },
-  oddsChance: { fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#606480' },
+  oddsChance: { fontFamily: 'Orbitron_900Black', fontSize: 13, color: T.text.muted },
 
   // ── Reveal ──
   revealRoot:     { flex: 1, alignItems: 'center', paddingTop: 8 },
   progressRow:    { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  dot:            { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1a1a30' },
+  dot:            { width: 8, height: 8, borderRadius: 4, backgroundColor: T.bg.border },
   dotDone:        { backgroundColor: '#4fc3f7' },
   dotCurrent:     { backgroundColor: '#4fc3f766', transform: [{ scale: 1.3 }] },
   revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 2, marginBottom: 20 },
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
-  revealName:     { fontFamily: 'Orbitron_900Black', fontSize: 16, color: '#ffffff', letterSpacing: 1, textAlign: 'center' },
+  revealName:     { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.text.primary, letterSpacing: 1, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
   tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#303050', letterSpacing: 2 },
   nextBtn:        { backgroundColor: '#4fc3f7', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
   nextBtnGreen:   { backgroundColor: '#2ED573' },
-  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: '#060610', letterSpacing: 2 },
+  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: T.bg.root, letterSpacing: 2 },
 
   // ── Summary ──
   summaryScroll:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48, alignItems: 'center' },
@@ -549,5 +550,5 @@ const s = StyleSheet.create({
   totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
   totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: 16, color: '#4fc3f7' },
   collectBtn:        { backgroundColor: '#4fc3f7', borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
-  collectText:       { fontFamily: 'Orbitron_900Black', fontSize: 16, color: '#060610', letterSpacing: 3 },
+  collectText:       { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.bg.root, letterSpacing: 3 },
 });
