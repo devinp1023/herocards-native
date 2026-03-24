@@ -20,6 +20,7 @@ import { CardWrapper } from '../components/CardWrapper';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { T } from '../theme/theme';
+import { ScreenBackground } from '../components/ScreenBackground';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -238,7 +239,7 @@ export default function StoreScreen() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.root}>
+    <ScreenBackground theme="store">
       {toast && <Toast msg={toast.msg} color={toast.color} />}
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
@@ -466,13 +467,13 @@ export default function StoreScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: T.bg.root },
+  root:   { },
   scroll: { paddingHorizontal: 16, paddingBottom: 40 },
 
   // Top bar
@@ -481,7 +482,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 12,
-    backgroundColor: T.bg.root,
   },
   storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#FFBE0B', letterSpacing: 3 },
   creditsChip: {

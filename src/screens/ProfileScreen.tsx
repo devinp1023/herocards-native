@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { T } from '../theme/theme';
+import { ScreenBackground } from '../components/ScreenBackground';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned, isOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
@@ -142,7 +143,7 @@ export default function ProfileScreen() {
   }, [gs.equipAvatar]);
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground theme="profile">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile header ── */}
@@ -239,13 +240,13 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: T.bg.root },
+  root:   { },
   scroll: { padding: 20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 50 },
 
   // Header

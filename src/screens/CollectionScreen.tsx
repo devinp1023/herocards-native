@@ -37,6 +37,7 @@ import { MissingCard } from '../components/MissingCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import { ScreenBackground } from '../components/ScreenBackground';
 
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
@@ -307,7 +308,7 @@ export default function CollectionScreen({ navigation }: Props) {
     item ? String(item.id) : `filler-${idx}`, []);
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground theme="collection">
       {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>COLLECTION</Text>
@@ -432,15 +433,13 @@ export default function CollectionScreen({ navigation }: Props) {
         onClear={clearFilters}
         onClose={() => setSidebarOpen(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
-    backgroundColor: T.bg.root,
   },
 
   // Header

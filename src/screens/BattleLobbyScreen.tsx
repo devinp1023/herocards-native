@@ -25,6 +25,7 @@ import { isOwned } from '../hooks/useGameState';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { ScreenBackground } from '../components/ScreenBackground';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 
@@ -432,7 +433,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
   // ── Opponent select ───────────────────────────────────────────────────────
   if (phase === 'opponent') {
     return (
-      <View style={s.root}>
+      <ScreenBackground theme="battle">
         <ScrollView contentContainerStyle={s.oppScroll} showsVerticalScrollIndicator={false}>
           <TouchableOpacity onPress={() => setPhase('deck')} style={s.backBtn} activeOpacity={0.7}>
             <Text style={s.backText}>← CHANGE DECK</Text>
@@ -458,13 +459,13 @@ export default function BattleLobbyScreen({ navigation }: Props) {
             <OpponentCard key={tier.tier} tier={tier} onPress={() => navigation.navigate('Battle', { playerDeck: battleDeck, tier: tier.tier })} />
           ))}
         </ScrollView>
-      </View>
+      </ScreenBackground>
     );
   }
 
   // ── Deck builder ─────────────────────────────────────────────────────────
   return (
-    <View style={s.root}>
+    <ScreenBackground theme="battle">
       {/* Fixed header */}
       <View style={s.header}>
         {/* Title row */}
@@ -645,16 +646,15 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         onClear={clearFilters}
         onClose={() => setSidebarOpen(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root: { flex:1, backgroundColor:T.bg.root },
 
   // Header
-  header:      { backgroundColor:T.bg.root, paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:T.bg.border },
+  header:      { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:T.bg.border },
   titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
   screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:T.text.primary, letterSpacing:1.5 },
   filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.elevated },
@@ -690,7 +690,7 @@ const s = StyleSheet.create({
   emptySub:   { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:T.bg.border, textAlign:'center', lineHeight:20 },
 
   // Footer CTA
-  footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:T.bg.root, borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
+  footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'rgba(8,5,10,0.92)', borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
   cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FF4757', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
   ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
   ctaBtnReady:     { backgroundColor:T.accent.mint, borderColor:T.accent.mint },

@@ -25,6 +25,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
+import { ScreenBackground } from '../components/ScreenBackground';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -228,7 +229,7 @@ export default function HomeScreen({ navigation }: Props) {
   const { animatedStyle: profileElevStyle } = useElevation(profilePressed ? 'hovered' : 'resting');
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground theme="home">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile card ── */}
@@ -318,13 +319,13 @@ export default function HomeScreen({ navigation }: Props) {
         <PackStatCard packId={2} collection={gs.collection} cardRoster={gs.cardRoster} />
 
       </ScrollView>
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex:1, backgroundColor:T.bg.root },
+  root:   { },
   scroll: { padding:20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom:40 },
 
   // Profile card

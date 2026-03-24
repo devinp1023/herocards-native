@@ -15,6 +15,7 @@ import { FONTS } from '../theme/fonts';
 import { T } from '../theme/theme';
 import { STARTING_CREDITS } from '../data/constants';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { ScreenBackground } from '../components/ScreenBackground';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 
 type Mode = 'login' | 'register';
@@ -88,8 +89,9 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
   };
 
   return (
+    <ScreenBackground theme="neutral">
     <KeyboardAvoidingView
-      style={s.root}
+      style={s.kav}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
@@ -262,11 +264,12 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
 
       </ScrollView>
     </KeyboardAvoidingView>
+    </ScreenBackground>
   );
 }
 
 const s = StyleSheet.create({
-  root:             { flex:1, backgroundColor:T.bg.root },
+  kav:              { flex:1 },
   scroll:           { flexGrow:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, paddingVertical:24 },
 
   logo:             { width:380, height:240, marginBottom:0, backgroundColor:T.bg.root },

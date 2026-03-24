@@ -50,6 +50,7 @@ All 14 build sessions complete. The app has:
 - **Never put computed values that depend on `cardRoster` at module level.** They must be `useMemo` inside the component (e.g. `ALL_TYPES` filters).
 - **`React.memo`** should be applied to any list item component rendered inside a `FlatList` — prevents expensive re-renders when unrelated state changes.
 - **`useCallback`** should wrap all event handlers passed as props to memoized components.
+- **Never hardcode hex color values in screens or components.** Always use `T.*` tokens from `src/theme/theme.ts` (e.g. `T.bg.surface`, `T.accent.mint`, `T.text.muted`). The only exceptions are: (1) domain colors in data files (`cards.ts`, `packs.ts`, `constants.ts`) where color is part of the data model, (2) stamina-specific cyan (`#4fc3f7`), and (3) colors with dynamic alpha that don't have a token (use `T.accent.mint + '66'` pattern). If a new color is needed, add it to `theme.ts` first, then reference the token.
 
 ## Auth
 - Email/password only (no Google Sign-In in the native app)

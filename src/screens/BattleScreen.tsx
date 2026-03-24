@@ -28,6 +28,7 @@ import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { ScreenBackground } from '../components/ScreenBackground';
 import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
@@ -960,7 +961,7 @@ export default function BattleScreen({ navigation, route }: Props) {
     .slice(-3);
 
   return (
-    <View style={s.root}>
+    <ScreenBackground theme="battle">
 
       {/* Header */}
       <MaterialSurface material="brushedMetal" style={s.header} borderRadius={0}>
@@ -1077,12 +1078,11 @@ export default function BattleScreen({ navigation, route }: Props) {
         <CardPreviewModal card={previewCard} onClose={() => setPreviewCard(null)} />
       )}
 
-    </View>
+    </ScreenBackground>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.bg.root },
 
   header:       { paddingTop: Platform.OS === 'ios' ? 52 : 12, paddingHorizontal: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerSide:   { flex: 1, alignItems: 'flex-start', gap: 2 },

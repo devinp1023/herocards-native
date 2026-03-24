@@ -24,6 +24,7 @@ import { PACKS } from '../data/packs';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
+import { ScreenBackground } from '../components/ScreenBackground';
 import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
@@ -326,7 +327,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
   // RENDER
   // ══════════════════════════════════════════════════════════════════════════
   return (
-    <View style={s.root}>
+    <ScreenBackground theme="home" style={{ paddingTop: Platform.OS === 'ios' ? 56 : 16 }}>
 
       {/* Back button */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
@@ -483,13 +484,12 @@ export default function PackOpeningScreen({ navigation }: Props) {
         </ScrollView>
       )}
 
-    </View>
+    </ScreenBackground>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root:     { flex: 1, backgroundColor: T.bg.root, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
 
   backBtn:  { paddingHorizontal: 20, paddingVertical: 10 },
   backText: { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: T.accent.mint, letterSpacing: 1.5 },

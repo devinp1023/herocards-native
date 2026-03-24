@@ -22,6 +22,7 @@ import { useGameStateContext } from '../context/GameStateContext';
 import { AchievementNode, HubNode } from '../components/AchievementNode';
 import { BranchConnector } from '../components/BranchConnector';
 import { T } from '../theme/theme';
+import { ScreenBackground } from '../components/ScreenBackground';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const NODE_SIZE = 48;
@@ -538,7 +539,7 @@ export default function CareerScreen() {
   const keyExtractor = useCallback((item: CategoryDef) => item.id, []);
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground theme="career">
       <ReAnimated.FlatList
         ref={flatListRef as any}
         data={ACHIEVEMENT_CATEGORIES as unknown as CategoryDef[]}
@@ -638,7 +639,7 @@ export default function CareerScreen() {
           </GestureDetector>
         </>
       )}
-    </View>
+    </ScreenBackground>
   );
 }
 
@@ -718,5 +719,5 @@ const bsStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.bg.root },
+  root: { },
 });
