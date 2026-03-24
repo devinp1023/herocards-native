@@ -4,6 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity,
 } from 'react-native';
+import { MaterialSurface } from '../components/MaterialSurface';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned, isOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
@@ -17,17 +18,16 @@ const ALL_AVATARS: (PurchasableAvatar | LevelAvatar)[] = [...AVATARS, ...LEVEL_A
 // ── StatBox ──────────────────────────────────────────────────────────────────
 function StatBox({ value, label }: { value: string; label: string }) {
   return (
-    <View style={bStyles.statBox}>
+    <MaterialSurface style={bStyles.statBox} borderRadius={10}>
       <Text style={bStyles.statVal}>{value}</Text>
       <Text style={bStyles.statLbl}>{label}</Text>
-    </View>
+    </MaterialSurface>
   );
 }
 
 const bStyles = StyleSheet.create({
   statBox: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#0a0a1e', borderRadius: 10, borderWidth: 1, borderColor: '#14142a',
     paddingVertical: 14, gap: 4,
   },
   statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile header ── */}
-        <View style={styles.header}>
+        <MaterialSurface style={styles.header} borderRadius={20}>
           <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
             <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
           </View>
@@ -172,7 +172,7 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </MaterialSurface>
 
         {/* ── Battle Stats ── */}
         <View style={styles.sectionHeader}>
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
             {uniqueOwned}/{totalCards}
           </Text>
         </View>
-        <View style={styles.collCard}>
+        <MaterialSurface style={styles.collCard}>
           <View style={styles.collBarTrack}>
             <View style={[styles.collBarFill, { width: `${collPct}%` as any }]} />
           </View>
@@ -206,7 +206,7 @@ export default function ProfileScreen() {
           <View style={styles.dividerThin} />
           <PackBar packId={1} collection={gs.collection} cardRoster={gs.cardRoster} />
           <PackBar packId={2} collection={gs.collection} cardRoster={gs.cardRoster} />
-        </View>
+        </MaterialSurface>
 
         {/* ── Avatars ── */}
         <View style={styles.sectionHeader}>
@@ -250,9 +250,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     flexDirection: 'row', gap: 16, alignItems: 'center',
-    backgroundColor: '#0a0a1e', borderRadius: 20,
     padding: 18, marginBottom: 20,
-    borderWidth: 1, borderColor: '#12122a',
   },
   avatarRing: {
     width: 70, height: 70, borderRadius: 35,
@@ -282,7 +280,7 @@ const styles = StyleSheet.create({
 
   // Collection
   collCard: {
-    backgroundColor: '#0a0a1e', borderRadius: 14, borderWidth: 1, borderColor: '#14142a',
+    borderRadius: 14,
     padding: 16, marginBottom: 24,
   },
   collBarTrack: { height: 8, backgroundColor: '#0d0d20', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },

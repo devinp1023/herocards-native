@@ -24,6 +24,7 @@ import {
 import { isOwned } from '../hooks/useGameState';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'BattleLobby'>;
 type Phase = 'deck' | 'opponent';
@@ -275,35 +276,38 @@ const grid = StyleSheet.create({
 const OpponentCard = React.memo(function OpponentCard({ tier, onPress }: { tier: typeof TIER_INFO[0]; onPress: () => void }) {
   const rewards = BATTLE_REWARDS[tier.tier];
   return (
-    <TouchableOpacity style={[opp.card, { borderColor: tier.color + '44' }]} onPress={onPress} activeOpacity={0.8}>
-      <View style={[opp.badge, { borderColor: tier.color + '55', backgroundColor: tier.color + '18' }]}>
-        <Text style={[opp.symbol, { color: tier.color }]}>{tier.symbol}</Text>
-      </View>
-      <View style={opp.info}>
-        <View style={opp.nameRow}>
-          <Text style={[opp.name, { color: tier.color }]}>{tier.name.toUpperCase()}</Text>
-          <View style={opp.dots}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <View key={i} style={[opp.dot, { backgroundColor: i < tier.difficulty ? tier.color : tier.color + '28' }]} />
-            ))}
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={opp.cardOuter}>
+      <MaterialSurface style={opp.card}>
+        <View style={[opp.badge, { borderColor: tier.color + '55', backgroundColor: tier.color + '18' }]}>
+          <Text style={[opp.symbol, { color: tier.color }]}>{tier.symbol}</Text>
+        </View>
+        <View style={opp.info}>
+          <View style={opp.nameRow}>
+            <Text style={[opp.name, { color: tier.color }]}>{tier.name.toUpperCase()}</Text>
+            <View style={opp.dots}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <View key={i} style={[opp.dot, { backgroundColor: i < tier.difficulty ? tier.color : tier.color + '28' }]} />
+              ))}
+            </View>
+          </View>
+          <Text style={opp.desc} numberOfLines={2}>{tier.description}</Text>
+          <View style={opp.rewards}>
+            <Text style={opp.win}>Win  +{rewards.winCredits} CR  +{rewards.winXp} XP</Text>
+            <Text style={opp.loss}>Loss  +{rewards.lossCredits} CR  +{rewards.lossXp} XP</Text>
           </View>
         </View>
-        <Text style={opp.desc} numberOfLines={2}>{tier.description}</Text>
-        <View style={opp.rewards}>
-          <Text style={opp.win}>Win  +{rewards.winCredits} CR  +{rewards.winXp} XP</Text>
-          <Text style={opp.loss}>Loss  +{rewards.lossCredits} CR  +{rewards.lossXp} XP</Text>
-        </View>
-      </View>
-      {/* Compact battle arrow */}
-      <TouchableOpacity style={[opp.arrow, { borderColor: tier.color + '66' }]} onPress={onPress}>
-        <Text style={[opp.arrowText, { color: tier.color }]}>→</Text>
-      </TouchableOpacity>
+        {/* Compact battle arrow */}
+        <TouchableOpacity style={[opp.arrow, { borderColor: tier.color + '66' }]} onPress={onPress}>
+          <Text style={[opp.arrowText, { color: tier.color }]}>→</Text>
+        </TouchableOpacity>
+      </MaterialSurface>
     </TouchableOpacity>
   );
 });
 
 const opp = StyleSheet.create({
-  card:      { flexDirection:'row', alignItems:'center', backgroundColor:'#0a0a1e', borderRadius:14, borderWidth:1, padding:14, marginBottom:10, gap:12 },
+  cardOuter: { marginBottom:10 },
+  card:      { flexDirection:'row', alignItems:'center', borderRadius:14, padding:14, gap:12 },
   badge:     { width:40, height:40, borderRadius:10, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   symbol:    { fontSize:20, lineHeight:24 },
   info:      { flex:1, gap:4 },
@@ -434,7 +438,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
           <Text style={s.oppSub}>Higher tiers mean tougher opponents and bigger rewards.</Text>
 
           {/* Deck summary */}
-          <View style={s.deckSummary}>
+          <MaterialSurface style={s.deckSummary} borderRadius={12}>
             <Text style={s.deckSummaryLabel}>YOUR DECK  ·  {DECK_SIZE} CARDS</Text>
             <View style={s.deckSummaryChips}>
               {RARITY_ORDER.filter(r => (rarityCounts[r] ?? 0) > 0).map(r => (
@@ -445,7 +449,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
                 </View>
               ))}
             </View>
-          </View>
+          </MaterialSurface>
 
           {TIER_INFO.map(tier => (
             <OpponentCard key={tier.tier} tier={tier} onPress={() => navigation.navigate('Battle', { playerDeck: battleDeck, tier: tier.tier })} />
@@ -669,7 +673,7 @@ const s = StyleSheet.create({
   backBtn:          { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingBottom:16 },
   backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#4fc3f7', letterSpacing:1 },
   oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:'#606480', marginBottom:16 },
-  deckSummary:      { backgroundColor:'#0a0a1e', borderRadius:12, borderWidth:1, borderColor:'#14142a', padding:12, marginBottom:16, gap:8 },
+  deckSummary:      { borderRadius:12, padding:12, marginBottom:16, gap:8 },
   deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#404458', letterSpacing:1.5 },
   deckSummaryChips: { flexDirection:'row', flexWrap:'wrap', gap:6 },
   summaryChip:      { paddingHorizontal:8, paddingVertical:3, borderRadius:5, borderWidth:1 },

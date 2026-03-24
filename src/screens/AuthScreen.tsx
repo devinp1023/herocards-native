@@ -13,6 +13,7 @@ import {
 import { auth, db } from '../firebase/config';
 import { FONTS } from '../theme/fonts';
 import { STARTING_CREDITS } from '../data/constants';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 type Mode = 'login' | 'register';
 
@@ -98,7 +99,7 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
         />
 
         {/* Card */}
-        <View style={s.card}>
+        <MaterialSurface style={s.card} borderRadius={22}>
           {/* Mode toggle */}
           <View style={s.toggle}>
             {(['login', 'register'] as Mode[]).map(m => (
@@ -163,7 +164,7 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
               }
             </TouchableOpacity>
           </View>
-        </View>
+        </MaterialSurface>
 
         <Text style={s.tagline}>Syncs across all your devices · Secured by Firebase</Text>
 
@@ -202,7 +203,7 @@ const s = StyleSheet.create({
 
   logo:             { width:380, height:240, marginBottom:0, backgroundColor:'#010004' },
 
-  card:             { width:'100%', maxWidth:360, backgroundColor:'#06060f', borderRadius:22, padding:32, borderWidth:1, borderColor:'#16163a' },
+  card:             { width:'100%', maxWidth:360, borderRadius:22, padding:32 },
   toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:'#12122a' },
   toggleBtn:        { flex:1, paddingVertical:12, alignItems:'center', backgroundColor:'transparent' },
   toggleBtnActive:  { backgroundColor:'#4fc3f7' },

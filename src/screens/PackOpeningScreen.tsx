@@ -23,6 +23,7 @@ import { RC, PACK_COST, XP_AWARDS } from '../data/constants';
 import { PACKS } from '../data/packs';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
 
@@ -337,10 +338,10 @@ export default function PackOpeningScreen({ navigation }: Props) {
           <Text style={s.screenTitle}>OPEN A PACK</Text>
           <Text style={s.screenSub}>5 cards · {PACK_COST} credits each</Text>
 
-          <View style={s.balanceRow}>
+          <MaterialSurface style={s.balanceRow} borderRadius={12}>
             <Text style={s.balanceLabel}>YOUR BALANCE</Text>
             <Text style={s.balanceVal}>{gs.coins.toLocaleString()} CR</Text>
-          </View>
+          </MaterialSurface>
 
           {[1, 2].map(id => {
             const p = PACKS[id];
@@ -348,32 +349,34 @@ export default function PackOpeningScreen({ navigation }: Props) {
             return (
               <TouchableOpacity
                 key={id}
-                style={[s.packCard, { borderColor: p.color + '55' }, !canAfford && s.packCardDisabled]}
+                style={[s.packCardOuter, !canAfford && s.packCardDisabled]}
                 onPress={() => openPack(id)}
                 activeOpacity={0.8}
                 disabled={!canAfford}
               >
-                <View style={[s.packColorBar, { backgroundColor: p.color }]} />
-                <View style={s.packInfo}>
-                  <Text style={[s.packName, { color: p.color }]}>{p.name.toUpperCase()}</Text>
-                  <Text style={s.packSub}>{p.subtitle}</Text>
-                  <View style={s.packMeta}>
-                    <Text style={s.packCards}>5 CARDS</Text>
-                    <View style={[s.costBadge, { borderColor: p.color + '55', backgroundColor: p.color + '18' }]}>
-                      <Text style={[s.costText, { color: p.color }]}>{PACK_COST} CR</Text>
+                <MaterialSurface style={s.packCard} borderRadius={18}>
+                  <View style={[s.packColorBar, { backgroundColor: p.color }]} />
+                  <View style={s.packInfo}>
+                    <Text style={[s.packName, { color: p.color }]}>{p.name.toUpperCase()}</Text>
+                    <Text style={s.packSub}>{p.subtitle}</Text>
+                    <View style={s.packMeta}>
+                      <Text style={s.packCards}>5 CARDS</Text>
+                      <View style={[s.costBadge, { borderColor: p.color + '55', backgroundColor: p.color + '18' }]}>
+                        <Text style={[s.costText, { color: p.color }]}>{PACK_COST} CR</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-                {!canAfford && (
-                  <View style={s.insufficientBadge}>
-                    <Text style={s.insufficientText}>NOT ENOUGH CR</Text>
-                  </View>
-                )}
+                  {!canAfford && (
+                    <View style={s.insufficientBadge}>
+                      <Text style={s.insufficientText}>NOT ENOUGH CR</Text>
+                    </View>
+                  )}
+                </MaterialSurface>
               </TouchableOpacity>
             );
           })}
 
-          <View style={s.oddsBox}>
+          <MaterialSurface style={s.oddsBox}>
             <Text style={s.oddsTitle}>PULL RATES</Text>
             {RARITY_ORDER.map(r => (
               <View key={r} style={s.oddsRow}>
@@ -382,7 +385,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
                 <Text style={s.oddsChance}>{RC[r].chance}%</Text>
               </View>
             ))}
-          </View>
+          </MaterialSurface>
         </ScrollView>
       )}
 
@@ -456,7 +459,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
           </View>
 
           {/* Totals */}
-          <View style={s.totalsBox}>
+          <MaterialSurface style={s.totalsBox}>
             <View style={s.totalRow}>
               <Text style={s.totalLabel}>XP EARNED</Text>
               <Text style={s.totalVal}>+{XP_AWARDS.pack} XP</Text>
@@ -471,7 +474,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
                 <Text style={[s.totalVal, { color: '#FFBE0B' }]}>{dupeCount}</Text>
               </View>
             )}
-          </View>
+          </MaterialSurface>
 
           <TouchableOpacity style={s.collectBtn} onPress={collect} activeOpacity={0.85}>
             <Text style={s.collectText}>COLLECT</Text>
@@ -496,11 +499,12 @@ const s = StyleSheet.create({
   // ── Select ──
   selectScroll: { paddingHorizontal: 20, paddingBottom: 48 },
 
-  balanceRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, backgroundColor: '#0a0a1e', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#14142a' },
+  balanceRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderRadius: 12, padding: 14 },
   balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
   balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
 
-  packCard:         { flexDirection: 'row', backgroundColor: '#0a0a1e', borderRadius: 18, borderWidth: 1, marginBottom: 14, overflow: 'hidden' },
+  packCardOuter:    { marginBottom: 14 },
+  packCard:         { flexDirection: 'row', borderRadius: 18, overflow: 'hidden' },
   packCardDisabled: { opacity: 0.4 },
   packColorBar:     { width: 6 },
   packInfo:         { flex: 1, padding: 18, gap: 6 },
@@ -513,7 +517,7 @@ const s = StyleSheet.create({
   insufficientBadge:{ justifyContent: 'center', paddingRight: 16 },
   insufficientText: { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ff4060', letterSpacing: 0.5 },
 
-  oddsBox:    { marginTop: 12, backgroundColor: '#0a0a1e', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#14142a', gap: 8 },
+  oddsBox:    { marginTop: 12, borderRadius: 14, padding: 16, gap: 8 },
   oddsTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#404060', letterSpacing: 2, marginBottom: 4 },
   oddsRow:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   oddsDot:    { width: 8, height: 8, borderRadius: 4 },
@@ -540,7 +544,7 @@ const s = StyleSheet.create({
   summaryScroll:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48, alignItems: 'center' },
   summaryRow:        { flexDirection: 'row', gap: 8, marginBottom: 12, width: '100%' },
   summaryRowCenter:  { justifyContent: 'center' },
-  totalsBox:         { backgroundColor: '#0a0a1e', borderRadius: 14, borderWidth: 1, borderColor: '#14142a', padding: 16, gap: 10, width: '100%', marginTop: 4 },
+  totalsBox:         { borderRadius: 14, padding: 16, gap: 10, width: '100%', marginTop: 4 },
   totalRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
   totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: 16, color: '#4fc3f7' },

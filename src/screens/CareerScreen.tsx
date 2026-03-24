@@ -14,6 +14,7 @@ import ReAnimated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialSurface } from '../components/MaterialSurface';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategoryId } from '../data/constants';
 import { AchievementFamily, AchievementTier } from '../data/achievements';
 import { useAchievementProgress } from '../hooks/useAchievementProgress';
@@ -589,7 +590,7 @@ export default function CareerScreen() {
             <Text style={bsStyles.progressLabel}>{selectedTier.progressLabel}</Text>
 
             {/* Rewards */}
-            <View style={bsStyles.rewardRow}>
+            <MaterialSurface style={bsStyles.rewardRow} borderRadius={12}>
               <View style={bsStyles.rewardItem}>
                 <View style={bsStyles.rewardValueRow}>
                   <Text style={bsStyles.rewardValue}>+{selectedTier.achievement.xp.toLocaleString()}</Text>
@@ -609,7 +610,7 @@ export default function CareerScreen() {
                 </View>
                 <Text style={bsStyles.rewardLabel}>CREDITS</Text>
               </View>
-            </View>
+            </MaterialSurface>
 
             {/* Status / action */}
             {selectedTier.status === 'completed' && (
@@ -682,7 +683,6 @@ const bsStyles = StyleSheet.create({
   },
   rewardRow: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#0a0a1e', borderRadius: 12, borderWidth: 1, borderColor: '#14142a',
     paddingVertical: 12, marginBottom: 12,
   },
   rewardItem: {

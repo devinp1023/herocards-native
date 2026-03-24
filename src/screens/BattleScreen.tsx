@@ -27,6 +27,7 @@ import { useSession } from '../context/SessionContext';
 import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { HeroCard } from '../components/HeroCard';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
@@ -96,7 +97,7 @@ function CardPreviewModal({ card, onClose }: { card: BattleCard; onClose: () => 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={pm.backdrop} activeOpacity={1} onPress={onClose}>
-        <View style={pm.cardWrap}>
+        <MaterialSurface material="frostedGlass" style={pm.cardWrap} borderRadius={16}>
           <CardWrapper scale={PREVIEW_SCALE}>
             <HeroCard
               card={card}
@@ -108,14 +109,14 @@ function CardPreviewModal({ card, onClose }: { card: BattleCard; onClose: () => 
               hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
             />
           </CardWrapper>
-        </View>
+        </MaterialSurface>
       </TouchableOpacity>
     </Modal>
   );
 }
 const pm = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', alignItems: 'center', justifyContent: 'center' },
-  cardWrap: { alignItems: 'center' },
+  cardWrap: { alignItems: 'center', padding: 12 },
 });
 
 // ── Empty hand slot ────────────────────────────────────────────────────────────
@@ -432,7 +433,7 @@ const pas = StyleSheet.create({
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
 function AIZone({ handCount }: { handCount: number }) {
   return (
-    <View style={az.container}>
+    <MaterialSurface material="brushedMetal" style={az.container} borderRadius={0}>
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const filled = i < handCount;
         return (
@@ -441,11 +442,11 @@ function AIZone({ handCount }: { handCount: number }) {
           </View>
         );
       })}
-    </View>
+    </MaterialSurface>
   );
 }
 const az = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderBottomWidth: 1, borderBottomColor: '#0f0f24' },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
 });
 
 // ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
@@ -576,7 +577,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
   onPreview: (c: BattleCard) => void;
 }) {
   return (
-    <View style={pz.container}>
+    <MaterialSurface material="brushedMetal" style={pz.container} borderRadius={0}>
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const card = hand[i];
         return card ? (
@@ -596,11 +597,11 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
           </View>
         );
       })}
-    </View>
+    </MaterialSurface>
   );
 }
 const pz = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#080818', borderTopWidth: 1, borderTopColor: '#0f0f24' },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
 });
 
 // ── Amp effect display constants (used by eventLine and AmpMeter) ─────────────
@@ -877,12 +878,12 @@ function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
       {winner === 'tie' && <Text style={rs.tieNote}>Last Effort — both last cards fell simultaneously</Text>}
       <Text style={[rs.tier, { color: tierColor }]}>{tierName.toUpperCase()}</Text>
       {rewards && (
-        <View style={rs.rewardsBox}>
+        <MaterialSurface material="brushedMetal" style={rs.rewardsBox}>
           <Text style={rs.rewardsTitle}>REWARDS</Text>
           <Text style={rs.rewardLine}>+{rewards.credits} Credits</Text>
           <Text style={rs.rewardLine}>+{rewards.xp} XP</Text>
           {rewards.streakBonus && <Text style={rs.streak}>WIN STREAK BONUS x2</Text>}
-        </View>
+        </MaterialSurface>
       )}
       <TouchableOpacity style={[rs.backBtn, { borderColor: tierColor + '88' }]} onPress={onBack} activeOpacity={0.8}>
         <Text style={[rs.backText, { color: tierColor }]}>BACK TO LOBBY</Text>
@@ -894,7 +895,7 @@ const rs = StyleSheet.create({
   root:         { flex: 1, backgroundColor: '#060610', alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
   outcome:      { fontFamily: 'Orbitron_900Black', fontSize: 36, letterSpacing: 4 },
   tier:         { fontFamily: 'Orbitron_700Bold', fontSize: 12, letterSpacing: 2, marginBottom: 8 },
-  rewardsBox:   { backgroundColor: '#0a0a1e', borderRadius: 14, borderWidth: 1, borderColor: '#14142a', padding: 20, width: '100%', alignItems: 'center', gap: 6 },
+  rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
   rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 2, marginBottom: 4 },
   rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
   streak:       { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ffa726', letterSpacing: 1, marginTop: 4 },
@@ -961,7 +962,7 @@ export default function BattleScreen({ navigation, route }: Props) {
     <View style={s.root}>
 
       {/* Header */}
-      <View style={s.header}>
+      <MaterialSurface material="brushedMetal" style={s.header} borderRadius={0}>
         {/* Player side */}
         <View style={s.headerSide}>
           <View style={[s.avatarCircle, { borderColor: playerAvatar?.color ?? '#4fc3f7' }]}>
@@ -988,7 +989,7 @@ export default function BattleScreen({ navigation, route }: Props) {
           </View>
           <Text style={[s.playerName, { color: tc }]} numberOfLines={1}>{battle.tierName.toUpperCase()}</Text>
         </View>
-      </View>
+      </MaterialSurface>
 
       {/* AI zone — face-down hand only */}
       <AIZone handCount={battle.aiHandCount} />
@@ -1082,7 +1083,7 @@ export default function BattleScreen({ navigation, route }: Props) {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#060610' },
 
-  header:       { paddingTop: Platform.OS === 'ios' ? 52 : 12, paddingHorizontal: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#10102a', backgroundColor: '#060610' },
+  header:       { paddingTop: Platform.OS === 'ios' ? 52 : 12, paddingHorizontal: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerSide:   { flex: 1, alignItems: 'flex-start', gap: 2 },
   avatarCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a1e' },
   avatarSymbol: { fontSize: 14, fontWeight: '700' },
