@@ -256,40 +256,51 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Earn an achievement — toast has violet gradient border + violet glow.
 - **Warnings to check:** Energy Border Memoization — when applying elevation to FlatList items in future sprints, confirm animations don't break `React.memo`.
 
-**Sprint 2.4b — Token migration + targeted GradientBorder/elevation**
-- **Color token migration:** Replace hardcoded background, border, and text hex values with `T.*` token references across all screens. Consolidate similar-but-different dark shades to canonical token values. Screen root backgrounds (`#060610` etc.) are left as-is — replaced by `ScreenBackground` in Sprint 3.1.
-- **GradientBorder — TextInputs:** Add gradient border on focus to AuthScreen inputs (username, email, password), CollectionScreen search, BattleLobbyScreen search. Track focus state, show mint gradient border when focused, default border when blurred.
-- **GradientBorder — Primary CTA buttons:** Apply to HomeScreen battle button, HomeScreen open pack button, AuthScreen submit button, StoreScreen buy/equip buttons. Use mint preset for positive actions, gold for purchase actions.
-- **useElevation — High-impact interactive elements:** Apply to HomeScreen quest items (resting→hovered on press), HomeScreen profile card (resting→hovered on press), StoreScreen featured deal card (resting→hovered on press).
-- **NOT included (deferred):** MiniCard elevation (→ Sprint 3.3 card breathing), all remaining buttons (→ Sprint 4.2 press ripple), selected list items (→ Sprint 4.2).
-- **Verify:** Focus an input on AuthScreen — mint gradient border appears. Tap battle button on Home — gradient border visible. Press a quest card — lifts with glow. `npx tsc --noEmit` passes.
-- **Warnings to check:** Energy Border Memoization — quest items are in a list, confirm elevation animation doesn't break memoization.
+**Sprint 2.4b — Token migration + targeted GradientBorder/elevation** ✅ COMPLETE
+- Color token migration: ~104 replacements across 12 screens — hardcoded backgrounds → `T.bg.*`, borders → `T.bg.border`, text colors → `T.text.*`
+- GradientBorder on TextInputs: AuthScreen (3 inputs), CollectionScreen search, BattleLobbyScreen search — mint gradient on focus
+- GradientBorder on CTA buttons: HomeScreen battle (mint) + pack (violet), AuthScreen submit (mint), StoreScreen buy/equip (gold)
+- useElevation on: HomeScreen quest cards + profile card, StoreScreen featured deal card
+- **Note:** Broad button/MiniCard application deferred to Sprints 3.3 and 4.2.
 
-**Sprint 2.5 — Progress bar treatments**
-- Update all progress bars with per-context colors and 2-layer glows
-- Quest progress: mint fill + mint glow
-- HP bars in battle: vitality/caution/danger based on percentage
+**Sprint 2.5 — Progress bar treatments** ✅ COMPLETE
 - XP bar: violet gradient fill (`#B14EFF → #cc6dff`) + violet glow
-- **Verify:** Open battle, take damage — HP bar changes color and glow at thresholds. Check quest panel — mint glow on progress fill.
-- **Warnings to check:** None — these are style-only changes on existing components.
+- Quest bars: mint fill + mint glow (green when complete)
+- HP bars (HeroCard + MiniCard): `T.status.vitality`/`caution`/`danger` with matched glow
+- Pack progress bars (Home + Profile): pack-color glow added
+- Achievement progress bar (Career): category-color glow added
+- Collection progress bar (Profile): mint fill + mint glow
 
-> **Flagged: Cyan (`#4fc3f7`) → Mint (`T.accent.mint`) migration**
-> The style guide defines mint (`#00FFAA`) as the primary accent, but the app still uses cyan (`#4fc3f7`) as its primary accent in **120 occurrences across 17 files** — tab bar, stamina pips, links, selected states, badges, icons, button tints, and more. This is a large migration that should be its own dedicated sprint. It will change the app's visual identity significantly (cool blue → vibrant green). Recommend scheduling as **Sprint 2.6 — Cyan-to-mint accent migration** before Phase 3 begins, since Phase 3 (screen identity, ambient particles) will add more mint-colored elements and the inconsistency will be more jarring if cyan still exists alongside.
->
-> **Files with highest counts:** BattleScreen (18), CollectionScreen (18), achievements.ts (19), BattleLobbyScreen (17), HomeScreen (11), PackOpeningScreen (8).
+**Sprint 2.6 — Cyan-to-mint accent migration** ✅ COMPLETE
+- Replaced 117 occurrences of `#4fc3f7` with `T.accent.mint` across 18 files
+- Data files (quests.ts, achievements.ts) updated to `#00FFAA` literals
+- Pack domain colors (Infinite Waves, Sea Sovereign, Storm Rider) kept as cyan — identity colors
+- Stamina pips/text kept as cyan — stamina has its own visual identity
 
 ---
 
 ### Phase 3 — Screen Identity & Ambient Life
 
-**Sprint 3.1 — ScreenBackground component**
-- Create `src/components/ScreenBackground.tsx`
-- Implement per-screen base gradients (screen identity through unique base gradients + vignette colors — no texture overlay images)
-- Implement vignette View with **breathing animation** (5s ease-in-out opacity pulse)
-- Wrap all screen root Views in `<ScreenBackground theme="...">` (Home, Collection, Store, Career, Battle, Profile)
-- Battle screen: test obsidian gradient as screen background here. If `obsidian-cracks.png` works at full-screen with `resizeMode="cover"`, layer it on. Otherwise keep pure gradient.
-- **Verify:** Navigate between screens — each should have a subtly different visual temperature. The vignette should breathe (barely perceptible at normal viewing).
-- **Warnings to check:** Reanimated Shared Value Count — each screen adds a vignette shared value. Confirm animations pause on screen blur via `useIsFocused()`.
+**Sprint 3.1 — ScreenBackground component** ✅ COMPLETE
+- Created `src/components/ScreenBackground.tsx` with 7 themes (home, career, battle, collection, store, profile, neutral)
+- Each theme has unique base gradient + colored vignette with breathing animation (5s cycle)
+- Per-theme vignette alpha tuned for perceptual brightness matching (mint=30, violet=44, red=40, gold=50, white=20)
+- Vignette pauses when screen is not focused (`useIsFocused()`)
+- All 10 screens wrapped. Removed opaque backgrounds from StoreScreen topBar and BattleLobbyScreen header so vignette shows through.
+- BattleLobby footer uses `rgba(8,5,10,0.92)` to hide scroll content while allowing vignette bleed.
+- CLAUDE.md updated: never hardcode hex colors, always use `T.*` tokens.
+
+**Sprint 3.1b — Text visibility cleanup**
+- **Problem:** 50+ hardcoded dark gray colors (`#506070`, `#404458`, `#404060`, `#303050`, `#505068`, `#8090a0`) remain across all screens — these create a fourth unofficial text tier darker than `T.text.muted` (#6e7191). Combined with deepened screen gradients, these elements are nearly invisible.
+- **Additionally:** 17 elements at fontSize 7 combined with dark colors are at the edge of legibility (CareerScreen badge labels, BattleLobbyScreen limit text, various card labels).
+- **Migration rules:**
+  - Section headers/labels currently `#506070` → `T.text.muted` (promote to visible)
+  - Subtitles/descriptions currently `#404458`/`#404060` → `T.text.muted` (promote to visible)
+  - Placeholder/disabled text currently `#303050` → leave as intentionally dim OR use `T.text.muted` with reduced opacity
+  - Font sizes at 7px → bump to minimum 8px where space allows
+  - Domain-specific disabled states (unaffordable prices, locked avatars) → keep dim but ensure minimum contrast
+- **Verify:** All text across the app is legible. Section headers no longer disappear into the background. No fontSize below 8px except where space is genuinely constrained (deck slot labels, card pip labels in battle).
+- **Warnings to check:** None — style-only changes.
 
 **Sprint 3.2 — Ambient particles**
 - Create `src/components/AmbientParticles.tsx`
@@ -314,6 +325,24 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - 45° angle, 6s cycle, 0.05 opacity, focused-only
 - **Verify:** Watch a screen title for 6s — a faint light sweep should cross the text. Switch screens — shimmer only runs on focused screen.
 - **Warnings to check:** Expo Go vs Custom Dev Client (MaskedView compatibility). MaskedView Performance — one per screen is fine.
+
+**Sprint 3.5 — Font size tokenization**
+- **Problem:** Font sizes are hardcoded across 100+ declarations with no system — fontSize 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 26 etc. appear ad-hoc. Same problem we had with colors before tokenization: values drift, inconsistencies emerge, and there's no single place to tune the type scale.
+- **Step 1:** Audit all `fontSize` values across `/src/screens/` and `/src/components/`. Group into a named scale (e.g., `T.font.xs`, `T.font.sm`, `T.font.md`, `T.font.lg`, `T.font.xl`, `T.font.xxl`, `T.font.display`).
+- **Step 2:** Add `T.font` to `src/theme/theme.ts` with the named scale. Each size maps to a specific px value.
+- **Step 3:** Replace all hardcoded `fontSize: N` with `fontSize: T.font.*` across all screens and components.
+- **Exception:** Skia `<Text>` elements use `fontSize` as a number prop — these can reference `T.font.*` since it resolves to a number.
+- **Verify:** `npx tsc --noEmit` passes. Visual spot-check every screen — text sizes should be identical (this is a mechanical replacement, not a redesign).
+- **Warnings to check:** None — mechanical replacement only. No visual changes expected.
+
+**Sprint 3.6 — Skia canvas color audit**
+- Skia elements (`<Path>`, `<Text>`, `<Fill>`, `<Rect>`, `<LinearGradient>`, etc.) use raw string colors — they can't reference `T.*` tokens directly.
+- Audit all Skia color values in: `App.tsx` (tab bar), `HeroCard.tsx`, `MiniCard.tsx`, `FaceDownCard.tsx`, `BranchConnector.tsx`, `AchievementNode.tsx`, and any Skia elements in screen files (BattleScreen amp arcs, etc.)
+- For each hardcoded Skia color, verify it matches the style guide's intended value. Replace outdated hex values (old cyan, old status colors, old backgrounds) with the correct style guide hex equivalents.
+- Since Skia can't use `T.*` at runtime, add a comment next to each Skia color referencing the token it corresponds to (e.g., `color="#00FFAA" /* T.accent.mint */`).
+- Consolidate stat pill colors if HeroCard and CardDetailScreen use different values for ATK/DEF/SPD — pick the canonical set and use it everywhere.
+- **Verify:** Tab bar colors match mint system. Card shimmer/glow colors align with style guide. Amp arcs use correct accent colors. No leftover cyan in Skia elements (except stamina).
+- **Warnings to check:** None — string color replacements only, no structural changes.
 
 ---
 

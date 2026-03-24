@@ -84,7 +84,7 @@ const FamilyColumn = React.memo(function FamilyColumn({
 
 const fcStyles = StyleSheet.create({
   familyLabel: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#505068',
+    fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.muted,
     letterSpacing: 0.5, marginBottom: 8, textAlign: 'center', width: '100%',
     height: 22,
   },
@@ -116,7 +116,7 @@ const FeatsPage = React.memo(function FeatsPage({
       <View style={fpStyles.headerRow}>
         <Text style={[fpStyles.catLabel, { color: category.color }]}>{category.label}</Text>
         <Text style={[fpStyles.catCount, {
-          color: categoryStats.completed === categoryStats.total ? '#2ED573' : '#606480',
+          color: categoryStats.completed === categoryStats.total ? T.status.vitality : T.text.muted,
         }]}>
           {categoryStats.completed}/{categoryStats.total}
         </Text>
@@ -256,8 +256,8 @@ const fpStyles = StyleSheet.create({
   headerRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: 16, letterSpacing: 2 },
   catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1 },
-  catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#404458', marginBottom: 20 },
-  badgeLabel: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#505068', letterSpacing: 0.5, marginTop: 4, textAlign: 'center', width: 80 },
+  catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.text.muted, marginBottom: 20 },
+  badgeLabel: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.muted, letterSpacing: 0.5, marginTop: 4, textAlign: 'center', width: 80 },
 });
 
 // ── StandardPage — tree layout for categories with multi-tier families
@@ -295,7 +295,7 @@ const StandardPage = React.memo(function StandardPage({
       <View style={spStyles.headerRow}>
         <Text style={[spStyles.catLabel, { color: category.color }]}>{category.label}</Text>
         <Text style={[spStyles.catCount, {
-          color: categoryStats.completed === categoryStats.total ? '#2ED573' : '#606480',
+          color: categoryStats.completed === categoryStats.total ? T.status.vitality : T.text.muted,
         }]}>
           {categoryStats.completed}/{categoryStats.total}
         </Text>
@@ -361,7 +361,7 @@ const spStyles = StyleSheet.create({
   headerRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: 16, letterSpacing: 2 },
   catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1 },
-  catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#404458', marginBottom: 20 },
+  catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.text.muted, marginBottom: 20 },
   rowLabel:   { marginBottom: 12 },
   rowDivider: { height: 1 },
   familyRow:  { flexDirection: 'row', justifyContent: 'center', paddingBottom: 8 },
@@ -598,7 +598,7 @@ export default function CareerScreen() {
                 <View style={bsStyles.rewardValueRow}>
                   <Text style={bsStyles.rewardValue}>+{selectedTier.achievement.xp.toLocaleString()}</Text>
                   {selectedTier.status === 'completed' && (
-                    <MaterialCommunityIcons name="check-circle" size={14} color="#2ED573" style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="check-circle" size={14} color={T.status.vitality} style={{ marginLeft: 4 }} />
                   )}
                 </View>
                 <Text style={bsStyles.rewardLabel}>XP</Text>
@@ -608,7 +608,7 @@ export default function CareerScreen() {
                 <View style={bsStyles.rewardValueRow}>
                   <Text style={bsStyles.rewardValue}>+{selectedTier.achievement.credits.toLocaleString()}</Text>
                   {selectedTier.status === 'completed' && (
-                    <MaterialCommunityIcons name="check-circle" size={14} color="#2ED573" style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="check-circle" size={14} color={T.status.vitality} style={{ marginLeft: 4 }} />
                   )}
                 </View>
                 <Text style={bsStyles.rewardLabel}>CREDITS</Text>
@@ -617,7 +617,7 @@ export default function CareerScreen() {
 
             {/* Status / action */}
             {selectedTier.status === 'completed' && (
-              <Text style={[bsStyles.statusText, { color: '#2ED573' }]}>COMPLETED</Text>
+              <Text style={[bsStyles.statusText, { color: T.status.vitality }]}>COMPLETED</Text>
             )}
             {selectedTier.status === 'earned' && (
               <Pressable
@@ -631,7 +631,7 @@ export default function CareerScreen() {
               <Text style={[bsStyles.statusText, { color: selectedColor }]}>IN PROGRESS</Text>
             )}
             {selectedTier.status === 'locked' && (
-              <Text style={[bsStyles.statusText, { color: '#606480' }]}>
+              <Text style={[bsStyles.statusText, { color: T.text.muted }]}>
                 Complete the previous tier to unlock
               </Text>
             )}
@@ -650,9 +650,9 @@ const bsStyles = StyleSheet.create({
   },
   sheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#0c0c22', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: T.bg.elevated, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingHorizontal: 24, paddingBottom: 40, paddingTop: 12,
-    borderTopWidth: 1, borderColor: '#1a1a35',
+    borderTopWidth: 1, borderColor: T.bg.border,
   },
   handle: {
     width: 36, height: 4, borderRadius: 2, backgroundColor: '#2a2a45',
@@ -670,7 +670,7 @@ const bsStyles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1,
   },
   desc: {
-    fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: '#b0b8cc',
+    fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: T.text.body,
     textAlign: 'center', marginBottom: 16, lineHeight: 20,
   },
   progressTrack: {

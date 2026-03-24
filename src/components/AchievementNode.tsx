@@ -6,6 +6,7 @@ import ReAnimated, {
   withTiming, Easing, cancelAnimation,
 } from 'react-native-reanimated';
 import { AchievementTier } from '../data/achievements';
+import { T } from '../theme/theme';
 
 // ── Props ────────────────────────────────────────────────────────────
 interface AchievementNodeProps {
@@ -149,7 +150,7 @@ const AchievementNode = React.memo(function AchievementNode({
           nStyles.node,
           {
             width: size, height: size, borderRadius,
-            backgroundColor: isFilled ? categoryColor : isLocked ? '#08081a' : '#0a0a1e',
+            backgroundColor: isFilled ? categoryColor : isLocked ? T.bg.root : T.bg.surface,
             borderColor: isFilled ? categoryColor : isLocked ? '#ffffff20' : categoryColor,
             borderWidth: isFilled ? 0 : 2,
           },
@@ -178,7 +179,7 @@ const AchievementNode = React.memo(function AchievementNode({
               nStyles.tierNumeral,
               {
                 fontSize: size * 0.32,
-                color: isFilled ? '#ffffff' : categoryColor,
+                color: isFilled ? T.text.primary : categoryColor,
               },
             ]}>
               {achievement.tier}
@@ -249,7 +250,7 @@ const HubNode = React.memo(function HubNode({
         hStyles.hub,
         {
           borderRadius,
-          backgroundColor: allDone ? categoryColor : '#0c0c22',
+          backgroundColor: allDone ? categoryColor : T.bg.elevated,
           borderColor: categoryColor, borderWidth: allDone ? 0 : 2,
         },
         allDone && {
@@ -266,7 +267,7 @@ const HubNode = React.memo(function HubNode({
       </ReAnimated.View>
 
       {/* Completion label */}
-      <Text style={[hStyles.countText, { color: allDone ? categoryColor : '#606480' }]}>
+      <Text style={[hStyles.countText, { color: allDone ? categoryColor : T.text.muted }]}>
         {completedCount}/{totalCount}
       </Text>
     </TouchableOpacity>

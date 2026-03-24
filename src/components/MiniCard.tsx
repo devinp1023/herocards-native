@@ -92,9 +92,9 @@ export function MiniCard({
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
 
   const statPills: { icon: 'sword' | 'shield' | 'run-fast'; value: number; bg: string }[] = [
-    { icon: 'sword',    value: card.power,   bg: '#e8445a' },
-    { icon: 'shield',   value: card.defense, bg: '#8b5cf6' },
-    { icon: 'run-fast', value: card.speed,   bg: '#f59e0b' },
+    { icon: 'sword',    value: card.power,   bg: T.stat.atk },
+    { icon: 'shield',   value: card.defense, bg: T.stat.def },
+    { icon: 'run-fast', value: card.speed,   bg: T.stat.spd },
   ];
 
   return (
@@ -262,7 +262,7 @@ const s = StyleSheet.create({
   cardName: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 18,
-    color: '#ffffff',
+    color: T.text.primary,
   },
 
   // Subtitle overlay (top-right)
@@ -354,7 +354,7 @@ const s = StyleSheet.create({
   statTag: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 11,
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 1.5,
   },
   statValue: {
@@ -445,12 +445,12 @@ const s = StyleSheet.create({
   abilityText: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 16,
-    color: '#e8e8e8',
+    color: T.text.body,
     lineHeight: 20,
   },
   abilityName: {
     fontFamily: 'Rajdhani_600SemiBold',
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 0.5,
   },
 
@@ -475,7 +475,7 @@ const s = StyleSheet.create({
   pillValue: {
     fontFamily: 'Orbitron_900Black',
     fontSize: 17,
-    color: '#ffffff',
+    color: T.text.primary,
     flex: 1,
     textAlign: 'right',
     textShadowColor: 'rgba(0,0,0,0.4)',

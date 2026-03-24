@@ -33,7 +33,7 @@ const bStyles = StyleSheet.create({
     paddingVertical: 14, gap: 4,
   },
   statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
-  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1 },
+  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1 },
 });
 
 // ── PackBar ──────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function ProfileScreen() {
         {/* ── Collection ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>— COLLECTION</Text>
-          <Text style={[styles.sectionCount, { color: collPct === 100 ? '#2ED573' : T.text.muted }]}>
+          <Text style={[styles.sectionCount, { color: collPct === 100 ? T.status.vitality : T.text.muted }]}>
             {uniqueOwned}/{totalCards}
           </Text>
         </View>
@@ -213,7 +213,7 @@ export default function ProfileScreen() {
         {/* ── Avatars ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>— AVATARS</Text>
-          <Text style={[styles.sectionCount, { color: ownedAvatars.length === ALL_AVATARS.length ? '#2ED573' : T.text.muted }]}>
+          <Text style={[styles.sectionCount, { color: ownedAvatars.length === ALL_AVATARS.length ? T.status.vitality : T.text.muted }]}>
             {ownedAvatars.length}/{ALL_AVATARS.length} COLLECTED
           </Text>
         </View>
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   statRow:     { flexDirection: 'row', alignItems: 'center' },
   hStatBox:    { alignItems: 'center', flex: 1 },
   hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: 12, color: T.accent.mint },
-  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
+  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
   statDivider: { width: 1, height: 24, backgroundColor: T.bg.border, marginHorizontal: 4 },
 
   // Sections
@@ -302,8 +302,8 @@ const styles = StyleSheet.create({
   logoutBtn: {
     alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, borderRadius: 12,
-    borderWidth: 1, borderColor: '#FF475733',
-    backgroundColor: '#FF475708', marginBottom: 8,
+    borderWidth: 1, borderColor: T.status.danger + '33',
+    backgroundColor: T.status.danger + '08', marginBottom: 8,
   },
-  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#FF4757', letterSpacing: 2 },
+  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: T.status.danger, letterSpacing: 2 },
 });

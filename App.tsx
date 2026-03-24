@@ -308,11 +308,11 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           />
         </Path>
         <Path path={topStrokePath} color={T.accent.mint} style="stroke" strokeWidth={1.5} />
-        <Path path={wallStrokePath} color="#2a7a9a" style="stroke" strokeWidth={1} />
+        <Path path={wallStrokePath} color="#1a6b55" style="stroke" strokeWidth={1} />
         {/* Outer divider lines — slightly dimmer */}
         {dividerPathStrs.map((d, i) => {
           const p = Skia.Path.MakeFromSVGString(d);
-          return p ? <Path key={i} path={p} color="#2a7a9a" style="stroke" strokeWidth={1} /> : null;
+          return p ? <Path key={i} path={p} color="#1a6b55" style="stroke" strokeWidth={1} /> : null;
         })}
       </Canvas>
 

@@ -153,13 +153,13 @@ const s = StyleSheet.create({
   label: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 8,
-    color: '#506070',
+    color: T.text.muted,
     letterSpacing: 1.5,
   },
   name: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 13,
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 0.5,
   },
   tapHint: {

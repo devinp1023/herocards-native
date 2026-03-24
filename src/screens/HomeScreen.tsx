@@ -113,7 +113,7 @@ const packStyles = StyleSheet.create({
   header:     { flexDirection:'row', alignItems:'center', gap:10, marginBottom:10 },
   packDot:    { width:12, height:12, borderRadius:6, flexShrink:0 },
   name:       { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:1 },
-  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070', marginTop:2 },
+  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, marginTop:2 },
   pct:        { fontFamily:'Orbitron_900Black', fontSize:20 },
   barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10 },
   barFill:    { height:'100%', borderRadius:3 },
@@ -121,7 +121,7 @@ const packStyles = StyleSheet.create({
   rarityItem: { alignItems:'center', gap:3 },
   rarityDot:  { width:6, height:6, borderRadius:3 },
   rarityCount:{ fontFamily:'Orbitron_700Bold', fontSize:10 },
-  rarityTotal:{ color:'#303050', fontFamily:'Orbitron_700Bold', fontSize:8 },
+  rarityTotal:{ color:T.bg.border, fontFamily:'Orbitron_700Bold', fontSize:8 },
 });
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
               <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[qStyles.task, done && { color: '#2ED57399' }]}>{quest.task}</Text>
+              <Text style={[qStyles.task, done && { color: T.status.vitality + '99' }]}>{quest.task}</Text>
               <View style={qStyles.metaRow}>
                 <View style={[qStyles.diffBadge, { borderColor: diffColor + '66', backgroundColor: diffColor + '18' }]}>
                   <Text style={[qStyles.diffText, { color: diffColor }]}>{quest.diff.toUpperCase()}</Text>
@@ -177,7 +177,7 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
 
 const qStyles = StyleSheet.create({
   card:         { borderRadius:12, padding:14, marginBottom:10 },
-  cardDone:     { borderColor:'#2ED57333', backgroundColor:'#2ED57308' },
+  cardDone:     { borderColor:T.status.vitality + '33', backgroundColor:T.status.vitality + '08' },
   top:          { flexDirection:'row', alignItems:'center', gap:12, marginBottom:10 },
   iconBox:      { width:34, height:34, borderRadius:8, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   iconSymbol:   { fontSize:16, lineHeight:20 },
@@ -185,9 +185,9 @@ const qStyles = StyleSheet.create({
   metaRow:      { flexDirection:'row', alignItems:'center', gap:8, marginTop:5 },
   diffBadge:    { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
   diffText:     { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
-  reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#506070' },
-  checkBox:     { backgroundColor:'#2ED57322', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:'#2ED57366' },
-  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#2ED573', letterSpacing:1 },
+  reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted },
+  checkBox:     { backgroundColor:T.status.vitality + '22', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:T.status.vitality + '66' },
+  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:T.status.vitality, letterSpacing:1 },
   progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.muted },
   barTrack:     { height:4, backgroundColor:T.bg.elevated, borderRadius:2, overflow:'hidden' },
   barFill:      { height:'100%', borderRadius:2 },
@@ -260,7 +260,7 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.xpLabel}>{gs.xpInLevel.toLocaleString()} / {gs.xpNeeded.toLocaleString()} XP</Text>
                 {!isMaxLevel
                   ? <Text style={styles.xpNextLabel}>LVL {gs.level + 1}</Text>
-                  : <Text style={[styles.xpNextLabel, { color: '#FFBE0B' }]}>MAX</Text>
+                  : <Text style={[styles.xpNextLabel, { color: T.status.caution }]}>MAX</Text>
                 }
               </View>
             </View>
@@ -303,7 +303,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.questSection}>
           <View style={styles.questHeader}>
             <Text style={styles.sectionTitle}>— DAILY QUESTS</Text>
-            <Text style={[styles.questDoneLabel, { color: doneCount >= 3 ? '#2ED573' : '#606480' }]}>
+            <Text style={[styles.questDoneLabel, { color: doneCount >= 3 ? T.status.vitality : T.text.muted }]}>
               {doneCount}/3 COMPLETE
             </Text>
           </View>
@@ -353,20 +353,20 @@ const styles = StyleSheet.create({
     borderWidth:1, borderColor:T.accent.mintMuted,
   },
   levelText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.accent.mint },
-  cardCount: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#506070' },
+  cardCount: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.muted },
   xpLabelRow: { flexDirection:'row', justifyContent:'space-between', marginTop:3 },
-  xpLabel:    { fontFamily:'monospace', fontSize:9, color:'#506070' },
+  xpLabel:    { fontFamily:'monospace', fontSize:9, color:T.text.muted },
   xpNextLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:T.accent.mint + '88' },
   creditsBox: { alignItems:'center', flexShrink:0 },
   creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:20, color:T.accent.mint, lineHeight:24 },
-  creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#404458', letterSpacing:1 },
+  creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:8, color:T.text.muted, letterSpacing:1 },
 
   // Battle button
   battleBtn: {
     flexDirection:'row', alignItems:'center', justifyContent:'center',
     gap:12, paddingVertical:18,
-    backgroundColor:'#e8445a', borderRadius:14.5,
-    shadowColor:'#e8445a', shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
+    backgroundColor:T.stat.atk, borderRadius:14.5,
+    shadowColor:T.stat.atk, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   battleBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:20,
@@ -392,12 +392,12 @@ const styles = StyleSheet.create({
   // Daily quests
   questSection: { marginBottom:24 },
   questHeader:  { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:4 },
-  questDoneLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, letterSpacing:1 },
-  questSub:     { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:'#404458', marginBottom:14 },
+  questDoneLabel: { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:1 },
+  questSub:     { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, marginBottom:14 },
 
   // Section title
   sectionTitle: {
-    fontFamily:'Orbitron_700Bold', fontSize:9,
-    color:'#404060', letterSpacing:2.5, marginBottom:12,
+    fontFamily:'Orbitron_700Bold', fontSize:11,
+    color:T.text.muted, letterSpacing:2.5, marginBottom:12,
   },
 });

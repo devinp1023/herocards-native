@@ -45,9 +45,9 @@ const ALLIANCE_COLORS: Record<string, { color: string; border: string; bg: strin
 const PACK_LABEL: Record<number, string> = { 1: '🌊 Pack 1', 2: '🌑 Pack 2' };
 
 const STAT_ROWS = [
-  { label: 'ATK', key: 'power',   color: '#ff6b40' },
-  { label: 'DEF', key: 'defense', color: '#4db8ff' },
-  { label: 'SPD', key: 'speed',   color: '#ffe040' },
+  { label: 'ATK', key: 'power',   color: T.stat.atk },
+  { label: 'DEF', key: 'defense', color: T.stat.def },
+  { label: 'SPD', key: 'speed',   color: T.stat.spd },
 ] as const;
 
 // ── AnimatedBar ───────────────────────────────────────────────────────────────
@@ -275,9 +275,9 @@ const styles = StyleSheet.create({
   },
 
   ownedRow:        { marginBottom: 10 },
-  ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: '#2ED57318', borderColor: '#2ED57355' },
+  ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: T.status.vitality + '18', borderColor: T.status.vitality + '55' },
   ownedBadgeMulti: { backgroundColor: T.accent.mint + '18', borderColor: T.accent.mint + '55' },
-  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#2ED573', letterSpacing: 1 },
+  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.status.vitality, letterSpacing: 1 },
   ownedTextMulti:  { color: T.accent.mint },
 
   metaRow: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   metaDot: {
-    color: '#303050',
+    color: T.bg.border,
     fontSize: 16,
   },
   cardId: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 9,
-    color: '#404060',
+    color: T.text.muted,
     letterSpacing: 2.5,
   },
 
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 11,
-    color: '#505070',
+    color: T.text.muted,
     letterSpacing: 1.5,
   },
   totalValue: {
@@ -436,6 +436,6 @@ const styles = StyleSheet.create({
   abilityDesc: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 13,
-    color: '#303050',
+    color: T.bg.border,
   },
 });

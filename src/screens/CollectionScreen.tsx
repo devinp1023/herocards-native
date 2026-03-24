@@ -143,7 +143,7 @@ function FilterSidebar({
               const color  = r === 'All' ? T.accent.mint : RC[r]?.color ?? '#fff';
               return (
                 <TouchableOpacity key={r} style={styles.radioRow} onPress={() => onRarity(r)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? color : '#303050' }]}>
+                  <View style={[styles.radioOuter, { borderColor: active ? color : T.bg.border }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: color }]} />}
                   </View>
                   <Text style={[styles.radioLabel, { color: active ? color : T.text.muted }]}>{r}</Text>
@@ -159,7 +159,7 @@ function FilterSidebar({
               const active = typeFilter === t;
               return (
                 <TouchableOpacity key={t} style={styles.radioRow} onPress={() => onType(t)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : '#303050' }]}>
+                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : T.bg.border }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: T.accent.mint }]} />}
                   </View>
                   <Text style={[styles.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{t}</Text>
@@ -175,7 +175,7 @@ function FilterSidebar({
               const active = packFilter === p.value;
               return (
                 <TouchableOpacity key={p.value} style={styles.radioRow} onPress={() => onPack(p.value)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : '#303050' }]}>
+                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : T.bg.border }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: T.accent.mint }]} />}
                   </View>
                   <Text style={[styles.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{p.label}</Text>
@@ -191,10 +191,10 @@ function FilterSidebar({
               const active = sortBy === s.key;
               return (
                 <TouchableOpacity key={s.key} style={styles.radioRow} onPress={() => onSort(s.key)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
-                    {active && <View style={[styles.radioInner, { backgroundColor: '#cc6dff' }]} />}
+                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.violet : T.bg.border }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: T.accent.violet }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#cc6dff' : T.text.muted }]}>{s.label}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? T.accent.violet : T.text.muted }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -392,8 +392,8 @@ export default function CollectionScreen({ navigation }: Props) {
             </TouchableOpacity>
           )}
           {sortBy !== 'rarity' && (
-            <TouchableOpacity style={[styles.chip, { borderColor: '#cc6dff' }]} onPress={() => setSortBy('rarity')}>
-              <Text style={[styles.chipText, { color: '#cc6dff' }]}>
+            <TouchableOpacity style={[styles.chip, { borderColor: T.accent.violet }]} onPress={() => setSortBy('rarity')}>
+              <Text style={[styles.chipText, { color: T.accent.violet }]}>
                 {SORT_OPTIONS.find(s => s.key === sortBy)?.chipLabel} ✕
               </Text>
             </TouchableOpacity>
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   headerSub: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 10,
-    color: '#506070',
+    color: T.text.muted,
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     fontSize: 18,
-    color: '#404458',
+    color: T.text.muted,
     marginRight: 6,
   },
   searchInput: {
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   resultsText: {
     fontFamily: 'monospace',
     fontSize: 11,
-    color: '#404458',
+    color: T.text.muted,
     paddingHorizontal: 16,
     marginBottom: 6,
   },
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 9,
-    color: '#506070',
+    color: T.text.muted,
     letterSpacing: 2,
     marginBottom: 8,
     marginTop: 4,

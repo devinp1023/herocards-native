@@ -209,7 +209,7 @@ function RevealSlot({ drawn, onRevealed, autoReveal }: RevealSlotProps) {
             <Text style={[slot.rarityText, { color: cfg.color }]}>{drawn.card.rarity.toUpperCase()}</Text>
           </View>
           <View style={[slot.statusBadge, drawn.isDupe ? slot.dupeBadge : slot.newBadge]}>
-            <Text style={[slot.statusText, { color: drawn.isDupe ? '#FFBE0B' : '#2ED573' }]}>
+            <Text style={[slot.statusText, { color: drawn.isDupe ? T.status.caution : T.status.vitality }]}>
               {drawn.isDupe ? 'DUPE' : 'NEW'}
             </Text>
           </View>
@@ -226,8 +226,8 @@ const slot = StyleSheet.create({
   rarityBadge: { paddingHorizontal: 14, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 1.5 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  newBadge:    { backgroundColor: '#2ED57322', borderColor: '#2ED57366' },
-  dupeBadge:   { backgroundColor: '#FFBE0B22', borderColor: '#FFBE0B66' },
+  newBadge:    { backgroundColor: T.status.vitality + '22', borderColor: T.status.vitality + '66' },
+  dupeBadge:   { backgroundColor: T.status.caution + '22', borderColor: T.status.caution + '66' },
   statusText:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 1 },
 });
 
@@ -257,13 +257,13 @@ function SummaryCard({ drawn }: { drawn: DrawnCard }) {
 
 const sum = StyleSheet.create({
   item:        { alignItems: 'center', gap: 5, flex: 1 },
-  cardName:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.3, textAlign: 'center' },
+  cardName:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 0.3, textAlign: 'center' },
   rarityBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5, borderWidth: 1 },
   rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 0.8 },
-  newBadge:    { backgroundColor: '#2ED57322', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#2ED57355' },
-  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#2ED573', letterSpacing: 1 },
-  dupeBadge:   { backgroundColor: '#FFBE0B18', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#FFBE0B55' },
-  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#FFBE0B', letterSpacing: 1 },
+  newBadge:    { backgroundColor: T.status.vitality + '22', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: T.status.vitality + '55' },
+  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.status.vitality, letterSpacing: 1 },
+  dupeBadge:   { backgroundColor: T.status.caution + '18', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: T.status.caution + '55' },
+  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.status.caution, letterSpacing: 1 },
 });
 
 // ── PackOpeningScreen ─────────────────────────────────────────────────────────
@@ -468,12 +468,12 @@ export default function PackOpeningScreen({ navigation }: Props) {
             </View>
             <View style={s.totalRow}>
               <Text style={s.totalLabel}>NEW CARDS</Text>
-              <Text style={[s.totalVal, { color: '#2ED573' }]}>{newCount} / 5</Text>
+              <Text style={[s.totalVal, { color: T.status.vitality }]}>{newCount} / 5</Text>
             </View>
             {dupeCount > 0 && (
               <View style={s.totalRow}>
                 <Text style={s.totalLabel}>DUPES</Text>
-                <Text style={[s.totalVal, { color: '#FFBE0B' }]}>{dupeCount}</Text>
+                <Text style={[s.totalVal, { color: T.status.caution }]}>{dupeCount}</Text>
               </View>
             )}
           </MaterialSurface>
@@ -495,13 +495,13 @@ const s = StyleSheet.create({
   backText: { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: T.accent.mint, letterSpacing: 1.5 },
 
   screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: 22, color: T.text.primary, letterSpacing: 2, textAlign: 'center', marginBottom: 6 },
-  screenSub:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: '#506070', textAlign: 'center', marginBottom: 24 },
+  screenSub:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: T.text.muted, textAlign: 'center', marginBottom: 24 },
 
   // ── Select ──
   selectScroll: { paddingHorizontal: 20, paddingBottom: 48 },
 
   balanceRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderRadius: 12, padding: 14 },
-  balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
+  balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 1 },
   balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
 
   packCardOuter:    { marginBottom: 14 },
@@ -510,16 +510,16 @@ const s = StyleSheet.create({
   packColorBar:     { width: 6 },
   packInfo:         { flex: 1, padding: 18, gap: 6 },
   packName:         { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 1 },
-  packSub:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: '#506070' },
+  packSub:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: T.text.muted },
   packMeta:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  packCards:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 1 },
+  packCards:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 1 },
   costBadge:        { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   costText:         { fontFamily: 'Orbitron_700Bold', fontSize: 11, letterSpacing: 0.5 },
   insufficientBadge:{ justifyContent: 'center', paddingRight: 16 },
   insufficientText: { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#ff4060', letterSpacing: 0.5 },
 
   oddsBox:    { marginTop: 12, borderRadius: 14, padding: 16, gap: 8 },
-  oddsTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#404060', letterSpacing: 2, marginBottom: 4 },
+  oddsTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.muted, letterSpacing: 2, marginBottom: 4 },
   oddsRow:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   oddsDot:    { width: 8, height: 8, borderRadius: 4 },
   oddsRarity: { fontFamily: 'Orbitron_700Bold', fontSize: 11, flex: 1, letterSpacing: 0.5 },
@@ -531,14 +531,14 @@ const s = StyleSheet.create({
   dot:            { width: 8, height: 8, borderRadius: 4, backgroundColor: T.bg.border },
   dotDone:        { backgroundColor: T.accent.mint },
   dotCurrent:     { backgroundColor: T.accent.mint + '66', transform: [{ scale: 1.3 }] },
-  revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 2, marginBottom: 20 },
+  revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 2, marginBottom: 20 },
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.text.primary, letterSpacing: 1, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
-  tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#303050', letterSpacing: 2 },
+  tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: T.bg.border, letterSpacing: 2 },
   nextBtn:        { backgroundColor: T.accent.mint, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
-  nextBtnGreen:   { backgroundColor: '#2ED573' },
+  nextBtnGreen:   { backgroundColor: T.status.vitality },
   nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: T.bg.root, letterSpacing: 2 },
 
   // ── Summary ──
@@ -547,7 +547,7 @@ const s = StyleSheet.create({
   summaryRowCenter:  { justifyContent: 'center' },
   totalsBox:         { borderRadius: 14, padding: 16, gap: 10, width: '100%', marginTop: 4 },
   totalRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
+  totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 1 },
   totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.accent.mint },
   collectBtn:        { backgroundColor: T.accent.mint, borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
   collectText:       { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.bg.root, letterSpacing: 3 },

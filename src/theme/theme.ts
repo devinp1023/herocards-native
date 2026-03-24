@@ -63,6 +63,13 @@ export const T = {
     caution: '#FFBE0B',  // was #ff9800
   },
 
+  // Stat pill colors (ATK / DEF / SPD on card components)
+  stat: {
+    atk: '#e8445a',
+    def: '#8b5cf6',
+    spd: '#f59e0b',
+  },
+
   // Spacing (base unit 4px)
   space: {
     xs: 4,

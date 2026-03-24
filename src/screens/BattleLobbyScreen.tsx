@@ -146,10 +146,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = sortBy === opt.key;
             return (
               <TouchableOpacity key={opt.key} style={sb.radioRow} onPress={() => onSort(opt.key)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#cc6dff' : T.bg.border }]}>
-                  {active && <View style={[sb.radioInner, { backgroundColor: '#cc6dff' }]} />}
+                <View style={[sb.radioOuter, { borderColor: active ? T.accent.violet : T.bg.border }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: T.accent.violet }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#cc6dff' : T.text.muted }]}>{opt.label}</Text>
+                <Text style={[sb.radioLabel, { color: active ? T.accent.violet : T.text.muted }]}>{opt.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -172,7 +172,7 @@ const sb = StyleSheet.create({
   closeBtn:   { padding:4 },
   closeText:  { color:T.text.muted, fontSize:16 },
   scroll:     { paddingHorizontal:20, paddingBottom:40, paddingTop:8 },
-  sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:'#506070', letterSpacing:2, marginBottom:8, marginTop:4 },
+  sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:T.text.muted, letterSpacing:2, marginBottom:8, marginTop:4 },
   radioRow:   { flexDirection:'row', alignItems:'center', paddingVertical:8, gap:12 },
   radioOuter: { width:18, height:18, borderRadius:9, borderWidth:2, alignItems:'center', justifyContent:'center' },
   radioInner: { width:8, height:8, borderRadius:4 },
@@ -238,7 +238,7 @@ const DeckCardCell = React.memo(function DeckCardCell({ card, inDeck, canAdd, co
 
       {/* Selected overlay — green border + check badge */}
       {inDeck && (
-        <View style={[grid.overlay, { borderColor: '#2ED573', borderWidth: 2, borderRadius: 6 }]}>
+        <View style={[grid.overlay, { borderColor: T.status.vitality, borderWidth: 2, borderRadius: 6 }]}>
           <View style={grid.checkBadge}>
             <Text style={grid.checkText}>✓</Text>
           </View>
@@ -266,13 +266,13 @@ const DeckCardCell = React.memo(function DeckCardCell({ card, inDeck, canAdd, co
 const grid = StyleSheet.create({
   cell:         { width: CARD_DISPLAY_W, alignItems: 'center' },
   overlay:      { position:'absolute', top:0, left:0, width:CARD_DISPLAY_W, height:CARD_DISPLAY_H, borderRadius:6, alignItems:'center', justifyContent:'center' },
-  checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:'#2ED573', alignItems:'center', justifyContent:'center' },
+  checkBadge:   { position:'absolute', top:6, right:6, width:22, height:22, borderRadius:11, backgroundColor:T.status.vitality, alignItems:'center', justifyContent:'center' },
   checkText:    { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.primary },
   cdOverlay:    { backgroundColor:'rgba(0,0,0,0.65)', flexDirection:'column', gap:4 },
-  cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:'#FF4757' },
-  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:'#FF475788', letterSpacing:1 },
+  cdTime:       { fontFamily:'Orbitron_900Black', fontSize:16, color:T.status.danger },
+  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:7, color:T.status.danger + '88', letterSpacing:1 },
   limitOverlay: { backgroundColor:'rgba(0,0,0,0.0)' },
-  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FFBE0B', letterSpacing:1, backgroundColor:'#FFBE0B22', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:'#FFBE0B55' },
+  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.status.caution, letterSpacing:1, backgroundColor:T.status.caution + '22', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:T.status.caution + '55' },
 });
 
 // ── OpponentCard ──────────────────────────────────────────────────────────────
@@ -321,7 +321,7 @@ const opp = StyleSheet.create({
   desc:      { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, lineHeight:16 },
   rewards:   { flexDirection:'row', gap:12 },
   win:       { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:T.accent.mint },
-  loss:      { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#404868' },
+  loss:      { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:T.text.muted },
   arrow:     { width:32, height:32, borderRadius:16, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   arrowText: { fontFamily:'Orbitron_700Bold', fontSize:16 },
 });
@@ -471,7 +471,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {/* Title row */}
         <View style={s.titleRow}>
           <Text style={s.screenTitle}>BUILD YOUR DECK</Text>
-          <Text style={[s.deckCount, { color: deckFull ? '#2ED573' : T.text.muted }]}>
+          <Text style={[s.deckCount, { color: deckFull ? T.status.vitality : T.text.muted }]}>
             {battleDeck.length}/{DECK_SIZE}
           </Text>
         </View>
@@ -485,7 +485,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
             const atLimit = count >= limit;
             return (
               <View key={r} style={[s.limitChip, { borderColor: atLimit ? color + '88' : T.bg.border }]}>
-                <Text style={[s.limitRarity, { color: atLimit ? color : '#404458' }]}>{r.slice(0,3).toUpperCase()}</Text>
+                <Text style={[s.limitRarity, { color: atLimit ? color : T.text.muted }]}>{r.slice(0,3).toUpperCase()}</Text>
                 <Text style={[s.limitCount, { color: atLimit ? color : T.text.muted }]}>{count}/{limit}</Text>
               </View>
             );
@@ -525,8 +525,8 @@ export default function BattleLobbyScreen({ navigation }: Props) {
               </TouchableOpacity>
             )}
             {sortBy !== 'rarity' && (
-              <TouchableOpacity style={[s.chip, { borderColor: '#cc6dff' }]} onPress={() => setSortBy('rarity')}>
-                <Text style={[s.chipText, { color: '#cc6dff' }]}>{SORT_OPTIONS.find(o => o.key === sortBy)?.chipLabel} ✕</Text>
+              <TouchableOpacity style={[s.chip, { borderColor: T.accent.violet }]} onPress={() => setSortBy('rarity')}>
+                <Text style={[s.chipText, { color: T.accent.violet }]}>{SORT_OPTIONS.find(o => o.key === sortBy)?.chipLabel} ✕</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -664,7 +664,7 @@ const s = StyleSheet.create({
 
   limitsRow:   { flexDirection:'row', gap:6, marginBottom:8 },
   limitChip:   { flex:1, borderWidth:1, borderRadius:6, paddingVertical:4, alignItems:'center', gap:1 },
-  limitRarity: { fontFamily:'Orbitron_700Bold', fontSize:7, letterSpacing:0.5 },
+  limitRarity: { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:0.5 },
   limitCount:  { fontFamily:'Orbitron_900Black', fontSize:10 },
 
   slotsScroll: { gap:8, paddingBottom:8 },
@@ -675,10 +675,10 @@ const s = StyleSheet.create({
 
   searchAndFilter: { flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 },
   searchRow:   { flex:1, flexDirection:'row', alignItems:'center', backgroundColor:T.bg.elevated, borderRadius:10, borderWidth:1, borderColor:T.bg.border, paddingHorizontal:10 },
-  searchIcon:  { fontSize:16, color:'#404458', marginRight:4 },
+  searchIcon:  { fontSize:16, color:T.text.muted, marginRight:4 },
   searchInput: { flex:1, height:36, color:T.text.body, fontFamily:'Rajdhani_600SemiBold', fontSize:14 },
   searchClear: { color:T.text.muted, fontSize:14, padding:4 },
-  resultsText: { fontFamily:'monospace', fontSize:10, color:'#404458', marginBottom:2 },
+  resultsText: { fontFamily:'monospace', fontSize:10, color:T.text.muted, marginBottom:2 },
 
   // Grid
   listContent:   { paddingHorizontal:8, paddingBottom:120 },
@@ -691,7 +691,7 @@ const s = StyleSheet.create({
 
   // Footer CTA
   footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'rgba(8,5,10,0.92)', borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
-  cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FF4757', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
+  cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.status.danger, letterSpacing:0.5, marginBottom:6, textAlign:'center' },
   ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
   ctaBtnReady:     { backgroundColor:T.accent.mint, borderColor:T.accent.mint },
   ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:T.bg.border, letterSpacing:1.5 },
@@ -703,7 +703,7 @@ const s = StyleSheet.create({
   backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:T.accent.mint, letterSpacing:1 },
   oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:T.text.muted, marginBottom:16 },
   deckSummary:      { borderRadius:12, padding:12, marginBottom:16, gap:8 },
-  deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#404458', letterSpacing:1.5 },
+  deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.text.muted, letterSpacing:1.5 },
   deckSummaryChips: { flexDirection:'row', flexWrap:'wrap', gap:6 },
   summaryChip:      { paddingHorizontal:8, paddingVertical:3, borderRadius:5, borderWidth:1 },
   summaryChipText:  { fontFamily:'Orbitron_700Bold', fontSize:9, letterSpacing:0.5 },

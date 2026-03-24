@@ -207,9 +207,9 @@ export function HeroCard({
   }));
 
   const statPills = [
-    { label: 'A', value: card.power,   bg: '#e8445a', bgDark: '#b8283a' },
-    { label: 'D', value: card.defense, bg: '#8b5cf6', bgDark: '#6d3fd4' },
-    { label: 'S', value: card.speed,   bg: '#f59e0b', bgDark: '#c47d08' },
+    { label: 'A', value: card.power,   bg: T.stat.atk, bgDark: '#b8283a' },
+    { label: 'D', value: card.defense, bg: T.stat.def, bgDark: '#6d3fd4' },
+    { label: 'S', value: card.speed,   bg: T.stat.spd, bgDark: '#c47d08' },
   ];
 
   // ── Shimmer sweep ─────────────────────────────────────────────────────────
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   cardName: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 18,
-    color: '#ffffff',
+    color: T.text.primary,
   },
   subtitleOverlay: {
     position: 'absolute',
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
   statTag: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 11,
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 1.5,
   },
   statValue: {
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   pillValue: {
     fontFamily: 'Orbitron_900Black',
     fontSize: 17,
-    color: '#ffffff',
+    color: T.text.primary,
     flex: 1,
     textAlign: 'right',
     textShadowColor: 'rgba(0,0,0,0.4)',
@@ -760,12 +760,12 @@ const styles = StyleSheet.create({
   abilityText: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 16,
-    color: '#e8e8e8',
+    color: T.text.body,
     lineHeight: 20,
   },
   abilityName: {
     fontFamily: 'Rajdhani_600SemiBold',
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 0.5,
   },
 });
