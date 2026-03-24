@@ -15,6 +15,8 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Achievement } from '../data/achievements';
+import { GradientBorder, BORDER_COLORS } from './GradientBorder';
+import { T, glowShadow } from '../theme/theme';
 
 const DISPLAY_MS  = 3500;  // how long the toast is visible
 const SLIDE_IN_MS = 380;
@@ -75,27 +77,33 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   return (
     <Animated.View style={[s.container, animStyle]}>
       <Pressable onPress={handleTap}>
-        <View style={s.toast}>
-          {/* Left accent strip */}
-          <View style={[s.strip, { backgroundColor: achievement.color }]} />
+        <GradientBorder
+          colors={BORDER_COLORS.violet}
+          borderRadius={16}
+          innerBackground="#0d0d20"
+        >
+          <View style={s.toast}>
+            {/* Left accent strip */}
+            <View style={[s.strip, { backgroundColor: achievement.color }]} />
 
-          {/* Symbol badge */}
-          <View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }]}>
-            <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
+            {/* Symbol badge */}
+            <View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }]}>
+              <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
+            </View>
+
+            {/* Text */}
+            <View style={s.textBlock}>
+              <Text style={s.label}>ACHIEVEMENT EARNED</Text>
+              <Text style={s.name} numberOfLines={1}>{achievement.name}</Text>
+              <Text style={s.tapHint}>Tap to collect rewards</Text>
+            </View>
+
+            {/* Close button */}
+            <Pressable onPress={handleClose} hitSlop={8} style={s.closeBtn}>
+              <MaterialCommunityIcons name="close" size={16} color="#606480" />
+            </Pressable>
           </View>
-
-          {/* Text */}
-          <View style={s.textBlock}>
-            <Text style={s.label}>ACHIEVEMENT EARNED</Text>
-            <Text style={s.name} numberOfLines={1}>{achievement.name}</Text>
-            <Text style={s.tapHint}>Tap to collect rewards</Text>
-          </View>
-
-          {/* Close button */}
-          <Pressable onPress={handleClose} hitSlop={8} style={s.closeBtn}>
-            <MaterialCommunityIcons name="close" size={16} color="#606480" />
-          </Pressable>
-        </View>
+        </GradientBorder>
       </Pressable>
     </Animated.View>
   );
@@ -108,20 +116,16 @@ const s = StyleSheet.create({
     left: 16,
     right: 16,
     zIndex: 9999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    // 3-layer violet glow
+    shadowColor: T.accent.violet,
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
-    shadowRadius: 12,
+    shadowRadius: 16,
     elevation: 20,
   },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0d0d20',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#1e1e3a',
-    overflow: 'hidden',
     gap: 12,
     paddingRight: 16,
     paddingVertical: 12,
