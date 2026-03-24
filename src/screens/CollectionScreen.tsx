@@ -139,7 +139,7 @@ function FilterSidebar({
             <Text style={styles.sectionLabel}>RARITY</Text>
             {RARITIES.map(r => {
               const active = rarity === r;
-              const color  = r === 'All' ? '#4fc3f7' : RC[r]?.color ?? '#fff';
+              const color  = r === 'All' ? T.accent.mint : RC[r]?.color ?? '#fff';
               return (
                 <TouchableOpacity key={r} style={styles.radioRow} onPress={() => onRarity(r)}>
                   <View style={[styles.radioOuter, { borderColor: active ? color : '#303050' }]}>
@@ -158,10 +158,10 @@ function FilterSidebar({
               const active = typeFilter === t;
               return (
                 <TouchableOpacity key={t} style={styles.radioRow} onPress={() => onType(t)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
-                    {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: T.accent.mint }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{t}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{t}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -174,10 +174,10 @@ function FilterSidebar({
               const active = packFilter === p.value;
               return (
                 <TouchableOpacity key={p.value} style={styles.radioRow} onPress={() => onPack(p.value)}>
-                  <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
-                    {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                  <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: T.accent.mint }]} />}
                   </View>
-                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{p.label}</Text>
+                  <Text style={[styles.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{p.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -365,7 +365,7 @@ export default function CollectionScreen({ navigation }: Props) {
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setSidebarOpen(true)}
         >
-          <Text style={[styles.filterBtnIcon, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
+          <Text style={[styles.filterBtnIcon, activeFilterCount > 0 && { color: T.accent.mint }]}>
             ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </Text>
         </TouchableOpacity>
@@ -375,9 +375,9 @@ export default function CollectionScreen({ navigation }: Props) {
       {activeFilterCount > 0 && (
         <View style={styles.chipRow}>
           {rarity !== 'All' && (
-            <TouchableOpacity style={[styles.chip, { borderColor: RC[rarity]?.color ?? '#4fc3f7' }]}
+            <TouchableOpacity style={[styles.chip, { borderColor: RC[rarity]?.color ?? T.accent.mint }]}
               onPress={() => setRarity('All')}>
-              <Text style={[styles.chipText, { color: RC[rarity]?.color ?? '#4fc3f7' }]}>{rarity} ✕</Text>
+              <Text style={[styles.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity} ✕</Text>
             </TouchableOpacity>
           )}
           {typeFilter !== 'All' && (
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 22,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 2,
   },
   headerSub: {
@@ -482,8 +482,8 @@ const styles = StyleSheet.create({
     backgroundColor: T.bg.elevated,
   },
   filterBtnActive: {
-    borderColor: '#4fc3f7',
-    backgroundColor: '#4fc3f711',
+    borderColor: T.accent.mint,
+    backgroundColor: T.accent.mintFaint,
   },
   filterBtnIcon: {
     fontSize: 14,
@@ -528,13 +528,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#4fc3f7',
-    backgroundColor: '#4fc3f711',
+    borderColor: T.accent.mint,
+    backgroundColor: T.accent.mintFaint,
   },
   chipText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 9,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 0.5,
   },
 
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   cardSlot:      { alignItems: 'center' },
   countBadge: {
     position: 'absolute', bottom: 6, right: 2,
-    backgroundColor: '#4fc3f7', borderRadius: 6,
+    backgroundColor: T.accent.mint, borderRadius: 6,
     paddingHorizontal: 5, paddingVertical: 2,
     borderWidth: 1, borderColor: T.bg.root,
   },
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   sidebarTitle: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 14,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 2,
   },
   closeBtn: { padding: 4 },

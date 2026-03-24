@@ -39,6 +39,7 @@ import { useGameState }       from './src/hooks/useGameState';
 import { AchievementPopup }  from './src/components/AchievementPopup';
 import { FAMILY_CATEGORY_MAP } from './src/data/achievements';
 import { ACHIEVEMENT_CATEGORIES } from './src/data/constants';
+import { T } from './src/theme/theme';
 
 // Navigation ref for global navigation (e.g. toast → Career tab)
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -306,7 +307,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             colors={['#10102a', '#08081a']}
           />
         </Path>
-        <Path path={topStrokePath} color="#4fc3f7" style="stroke" strokeWidth={1.5} />
+        <Path path={topStrokePath} color={T.accent.mint} style="stroke" strokeWidth={1.5} />
         <Path path={wallStrokePath} color="#2a7a9a" style="stroke" strokeWidth={1} />
         {/* Outer divider lines — slightly dimmer */}
         {dividerPathStrs.map((d, i) => {
@@ -348,7 +349,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   <MaterialCommunityIcons
                     name={iconName}
                     size={iconSize}
-                    color={focused ? '#4fc3f7' : '#ffffff'}
+                    color={focused ? T.accent.mint : '#ffffff'}
                   />
                 )}
                 {/* Badge for Career tab */}
@@ -396,7 +397,7 @@ const tabStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   hexActive: {
-    shadowColor: '#4fc3f7',
+    shadowColor: T.accent.mint,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 10,
@@ -409,7 +410,7 @@ const tabStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerHexActive: {
-    shadowColor: '#4fc3f7',
+    shadowColor: T.accent.mint,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7,
     shadowRadius: 14,
@@ -579,7 +580,7 @@ export default function App() {
   if (!fontsLoaded || !authReady) {
     return (
       <View style={{ flex: 1, backgroundColor: '#010004', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#4fc3f7" size="large" />
+        <ActivityIndicator color={T.accent.mint} size="large" />
       </View>
     );
   }
@@ -595,7 +596,7 @@ export default function App() {
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
           <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData} cardRoster={cardRoster}>
-          <NavigationContainer ref={navigationRef} theme={{ dark: true, colors: { primary: '#4fc3f7', background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: '#4fc3f7' } }}>
+          <NavigationContainer ref={navigationRef} theme={{ dark: true, colors: { primary: T.accent.mint, background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: T.accent.mint } }}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (
                 <RootStack.Screen name="Auth">

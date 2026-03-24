@@ -367,7 +367,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
   if (!card) {
     return (
       <View style={pas.row}>
-        <AmpBar amp={amp} baseColor="#4fc3f7" side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
+        <AmpBar amp={amp} baseColor={T.accent.mint} side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
         {/* Empty active slot — measured as the swap drop-zone for hand card drags */}
         <View
           ref={cardSlotRef}
@@ -387,7 +387,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
 
   return (
     <View style={pas.row}>
-      <AmpBar amp={amp} baseColor="#4fc3f7" side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
+      <AmpBar amp={amp} baseColor={T.accent.mint} side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
       {/* Measure only the card slot — this is the precise swap drop-zone */}
       <View
         ref={cardSlotRef}
@@ -421,13 +421,13 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
 }
 const pas = StyleSheet.create({
   row:               { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  deckBadgeActive:   { borderColor: '#4fc3f755' },
-  deckCountActive:   { color: '#4fc3f7' },
+  deckBadgeActive:   { borderColor: T.accent.mint + '55' },
+  deckCountActive:   { color: T.accent.mint },
   cardSlot:          { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  cardSlotTargeted:  { borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f712' },
-  emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: '#4fc3f744', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
-  emptyActiveTargeted:{ borderColor: '#4fc3f7cc', backgroundColor: '#4fc3f718' },
-  emptyActiveHint:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#4fc3f766', letterSpacing: 0.5, textAlign: 'center', lineHeight: 11 },
+  cardSlotTargeted:  { borderColor: T.accent.mint + 'cc', backgroundColor: T.accent.mint + '12' },
+  emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: T.accent.mintMuted, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  emptyActiveTargeted:{ borderColor: T.accent.mint + 'cc', backgroundColor: T.accent.mint + '18' },
+  emptyActiveHint:   { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.accent.mint + '66', letterSpacing: 0.5, textAlign: 'center', lineHeight: 11 },
   flashOverlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8, backgroundColor: '#FF4757' },
 });
 
@@ -608,7 +608,7 @@ const pz = StyleSheet.create({
 // ── Amp effect display constants (used by eventLine and AmpMeter) ─────────────
 const AMP_EFFECT_COLORS: Record<AmpEffectName, string> = {
   Overcharge: '#ffa726', TypeFlip: '#9c27b0', Exhaustion: '#ef5350',
-  FieldMedic: '#4caf50', LockOn: '#ffeb3b', Equaliser: '#4fc3f7',
+  FieldMedic: '#4caf50', LockOn: '#ffeb3b', Equaliser: T.accent.mint,
 };
 const AMP_EFFECT_LABELS: Record<AmpEffectName, string> = {
   Overcharge: 'OVERCHARGE', TypeFlip: 'TYPE FLIP', Exhaustion: 'EXHAUSTION',
@@ -622,7 +622,7 @@ function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
       if (ev.missed) return <Text key={idx} style={evs.miss}>{ev.attacker} missed!</Text>;
       const mult = ev.typeMultiplier;
       const adv  = mult >= 2.0 ? ' (adv)' : mult <= 0.5 ? ' (weak)' : '';
-      return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? '#4fc3f7' : '#FF4757' }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
+      return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? T.accent.mint : '#FF4757' }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
     case 'ABILITY':   return <Text key={idx} style={evs.ability}>{ev.ability}: {ev.effect}</Text>;
     case 'DEFEAT':    return <Text key={idx} style={evs.defeat}>{ev.card} defeated</Text>;
     case 'CARD_ENTER':return <Text key={idx} style={evs.enter}>{ev.side === 'player' ? 'Your' : 'AI'} {ev.card} enters</Text>;
@@ -651,7 +651,7 @@ const evs = StyleSheet.create({
   enter:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#2ED573', lineHeight: 16 },
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffeb3b', lineHeight: 16 },
   draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: T.text.muted, lineHeight: 15 },
-  start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#4fc3f7', lineHeight: 16 },
+  start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.accent.mint, lineHeight: 16 },
   amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: '#ffa726', lineHeight: 16 },
   ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: 11, color: T.text.muted, lineHeight: 15 },
 });
@@ -721,7 +721,7 @@ function AmpBar({ amp, baseColor, side, canTrigger, canSpend, onTrigger, onSpend
         </TouchableOpacity>
       )}
       {side === 'player' && canSpend && !canTrigger && onSpend && (
-        <TouchableOpacity style={[ab.ampBtn, { borderColor: '#4fc3f766', backgroundColor: '#4fc3f714' }]} onPress={onSpend} activeOpacity={0.75}>
+        <TouchableOpacity style={[ab.ampBtn, { borderColor: T.accent.mint + '66', backgroundColor: T.accent.mint + '14' }]} onPress={onSpend} activeOpacity={0.75}>
           <Text style={ab.ampBtnText}>SPEND</Text>
         </TouchableOpacity>
       )}
@@ -732,7 +732,7 @@ const ab = StyleSheet.create({
   wrap:       { position: 'absolute', left: 4, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   pct:        { fontFamily: 'Orbitron_900Black', fontSize: 16, marginTop: -4 },
   ampBtn:     { marginTop: 2, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
-  ampBtnText: { fontFamily: 'Orbitron_900Black', fontSize: 5, color: '#4fc3f7', letterSpacing: 0.3 },
+  ampBtnText: { fontFamily: 'Orbitron_900Black', fontSize: 5, color: T.accent.mint, letterSpacing: 0.3 },
 });
 
 // ── Shared amp effect banner — displayed in VS row ────────────────────────────
@@ -798,7 +798,7 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
 }) {
   const ready = phase === 'ready';
   const attacks: { weight: AttackWeight; label: string; cost: string; mult: string; minSp: number; colors: [string, string]; border: string }[] = [
-    { weight: 'light',  label: 'LIGHT',  cost: '−1 SP', mult: '×0.8', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: '#4fc3f766' },
+    { weight: 'light',  label: 'LIGHT',  cost: '−1 SP', mult: '×0.8', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: T.accent.mint + '66' },
     { weight: 'medium', label: 'MEDIUM', cost: '−3 SP', mult: '×1.0', minSp: 3, colors: ['#4a3000', '#2a1a00'], border: '#ffa72666' },
     { weight: 'heavy',  label: 'HEAVY',  cost: '−5 SP', mult: '×1.5', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: '#FF475766' },
   ];
@@ -898,7 +898,7 @@ const rs = StyleSheet.create({
   tier:         { fontFamily: 'Orbitron_700Bold', fontSize: 12, letterSpacing: 2, marginBottom: 8 },
   rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
   rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 2, marginBottom: 4 },
-  rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
+  rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
   streak:       { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#ffa726', letterSpacing: 1, marginTop: 4 },
   backBtn:      { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, borderWidth: 1, marginTop: 8 },
   backText:     { fontFamily: 'Orbitron_700Bold', fontSize: 13, letterSpacing: 1.5 },
@@ -966,8 +966,8 @@ export default function BattleScreen({ navigation, route }: Props) {
       <MaterialSurface material="brushedMetal" style={s.header} borderRadius={0}>
         {/* Player side */}
         <View style={s.headerSide}>
-          <View style={[s.avatarCircle, { borderColor: playerAvatar?.color ?? '#4fc3f7' }]}>
-            <Text style={[s.avatarSymbol, { color: playerAvatar?.color ?? '#4fc3f7' }]}>
+          <View style={[s.avatarCircle, { borderColor: playerAvatar?.color ?? T.accent.mint }]}>
+            <Text style={[s.avatarSymbol, { color: playerAvatar?.color ?? T.accent.mint }]}>
               {playerAvatar?.symbol ?? 'θ'}
             </Text>
           </View>
@@ -1099,7 +1099,7 @@ const s = StyleSheet.create({
   cardSection:{ flex: 1, justifyContent: 'center' },
   vsRow:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 },
   vsDivider:  { flex: 1, height: 1, backgroundColor: T.bg.border },
-  vsText:     { fontFamily: 'Orbitron_900Black', fontSize: 11, color: '#4fc3f744', letterSpacing: 4, paddingHorizontal: 10 },
+  vsText:     { fontFamily: 'Orbitron_900Black', fontSize: 11, color: T.accent.mintMuted, letterSpacing: 4, paddingHorizontal: 10 },
   logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 
 });

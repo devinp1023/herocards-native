@@ -31,7 +31,7 @@ const bStyles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, gap: 4,
   },
-  statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
+  statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
   statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1 },
 });
 
@@ -115,7 +115,7 @@ export default function ProfileScreen() {
     AVATARS.find(a => a.id === gs.activeAvatar) ??
     LEVEL_AVATARS.find(a => a.id === gs.activeAvatar);
   const avatarSymbol = avatarData?.symbol ?? username.charAt(0).toUpperCase();
-  const avatarColor  = avatarData?.color  ?? '#4fc3f7';
+  const avatarColor  = avatarData?.color  ?? T.accent.mint;
 
   // Battle stats
   const bs = gs.battleStats;
@@ -256,17 +256,17 @@ const styles = StyleSheet.create({
   avatarRing: {
     width: 70, height: 70, borderRadius: 35,
     backgroundColor: T.bg.elevated,
-    borderWidth: 2, borderColor: '#4fc3f744',
+    borderWidth: 2, borderColor: T.accent.mintMuted,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: 26, color: '#4fc3f7' },
+  avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: 26, color: T.accent.mint },
   username: {
     fontFamily: 'Orbitron_900Black', fontSize: 18,
     color: T.text.primary, letterSpacing: 1, marginBottom: 10,
   },
   statRow:     { flexDirection: 'row', alignItems: 'center' },
   hStatBox:    { alignItems: 'center', flex: 1 },
-  hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: 12, color: '#4fc3f7' },
+  hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: 12, color: T.accent.mint },
   hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
   statDivider: { width: 1, height: 24, backgroundColor: T.bg.border, marginHorizontal: 4 },
 

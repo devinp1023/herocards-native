@@ -274,14 +274,14 @@ const s = StyleSheet.create({
   card:             { width:'100%', maxWidth:360, borderRadius:22, padding:32 },
   toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:T.bg.elevated },
   toggleBtn:        { flex:1, paddingVertical:12, alignItems:'center', backgroundColor:'transparent' },
-  toggleBtnActive:  { backgroundColor:'#4fc3f7' },
+  toggleBtnActive:  { backgroundColor:T.accent.mint },
   toggleText:       { fontSize:14, color:'#d0d4e8', letterSpacing:1 },
   toggleTextActive: { color:T.bg.root },
 
   inputs:           { gap:14 },
   input:            { backgroundColor:T.bg.surface, borderWidth:1, borderColor:T.bg.border, borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:T.text.body, fontSize:16, fontFamily:'monospace' },
   error:            { color:'#FF4757', fontSize:14, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
-  submitBtn:        { backgroundColor:'#4fc3f7', borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
+  submitBtn:        { backgroundColor:T.accent.mint, borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
   submitText:       { fontSize:16, fontWeight:'700', color:T.bg.root, letterSpacing:2 },
 

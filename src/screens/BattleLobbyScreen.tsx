@@ -100,7 +100,7 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
           <Text style={sb.sectionLabel}>RARITY</Text>
           {RARITIES.map(r => {
             const active = rarity === r;
-            const color  = r === 'All' ? '#4fc3f7' : (RC[r]?.color ?? T.text.primary);
+            const color  = r === 'All' ? T.accent.mint : (RC[r]?.color ?? T.text.primary);
             return (
               <TouchableOpacity key={r} style={sb.radioRow} onPress={() => onRarity(r)}>
                 <View style={[sb.radioOuter, { borderColor: active ? color : T.bg.border }]}>
@@ -117,10 +117,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = typeFilter === t;
             return (
               <TouchableOpacity key={t} style={sb.radioRow} onPress={() => onType(t)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : T.bg.border }]}>
-                  {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                <View style={[sb.radioOuter, { borderColor: active ? T.accent.mint : T.bg.border }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: T.accent.mint }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{t}</Text>
+                <Text style={[sb.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
@@ -131,10 +131,10 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
             const active = packFilter === p.value;
             return (
               <TouchableOpacity key={p.value} style={sb.radioRow} onPress={() => onPack(p.value)}>
-                <View style={[sb.radioOuter, { borderColor: active ? '#4fc3f7' : T.bg.border }]}>
-                  {active && <View style={[sb.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                <View style={[sb.radioOuter, { borderColor: active ? T.accent.mint : T.bg.border }]}>
+                  {active && <View style={[sb.radioInner, { backgroundColor: T.accent.mint }]} />}
                 </View>
-                <Text style={[sb.radioLabel, { color: active ? '#4fc3f7' : T.text.muted }]}>{p.label}</Text>
+                <Text style={[sb.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{p.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -167,7 +167,7 @@ const sb = StyleSheet.create({
   backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor:'rgba(0,0,0,0.55)', zIndex:10 },
   panel:      { position:'absolute', right:0, top:0, bottom:0, width:SIDEBAR_W, backgroundColor:T.bg.surface, borderLeftWidth:1, borderLeftColor:T.bg.border, zIndex:11, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
   header:     { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingBottom:12, borderBottomWidth:1, borderBottomColor:T.bg.border },
-  title:      { fontFamily:'Orbitron_700Bold', fontSize:14, color:'#4fc3f7', letterSpacing:2 },
+  title:      { fontFamily:'Orbitron_700Bold', fontSize:14, color:T.accent.mint, letterSpacing:2 },
   closeBtn:   { padding:4 },
   closeText:  { color:T.text.muted, fontSize:16 },
   scroll:     { paddingHorizontal:20, paddingBottom:40, paddingTop:8 },
@@ -319,7 +319,7 @@ const opp = StyleSheet.create({
   dot:       { width:6, height:6, borderRadius:3 },
   desc:      { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, lineHeight:16 },
   rewards:   { flexDirection:'row', gap:12 },
-  win:       { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#4fc3f7' },
+  win:       { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:T.accent.mint },
   loss:      { fontFamily:'Rajdhani_600SemiBold', fontSize:11, color:'#404868' },
   arrow:     { width:32, height:32, borderRadius:16, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
   arrowText: { fontFamily:'Orbitron_700Bold', fontSize:16 },
@@ -509,8 +509,8 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {activeFilterCount > 0 && (
           <View style={s.chipRow}>
             {rarity !== 'All' && (
-              <TouchableOpacity style={[s.chip, { borderColor: RC[rarity]?.color ?? '#4fc3f7' }]} onPress={() => setRarity('All')}>
-                <Text style={[s.chipText, { color: RC[rarity]?.color ?? '#4fc3f7' }]}>{rarity} ✕</Text>
+              <TouchableOpacity style={[s.chip, { borderColor: RC[rarity]?.color ?? T.accent.mint }]} onPress={() => setRarity('All')}>
+                <Text style={[s.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity} ✕</Text>
               </TouchableOpacity>
             )}
             {typeFilter !== 'All' && (
@@ -580,7 +580,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
             style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
             onPress={() => setSidebarOpen(true)}
           >
-            <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: '#4fc3f7' }]}>
+            <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: T.accent.mint }]}>
               ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Text>
           </TouchableOpacity>
@@ -658,7 +658,7 @@ const s = StyleSheet.create({
   titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
   screenTitle: { fontFamily:'Orbitron_900Black', fontSize:17, color:T.text.primary, letterSpacing:1.5 },
   filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.elevated },
-  filterBtnActive: { borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
+  filterBtnActive: { borderColor:T.accent.mint, backgroundColor:T.accent.mintFaint },
   filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.text.muted, letterSpacing:0.5 },
   deckCount:   { fontFamily:'Orbitron_900Black', fontSize:18 },
 
@@ -670,8 +670,8 @@ const s = StyleSheet.create({
   slotsScroll: { gap:8, paddingBottom:8 },
 
   chipRow:     { flexDirection:'row', flexWrap:'wrap', gap:6, marginBottom:6 },
-  chip:        { paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:'#4fc3f7', backgroundColor:'#4fc3f711' },
-  chipText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#4fc3f7', letterSpacing:0.5 },
+  chip:        { paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:T.accent.mint, backgroundColor:T.accent.mintFaint },
+  chipText:    { fontFamily:'Orbitron_700Bold', fontSize:9, color:T.accent.mint, letterSpacing:0.5 },
 
   searchAndFilter: { flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 },
   searchRow:   { flex:1, flexDirection:'row', alignItems:'center', backgroundColor:T.bg.elevated, borderRadius:10, borderWidth:1, borderColor:T.bg.border, paddingHorizontal:10 },
@@ -693,14 +693,14 @@ const s = StyleSheet.create({
   footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:T.bg.root, borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
   cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#FF4757', letterSpacing:0.5, marginBottom:6, textAlign:'center' },
   ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
-  ctaBtnReady:     { backgroundColor:'#4fc3f7', borderColor:'#4fc3f7' },
+  ctaBtnReady:     { backgroundColor:T.accent.mint, borderColor:T.accent.mint },
   ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:13, color:T.bg.border, letterSpacing:1.5 },
   ctaTextReady:    { color:T.bg.root },
 
   // Opponent select
   oppScroll:        { paddingHorizontal:16, paddingBottom:48 },
   backBtn:          { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingBottom:16 },
-  backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:'#4fc3f7', letterSpacing:1 },
+  backText:         { fontFamily:'Orbitron_700Bold', fontSize:12, color:T.accent.mint, letterSpacing:1 },
   oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:14, color:T.text.muted, marginBottom:16 },
   deckSummary:      { borderRadius:12, padding:12, marginBottom:16, gap:8 },
   deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:9, color:'#404458', letterSpacing:1.5 },

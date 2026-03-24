@@ -184,7 +184,7 @@ export default function StoreScreen() {
   const hLeft = Math.floor(timeLeft / 3_600_000);
   const mLeft = Math.floor((timeLeft % 3_600_000) / 60_000);
 
-  const showToast = useCallback((msg: string, color = '#4fc3f7') => {
+  const showToast = useCallback((msg: string, color: string = T.accent.mint) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ msg, color });
     toastTimer.current = setTimeout(() => setToast(null), 2500);
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'baseline',
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  creditsVal: { fontFamily: 'Orbitron_900Black', fontSize: 14, color: '#4fc3f7' },
+  creditsVal: { fontFamily: 'Orbitron_900Black', fontSize: 14, color: T.accent.mint },
   creditsLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#404458', letterSpacing: 1 },
 
   // Tab row

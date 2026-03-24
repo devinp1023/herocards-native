@@ -111,7 +111,7 @@ const backStyles = StyleSheet.create({
   },
   brandTop: {
     fontFamily: 'Orbitron_900Black', fontSize: 22,
-    color: '#4fc3f7', letterSpacing: 4,
+    color: T.accent.mint, letterSpacing: 4,
   },
   brandBot: {
     fontFamily: 'Orbitron_700Bold', fontSize: 13,
@@ -492,7 +492,7 @@ const s = StyleSheet.create({
   root:     { flex: 1, backgroundColor: T.bg.root, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
 
   backBtn:  { paddingHorizontal: 20, paddingVertical: 10 },
-  backText: { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: '#4fc3f7', letterSpacing: 1.5 },
+  backText: { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: T.accent.mint, letterSpacing: 1.5 },
 
   screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: 22, color: T.text.primary, letterSpacing: 2, textAlign: 'center', marginBottom: 6 },
   screenSub:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: 14, color: '#506070', textAlign: 'center', marginBottom: 24 },
@@ -502,7 +502,7 @@ const s = StyleSheet.create({
 
   balanceRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderRadius: 12, padding: 14 },
   balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
-  balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: 18, color: '#4fc3f7' },
+  balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
 
   packCardOuter:    { marginBottom: 14 },
   packCard:         { flexDirection: 'row', borderRadius: 18, overflow: 'hidden' },
@@ -529,15 +529,15 @@ const s = StyleSheet.create({
   revealRoot:     { flex: 1, alignItems: 'center', paddingTop: 8 },
   progressRow:    { flexDirection: 'row', gap: 8, marginBottom: 8 },
   dot:            { width: 8, height: 8, borderRadius: 4, backgroundColor: T.bg.border },
-  dotDone:        { backgroundColor: '#4fc3f7' },
-  dotCurrent:     { backgroundColor: '#4fc3f766', transform: [{ scale: 1.3 }] },
+  dotDone:        { backgroundColor: T.accent.mint },
+  dotCurrent:     { backgroundColor: T.accent.mint + '66', transform: [{ scale: 1.3 }] },
   revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#404458', letterSpacing: 2, marginBottom: 20 },
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.text.primary, letterSpacing: 1, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
   tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: '#303050', letterSpacing: 2 },
-  nextBtn:        { backgroundColor: '#4fc3f7', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
+  nextBtn:        { backgroundColor: T.accent.mint, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
   nextBtnGreen:   { backgroundColor: '#2ED573' },
   nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: T.bg.root, letterSpacing: 2 },
 
@@ -548,7 +548,7 @@ const s = StyleSheet.create({
   totalsBox:         { borderRadius: 14, padding: 16, gap: 10, width: '100%', marginTop: 4 },
   totalRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#506070', letterSpacing: 1 },
-  totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: 16, color: '#4fc3f7' },
-  collectBtn:        { backgroundColor: '#4fc3f7', borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
+  totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.accent.mint },
+  collectBtn:        { backgroundColor: T.accent.mint, borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
   collectText:       { fontFamily: 'Orbitron_900Black', fontSize: 16, color: T.bg.root, letterSpacing: 3 },
 });

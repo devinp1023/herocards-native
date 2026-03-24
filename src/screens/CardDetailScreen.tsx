@@ -37,7 +37,7 @@ const BAR_MAX_W  = Dimensions.get('window').width - 80; // full-width bars
 const DESC_LIMIT = 120; // chars before "Read more" appears
 
 const ALLIANCE_COLORS: Record<string, { color: string; border: string; bg: string }> = {
-  Hero:      { color: '#4fc3f7', border: '#4fc3f744', bg: '#4fc3f711' },
+  Hero:      { color: T.accent.mint, border: T.accent.mintMuted, bg: T.accent.mintFaint },
   Villain:   { color: '#ff4060', border: '#ff406044', bg: '#ff406011' },
   'Anti-Hero': { color: '#ff9800', border: '#ff980044', bg: '#ff980011' },
 };
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 12,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 1.5,
   },
 
@@ -276,9 +276,9 @@ const styles = StyleSheet.create({
 
   ownedRow:        { marginBottom: 10 },
   ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: '#2ED57318', borderColor: '#2ED57355' },
-  ownedBadgeMulti: { backgroundColor: '#4fc3f718', borderColor: '#4fc3f755' },
+  ownedBadgeMulti: { backgroundColor: T.accent.mint + '18', borderColor: T.accent.mint + '55' },
   ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#2ED573', letterSpacing: 1 },
-  ownedTextMulti:  { color: '#4fc3f7' },
+  ownedTextMulti:  { color: T.accent.mint },
 
   metaRow: {
     flexDirection: 'row',
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   readMoreText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: 9,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 1,
   },
 

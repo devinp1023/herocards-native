@@ -694,7 +694,7 @@ const bsStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
   },
   rewardValue: {
-    fontFamily: 'Orbitron_900Black', fontSize: 14, color: '#4fc3f7', marginBottom: 2,
+    fontFamily: 'Orbitron_900Black', fontSize: 14, color: T.accent.mint, marginBottom: 2,
   },
   rewardLabel: {
     fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1,

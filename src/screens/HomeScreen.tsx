@@ -128,7 +128,7 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
   const target    = quest.req.n;
   const done      = progress >= target;
   const pct       = Math.min(progress / target, 1);
-  const diffColor = DIFF_COLOR[quest.diff] ?? '#4fc3f7';
+  const diffColor = DIFF_COLOR[quest.diff] ?? T.accent.mint;
 
   const [pressed, setPressed] = useState(false);
   const { animatedStyle: elevStyle } = useElevation(pressed ? 'hovered' : 'resting');
@@ -222,7 +222,7 @@ export default function HomeScreen({ navigation }: Props) {
     AVATARS.find(a => a.id === gs.activeAvatar) ??
     LEVEL_AVATARS.find(a => a.id === gs.activeAvatar);
   const avatarSymbol = avatarData?.symbol ?? username.charAt(0).toUpperCase();
-  const avatarColor  = avatarData?.color  ?? '#4fc3f7';
+  const avatarColor  = avatarData?.color  ?? T.accent.mint;
 
   const [profilePressed, setProfilePressed] = useState(false);
   const { animatedStyle: profileElevStyle } = useElevation(profilePressed ? 'hovered' : 'resting');
@@ -336,10 +336,10 @@ const styles = StyleSheet.create({
   avatarRing: {
     width:64, height:64, borderRadius:32,
     backgroundColor:T.bg.elevated,
-    borderWidth:2, borderColor:'#4fc3f744',
+    borderWidth:2, borderColor:T.accent.mintMuted,
     alignItems:'center', justifyContent:'center', flexShrink:0,
   },
-  avatarInitial: { fontFamily:'Orbitron_900Black', fontSize:22, color:'#4fc3f7' },
+  avatarInitial: { fontFamily:'Orbitron_900Black', fontSize:22, color:T.accent.mint },
   profileInfo: { flex:1, gap:2 },
   username: {
     fontFamily:'Orbitron_900Black', fontSize:16,
@@ -347,17 +347,17 @@ const styles = StyleSheet.create({
   },
   levelRow: { flexDirection:'row', alignItems:'center', gap:8, marginTop:4 },
   levelBadge: {
-    backgroundColor:'#4fc3f722', borderRadius:6,
+    backgroundColor:T.accent.mint + '22', borderRadius:6,
     paddingHorizontal:8, paddingVertical:2,
-    borderWidth:1, borderColor:'#4fc3f744',
+    borderWidth:1, borderColor:T.accent.mintMuted,
   },
-  levelText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#4fc3f7' },
+  levelText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.accent.mint },
   cardCount: { fontFamily:'Orbitron_700Bold', fontSize:11, color:'#506070' },
   xpLabelRow: { flexDirection:'row', justifyContent:'space-between', marginTop:3 },
   xpLabel:    { fontFamily:'monospace', fontSize:9, color:'#506070' },
-  xpNextLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:'#4fc3f788' },
+  xpNextLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:T.accent.mint + '88' },
   creditsBox: { alignItems:'center', flexShrink:0 },
-  creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:20, color:'#4fc3f7', lineHeight:24 },
+  creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:20, color:T.accent.mint, lineHeight:24 },
   creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:8, color:'#404458', letterSpacing:1 },
 
   // Battle button
@@ -376,8 +376,8 @@ const styles = StyleSheet.create({
   packBtn: {
     flexDirection:'row', alignItems:'center', justifyContent:'center',
     gap:12, paddingVertical:18,
-    backgroundColor:'#4fc3f7', borderRadius:14.5,
-    shadowColor:'#4fc3f7', shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
+    backgroundColor:T.accent.mint, borderRadius:14.5,
+    shadowColor:T.accent.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   packBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:20,

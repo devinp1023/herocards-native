@@ -9,7 +9,7 @@ export default function DecksScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        <MaterialCommunityIcons name="cards-outline" size={64} color="#4fc3f744" />
+        <MaterialCommunityIcons name="cards-outline" size={64} color={T.accent.mintMuted} />
         <Text style={styles.title}>DECKS</Text>
         <Text style={styles.sub}>Coming Soon</Text>
       </View>

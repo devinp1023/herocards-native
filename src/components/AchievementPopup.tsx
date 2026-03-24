@@ -165,7 +165,7 @@ const s = StyleSheet.create({
   tapHint: {
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: 12,
-    color: '#4fc3f7',
+    color: T.accent.mint,
     letterSpacing: 0.5,
   },
   closeBtn: {

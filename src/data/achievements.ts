@@ -25,11 +25,11 @@ export interface Achievement {
 
 export const ACHIEVEMENTS: Achievement[] = [
   // ── Card Collector ─────────────────────────────────────────────────────────
-  {id:'card_collector_1', family:'Card Collector',   symbol:'◈', color:'#4fc3f7', cat:'Collection', tier:'I',   name:'Card Collector I',   desc:'Collect 1 card',        req:{type:'col',n:1},    xp:100,  credits:50},
-  {id:'card_collector_2', family:'Card Collector',   symbol:'◈', color:'#4fc3f7', cat:'Collection', tier:'II',  name:'Card Collector II',  desc:'Collect 10 cards',      req:{type:'col',n:10},   xp:200,  credits:100},
-  {id:'card_collector_3', family:'Card Collector',   symbol:'◈', color:'#4fc3f7', cat:'Collection', tier:'III', name:'Card Collector III', desc:'Collect 50 cards',      req:{type:'col',n:50},   xp:500,  credits:250},
-  {id:'card_collector_4', family:'Card Collector',   symbol:'◈', color:'#4fc3f7', cat:'Collection', tier:'IV',  name:'Card Collector IV',  desc:'Collect 100 cards',     req:{type:'col',n:100},  xp:1000, credits:500},
-  {id:'card_collector_5', family:'Card Collector',   symbol:'◈', color:'#4fc3f7', cat:'Collection', tier:'V',   name:'Card Collector V',   desc:'Collect all 200 cards', req:{type:'col',n:200},  xp:5000, credits:3000},
+  {id:'card_collector_1', family:'Card Collector',   symbol:'◈', color:'#00FFAA', cat:'Collection', tier:'I',   name:'Card Collector I',   desc:'Collect 1 card',        req:{type:'col',n:1},    xp:100,  credits:50},
+  {id:'card_collector_2', family:'Card Collector',   symbol:'◈', color:'#00FFAA', cat:'Collection', tier:'II',  name:'Card Collector II',  desc:'Collect 10 cards',      req:{type:'col',n:10},   xp:200,  credits:100},
+  {id:'card_collector_3', family:'Card Collector',   symbol:'◈', color:'#00FFAA', cat:'Collection', tier:'III', name:'Card Collector III', desc:'Collect 50 cards',      req:{type:'col',n:50},   xp:500,  credits:250},
+  {id:'card_collector_4', family:'Card Collector',   symbol:'◈', color:'#00FFAA', cat:'Collection', tier:'IV',  name:'Card Collector IV',  desc:'Collect 100 cards',     req:{type:'col',n:100},  xp:1000, credits:500},
+  {id:'card_collector_5', family:'Card Collector',   symbol:'◈', color:'#00FFAA', cat:'Collection', tier:'V',   name:'Card Collector V',   desc:'Collect all 200 cards', req:{type:'col',n:200},  xp:5000, credits:3000},
 
   // ── Pack Rat ───────────────────────────────────────────────────────────────
   {id:'pack_rat_1', family:'Pack Rat', symbol:'▣', color:'#ff9800', cat:'Packs', tier:'I',   name:'Pack Rat I',   desc:'Open 1 pack',    req:{type:'packs',n:1},   xp:100,  credits:50},
@@ -75,9 +75,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {id:'big_spender_3', family:'Big Spender', symbol:'◆', color:'#ff9800', cat:'Economy', tier:'III', name:'Big Spender III', desc:'Own 10 purchased avatars',      req:{type:'avatars',n:10}, xp:1500, credits:800},
 
   // ── Alliance ───────────────────────────────────────────────────────────────
-  {id:'hero_path_1', family:'Hero Path', symbol:'▲', color:'#4fc3f7', cat:'Alliance', tier:'I',   name:'Hero Path I',   desc:'Collect 5 Hero cards',  req:{type:'alliance',alliance:'Hero',n:5},  xp:150, credits:75},
-  {id:'hero_path_2', family:'Hero Path', symbol:'▲', color:'#4fc3f7', cat:'Alliance', tier:'II',  name:'Hero Path II',  desc:'Collect 20 Hero cards', req:{type:'alliance',alliance:'Hero',n:20}, xp:400, credits:200},
-  {id:'hero_path_3', family:'Hero Path', symbol:'▲', color:'#4fc3f7', cat:'Alliance', tier:'III', name:'Hero Path III', desc:'Collect 50 Hero cards', req:{type:'alliance',alliance:'Hero',n:50}, xp:1000,credits:500},
+  {id:'hero_path_1', family:'Hero Path', symbol:'▲', color:'#00FFAA', cat:'Alliance', tier:'I',   name:'Hero Path I',   desc:'Collect 5 Hero cards',  req:{type:'alliance',alliance:'Hero',n:5},  xp:150, credits:75},
+  {id:'hero_path_2', family:'Hero Path', symbol:'▲', color:'#00FFAA', cat:'Alliance', tier:'II',  name:'Hero Path II',  desc:'Collect 20 Hero cards', req:{type:'alliance',alliance:'Hero',n:20}, xp:400, credits:200},
+  {id:'hero_path_3', family:'Hero Path', symbol:'▲', color:'#00FFAA', cat:'Alliance', tier:'III', name:'Hero Path III', desc:'Collect 50 Hero cards', req:{type:'alliance',alliance:'Hero',n:50}, xp:1000,credits:500},
 
   {id:'villain_path_1', family:'Villain Path', symbol:'✦', color:'#f44336', cat:'Alliance', tier:'I',   name:'Villain Path I',   desc:'Collect 5 Villain cards',  req:{type:'alliance',alliance:'Villain',n:5},  xp:150, credits:75},
   {id:'villain_path_2', family:'Villain Path', symbol:'✦', color:'#f44336', cat:'Alliance', tier:'II',  name:'Villain Path II',  desc:'Collect 20 Villain cards', req:{type:'alliance',alliance:'Villain',n:20}, xp:400, credits:200},
@@ -149,11 +149,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   {id:'cosmic_clash_4', family:'Cosmic Clash', symbol:'◇', color:'#7c3aed', cat:'Battle', tier:'IV',  name:'Cosmic Clash IV',  desc:'40 Cosmic Clash wins', req:{type:'battle_stat',stat:'cosmicClashWins',n:40},  xp:8000, credits:4000},
   {id:'cosmic_clash_5', family:'Cosmic Clash', symbol:'◇', color:'#7c3aed', cat:'Battle', tier:'V',   name:'Cosmic Clash V',   desc:'100 Cosmic Clash wins',req:{type:'battle_stat',stat:'cosmicClashWins',n:100}, xp:20000,credits:10000},
 
-  {id:'against_all_odds_1', family:'Against All Odds', symbol:'◇', color:'#4fc3f7', cat:'Battle', tier:'I',   name:'Against All Odds I',   desc:'Win a battle with type disadvantage',     req:{type:'battle_stat',stat:'typeDisadvantageWins',n:1},   xp:300,  credits:150},
-  {id:'against_all_odds_2', family:'Against All Odds', symbol:'◇', color:'#4fc3f7', cat:'Battle', tier:'II',  name:'Against All Odds II',  desc:'Win 10 type disadvantage battles',  req:{type:'battle_stat',stat:'typeDisadvantageWins',n:10},  xp:900,  credits:450},
-  {id:'against_all_odds_3', family:'Against All Odds', symbol:'◇', color:'#4fc3f7', cat:'Battle', tier:'III', name:'Against All Odds III', desc:'Win 35 type disadvantage battles',  req:{type:'battle_stat',stat:'typeDisadvantageWins',n:35},  xp:2800, credits:1400},
-  {id:'against_all_odds_4', family:'Against All Odds', symbol:'◇', color:'#4fc3f7', cat:'Battle', tier:'IV',  name:'Against All Odds IV',  desc:'Win 100 type disadvantage battles', req:{type:'battle_stat',stat:'typeDisadvantageWins',n:100}, xp:7000, credits:3500},
-  {id:'against_all_odds_5', family:'Against All Odds', symbol:'◇', color:'#4fc3f7', cat:'Battle', tier:'V',   name:'Against All Odds V',   desc:'Win 250 type disadvantage battles', req:{type:'battle_stat',stat:'typeDisadvantageWins',n:250}, xp:18000,credits:9000},
+  {id:'against_all_odds_1', family:'Against All Odds', symbol:'◇', color:'#00FFAA', cat:'Battle', tier:'I',   name:'Against All Odds I',   desc:'Win a battle with type disadvantage',     req:{type:'battle_stat',stat:'typeDisadvantageWins',n:1},   xp:300,  credits:150},
+  {id:'against_all_odds_2', family:'Against All Odds', symbol:'◇', color:'#00FFAA', cat:'Battle', tier:'II',  name:'Against All Odds II',  desc:'Win 10 type disadvantage battles',  req:{type:'battle_stat',stat:'typeDisadvantageWins',n:10},  xp:900,  credits:450},
+  {id:'against_all_odds_3', family:'Against All Odds', symbol:'◇', color:'#00FFAA', cat:'Battle', tier:'III', name:'Against All Odds III', desc:'Win 35 type disadvantage battles',  req:{type:'battle_stat',stat:'typeDisadvantageWins',n:35},  xp:2800, credits:1400},
+  {id:'against_all_odds_4', family:'Against All Odds', symbol:'◇', color:'#00FFAA', cat:'Battle', tier:'IV',  name:'Against All Odds IV',  desc:'Win 100 type disadvantage battles', req:{type:'battle_stat',stat:'typeDisadvantageWins',n:100}, xp:7000, credits:3500},
+  {id:'against_all_odds_5', family:'Against All Odds', symbol:'◇', color:'#00FFAA', cat:'Battle', tier:'V',   name:'Against All Odds V',   desc:'Win 250 type disadvantage battles', req:{type:'battle_stat',stat:'typeDisadvantageWins',n:250}, xp:18000,credits:9000},
 
   // ── Stamina Mastery ────────────────────────────────────────────────────────
 
@@ -209,11 +209,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   {id:'ability_activated_4', family:'Ability Activated', symbol:'✦', color:'#ab47bc', cat:'Battle', tier:'IV',  name:'Ability Activated IV',  desc:'500 ability activations',   req:{type:'battle_stat',stat:'abilityActivations',n:500},  xp:4000, credits:2000},
   {id:'ability_activated_5', family:'Ability Activated', symbol:'✦', color:'#ab47bc', cat:'Battle', tier:'V',   name:'Ability Activated V',   desc:'1000 ability activations',  req:{type:'battle_stat',stat:'abilityActivations',n:1000}, xp:10000,credits:5000},
 
-  {id:'second_chance_1', family:'Second Chance', symbol:'✦', color:'#4fc3f7', cat:'Battle', tier:'I',   name:'Second Chance I',   desc:'Survive a killing blow via Second Wind or Last Stand', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:1},  xp:400,  credits:200},
-  {id:'second_chance_2', family:'Second Chance', symbol:'✦', color:'#4fc3f7', cat:'Battle', tier:'II',  name:'Second Chance II',  desc:'5 Second Chance survivals',  req:{type:'battle_stat',stat:'secondChanceSurvivals',n:5},  xp:1200, credits:600},
-  {id:'second_chance_3', family:'Second Chance', symbol:'✦', color:'#4fc3f7', cat:'Battle', tier:'III', name:'Second Chance III', desc:'20 Second Chance survivals', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:20}, xp:3500, credits:1750},
-  {id:'second_chance_4', family:'Second Chance', symbol:'✦', color:'#4fc3f7', cat:'Battle', tier:'IV',  name:'Second Chance IV',  desc:'60 Second Chance survivals', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:60}, xp:8000, credits:4000},
-  {id:'second_chance_5', family:'Second Chance', symbol:'✦', color:'#4fc3f7', cat:'Battle', tier:'V',   name:'Second Chance V',   desc:'150 Second Chance survivals',req:{type:'battle_stat',stat:'secondChanceSurvivals',n:150},xp:20000,credits:10000},
+  {id:'second_chance_1', family:'Second Chance', symbol:'✦', color:'#00FFAA', cat:'Battle', tier:'I',   name:'Second Chance I',   desc:'Survive a killing blow via Second Wind or Last Stand', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:1},  xp:400,  credits:200},
+  {id:'second_chance_2', family:'Second Chance', symbol:'✦', color:'#00FFAA', cat:'Battle', tier:'II',  name:'Second Chance II',  desc:'5 Second Chance survivals',  req:{type:'battle_stat',stat:'secondChanceSurvivals',n:5},  xp:1200, credits:600},
+  {id:'second_chance_3', family:'Second Chance', symbol:'✦', color:'#00FFAA', cat:'Battle', tier:'III', name:'Second Chance III', desc:'20 Second Chance survivals', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:20}, xp:3500, credits:1750},
+  {id:'second_chance_4', family:'Second Chance', symbol:'✦', color:'#00FFAA', cat:'Battle', tier:'IV',  name:'Second Chance IV',  desc:'60 Second Chance survivals', req:{type:'battle_stat',stat:'secondChanceSurvivals',n:60}, xp:8000, credits:4000},
+  {id:'second_chance_5', family:'Second Chance', symbol:'✦', color:'#00FFAA', cat:'Battle', tier:'V',   name:'Second Chance V',   desc:'150 Second Chance survivals',req:{type:'battle_stat',stat:'secondChanceSurvivals',n:150},xp:20000,credits:10000},
 
   {id:'executioner_1', family:'Executioner', symbol:'✦', color:'#f44336', cat:'Battle', tier:'I',   name:'Executioner I',   desc:'Land 1 Execute kill (opponent below 25% HP)',   req:{type:'battle_stat',stat:'executionerKills',n:1},   xp:300,  credits:150},
   {id:'executioner_2', family:'Executioner', symbol:'✦', color:'#f44336', cat:'Battle', tier:'II',  name:'Executioner II',  desc:'15 Execute kills',  req:{type:'battle_stat',stat:'executionerKills',n:15},  xp:900,  credits:450},
@@ -250,7 +250,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Special Achievements (Tier I only, earned once) ────────────────────────
 
   {id:'perfect_battle_1', family:'Perfect Battle', symbol:'◆', color:'#00e676', cat:'Battle', tier:'I', name:'Perfect Battle', desc:'Win without any of your cards reaching 0 stamina', req:{type:'battle_stat',stat:'perfectBattles',n:1}, xp:1500, credits:750},
-  {id:'the_comeback_1', family:'The Comeback', symbol:'◆', color:'#4fc3f7', cat:'Battle', tier:'I', name:'The Comeback', desc:'Win with your last card -- hand and deck both empty', req:{type:'battle_stat',stat:'comebackWins',n:1}, xp:1500, credits:750},
+  {id:'the_comeback_1', family:'The Comeback', symbol:'◆', color:'#00FFAA', cat:'Battle', tier:'I', name:'The Comeback', desc:'Win with your last card -- hand and deck both empty', req:{type:'battle_stat',stat:'comebackWins',n:1}, xp:1500, credits:750},
   {id:'survivor_1', family:'Survivor', symbol:'◆', color:'#f44336', cat:'Battle', tier:'I', name:'Survivor', desc:'Win a battle where your last card survived at 1 HP via Last Stand', req:{type:'battle_stat',stat:'survivorWins',n:1}, xp:2000, credits:1000},
   {id:'amp_race_1', family:'Amp Race', symbol:'◆', color:'#ffd700', cat:'Battle', tier:'I', name:'Amp Race', desc:"Trigger Amp in the same round the opponent's meter also hit 100", req:{type:'battle_stat',stat:'ampRaceTriggers',n:1}, xp:2000, credits:1000},
   {id:'tie_breaker_1', family:'Tie Breaker', symbol:'◆', color:'#78909c', cat:'Battle', tier:'I', name:'Tie Breaker', desc:'Play a battle that ends in a Tie', req:{type:'battle_stat',stat:'tieBattles',n:1}, xp:1000, credits:500},
