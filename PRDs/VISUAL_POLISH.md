@@ -273,6 +273,11 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Open battle, take damage — HP bar changes color and glow at thresholds. Check quest panel — mint glow on progress fill.
 - **Warnings to check:** None — these are style-only changes on existing components.
 
+> **Flagged: Cyan (`#4fc3f7`) → Mint (`T.accent.mint`) migration**
+> The style guide defines mint (`#00FFAA`) as the primary accent, but the app still uses cyan (`#4fc3f7`) as its primary accent in **120 occurrences across 17 files** — tab bar, stamina pips, links, selected states, badges, icons, button tints, and more. This is a large migration that should be its own dedicated sprint. It will change the app's visual identity significantly (cool blue → vibrant green). Recommend scheduling as **Sprint 2.6 — Cyan-to-mint accent migration** before Phase 3 begins, since Phase 3 (screen identity, ambient particles) will add more mint-colored elements and the inconsistency will be more jarring if cyan still exists alongside.
+>
+> **Files with highest counts:** BattleScreen (18), CollectionScreen (18), achievements.ts (19), BattleLobbyScreen (17), HomeScreen (11), PackOpeningScreen (8).
+
 ---
 
 ### Phase 3 — Screen Identity & Ambient Life

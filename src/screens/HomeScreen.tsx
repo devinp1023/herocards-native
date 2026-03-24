@@ -23,6 +23,7 @@ import { PACKS, AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
 
 type Props = CompositeScreenProps<
@@ -50,14 +51,22 @@ function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number })
 
   return (
     <View style={xpStyles.track}>
-      <Animated.View style={[xpStyles.fill, barStyle]} />
+      <Animated.View style={[xpStyles.fill, barStyle]}>
+        <LinearGradient
+          colors={['#B14EFF', '#cc6dff']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={xpStyles.gradient}
+        />
+      </Animated.View>
     </View>
   );
 }
 
 const xpStyles = StyleSheet.create({
   track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6 },
-  fill:  { height: '100%', backgroundColor: '#4fc3f7', borderRadius: 3, shadowColor: '#4fc3f7', shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
+  fill:  { height: '100%', borderRadius: 3, shadowColor: '#B14EFF', shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
+  gradient: { flex: 1, borderRadius: 3 },
 });
 
 // ── PackStatCard ──────────────────────────────────────────────────────────────
@@ -84,7 +93,7 @@ function PackStatCard({ packId, collection, cardRoster }: { packId: number; coll
         <Text style={[packStyles.pct, { color: pack.color }]}>{pct}%</Text>
       </View>
       <View style={[packStyles.barTrack, { backgroundColor: pack.color + '18' }]}>
-        <View style={[packStyles.barFill, { width: `${pct}%` as any, backgroundColor: pack.color }]} />
+        <View style={[packStyles.barFill, { width: `${pct}%` as any, backgroundColor: pack.color, shadowColor: pack.color, shadowOpacity: 0.5, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } }]} />
       </View>
       <View style={packStyles.rarityRow}>
         {statsByRarity.map(({ r, color, count, total }) => (
@@ -154,7 +163,9 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
             <View style={[
               qStyles.barFill,
               { width: `${Math.round(pct * 100)}%` as any },
-              { backgroundColor: done ? '#2ED573' : diffColor },
+              done
+                ? { backgroundColor: T.status.vitality, shadowColor: T.status.vitality, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } }
+                : { backgroundColor: T.accent.mint, shadowColor: T.accent.mint, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
             ]} />
           </View>
         </MaterialSurface>

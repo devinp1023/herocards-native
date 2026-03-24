@@ -52,7 +52,7 @@ function PackBar({ packId, collection, cardRoster }: {
       <Text style={[pStyles.name, { color: pack.color }]} numberOfLines={1}>{pack.name.toUpperCase()}</Text>
       <Text style={pStyles.count}>{owned}/{packCards.length}</Text>
       <View style={pStyles.barTrack}>
-        <View style={[pStyles.barFill, { width: `${pct}%` as any, backgroundColor: pack.color }]} />
+        <View style={[pStyles.barFill, { width: `${pct}%` as any, backgroundColor: pack.color, shadowColor: pack.color, shadowOpacity: 0.5, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } }]} />
       </View>
       <Text style={[pStyles.pct, { color: pack.color }]}>{pct}%</Text>
     </View>
@@ -285,9 +285,9 @@ const styles = StyleSheet.create({
     padding: 16, marginBottom: 24,
   },
   collBarTrack: { height: 8, backgroundColor: T.bg.elevated, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
-  collBarFill:  { height: '100%', borderRadius: 4, backgroundColor: '#4fc3f7' },
+  collBarFill:  { height: '100%', borderRadius: 4, backgroundColor: T.accent.mint, shadowColor: T.accent.mint, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   collPct: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#4fc3f7',
+    fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.accent.mint,
     letterSpacing: 1, marginBottom: 12, textAlign: 'center',
   },
   dividerThin: { height: 1, backgroundColor: T.bg.border, marginBottom: 12 },

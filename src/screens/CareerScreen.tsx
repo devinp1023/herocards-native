@@ -585,7 +585,8 @@ export default function CareerScreen() {
             <View style={bsStyles.progressTrack}>
               <View style={[
                 bsStyles.progressFill,
-                { width: `${Math.min(selectedTier.progress, 1) * 100}%` as any, backgroundColor: selectedColor },
+                { width: `${Math.min(selectedTier.progress, 1) * 100}%` as any, backgroundColor: selectedColor,
+                  shadowColor: selectedColor, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
               ]} />
             </View>
             <Text style={bsStyles.progressLabel}>{selectedTier.progressLabel}</Text>

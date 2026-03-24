@@ -4,6 +4,7 @@
 
 import React, { useEffect } from 'react';
 import { StyleSheet, Image as RNImage, View, Text } from 'react-native';
+import { T } from '../theme/theme';
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -168,7 +169,7 @@ export function HeroCard({
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
 
   // HP bar color based on percentage
-  const hpBarColor = displayHpPct > 0.5 ? '#4ade80' : displayHpPct > 0.25 ? '#facc15' : '#ef4444';
+  const hpBarColor = displayHpPct > 0.5 ? T.status.vitality : displayHpPct > 0.25 ? T.status.caution : T.status.danger;
   const isLowHp = displayHpPct <= 0.25 && currentHp != null;
 
   // Low HP pulse animation

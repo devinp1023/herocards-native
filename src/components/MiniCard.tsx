@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { T } from '../theme/theme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
 
@@ -87,7 +88,7 @@ export function MiniCard({
   const displayStam   = currentStamina ?? maxStam;
 
   const hp = displayHp;
-  const hpBarColor = displayHpPct > 0.5 ? '#4ade80' : displayHpPct > 0.25 ? '#facc15' : '#ef4444';
+  const hpBarColor = displayHpPct > 0.5 ? T.status.vitality : displayHpPct > 0.25 ? T.status.caution : T.status.danger;
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
 
   const statPills: { icon: 'sword' | 'shield' | 'run-fast'; value: number; bg: string }[] = [
