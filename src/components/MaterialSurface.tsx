@@ -5,9 +5,13 @@
  * instead of a bare View with a flat backgroundColor.
  *
  * Materials:
- *   brushedMetal  — primary panels (gradient + noise + brush grain)
- *   frostedGlass  — overlay panels (dark tint + noise, blur on supported builds)
- *   obsidian      — battle screen only (dark warm gradient + noise + crack texture)
+ *   brushedMetal  — primary panels (multi-stop gradient + top-edge light catch + inner glow)
+ *   frostedGlass  — overlay panels (dark tint + top-edge highlight)
+ *   obsidian      — battle screen only (warm dark gradient + red-tinted inner glow)
+ *
+ * Depth is created through layered gradients and edge highlights — no image
+ * textures (RN Image tiling is broken on iOS). This is pure Views + LinearGradient,
+ * GPU-native and cheap.
  *
  * The energy border (animated mint→violet top-edge gradient) is opt-in via prop.
  * It renders as an isolated Animated.View to avoid breaking parent React.memo.
@@ -19,7 +23,6 @@
 import React from 'react';
 import {
   View,
-  Image,
   StyleSheet,
   type ViewStyle,
   type StyleProp,
@@ -33,14 +36,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { T } from '../theme/theme';
-
-// ── Texture assets ──────────────────────────────────────────────────────────
-// 512x512 noise texture — used with resizeMode="cover".
-// RN Image resizeMode="repeat" is broken on iOS, so we use a larger source
-// that covers panels without visible blur at production opacity (0.04).
-const noiseSource = require('../../assets/textures/noise-512.png');
-const brushGrainSource = require('../../assets/textures/brush-grain-128x4.png');
-const obsidianCracksSource = require('../../assets/textures/obsidian-cracks.png');
 
 // ── Types ───────────────────────────────────────────────────────────────────
 export type Material = 'brushedMetal' | 'frostedGlass' | 'obsidian';
@@ -56,6 +51,35 @@ interface Props {
   borderRadius?: number;
 }
 
+// ── Material configs ────────────────────────────────────────────────────────
+const MATERIALS = {
+  brushedMetal: {
+    // Multi-stop gradient: subtle lighter band near top creates curved-surface feel
+    gradient: ['#0e0f16', '#0b0c12', '#0a0b10', '#090a0e'] as const,
+    borderColor: T.bg.border,
+    // Top-edge light catch: simulates overhead light hitting a metal surface
+    topEdgeColor: 'rgba(255, 255, 255, 0.06)',
+    // Inner glow: light falloff from top
+    innerGlowColor: 'rgba(255, 255, 255, 0.025)',
+    innerGlowHeight: 40,
+  },
+  frostedGlass: {
+    gradient: ['rgba(16, 17, 24, 0.88)', 'rgba(10, 11, 16, 0.92)'] as const,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    topEdgeColor: 'rgba(255, 255, 255, 0.08)',
+    innerGlowColor: 'rgba(255, 255, 255, 0.03)',
+    innerGlowHeight: 30,
+  },
+  obsidian: {
+    // Warm dark gradient with slight red undertone
+    gradient: ['#0d080c', '#0b0710', '#09060a', '#080508'] as const,
+    borderColor: '#2a1520',
+    topEdgeColor: 'rgba(255, 71, 87, 0.06)',
+    innerGlowColor: 'rgba(255, 71, 87, 0.02)',
+    innerGlowHeight: 50,
+  },
+} as const;
+
 // ── Energy Border (isolated animated layer) ─────────────────────────────────
 // This is a separate component so its animation never re-renders the parent.
 const EnergyBorder = React.memo(({ borderRadius }: { borderRadius: number }) => {
@@ -70,8 +94,6 @@ const EnergyBorder = React.memo(({ borderRadius }: { borderRadius: number }) => 
   }, [position]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    // Shift the gradient by translating the View
-    // The gradient itself is static; we move it horizontally to create the flow effect
     transform: [{ translateX: (position.value - 0.5) * 200 }],
   }));
 
@@ -104,54 +126,37 @@ function MaterialSurfaceInner({
   energyBorder = false,
   borderRadius = T.radius.lg,
 }: Props) {
-  const gradientColors = material === 'obsidian' ? T.grad.obsidian : T.grad.surface;
-  const noiseOpacity = material === 'obsidian' ? 0.05 : material === 'frostedGlass' ? 0.03 : 0.04;
-  const borderColor = material === 'obsidian' ? '#2a1520' : T.bg.border;
+  const m = MATERIALS[material];
 
   return (
     <View
       style={[
         styles.container,
-        { borderRadius, borderColor },
-        material === 'frostedGlass' && styles.frostedContainer,
+        { borderRadius, borderColor: m.borderColor },
         style,
       ]}
     >
-      {/* Layer 1: Base gradient */}
-      {material !== 'frostedGlass' && (
-        <LinearGradient
-          colors={gradientColors as unknown as [string, string]}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-
-      {/* Layer 1 (frosted glass): dark tint overlay */}
-      {material === 'frostedGlass' && (
-        <View style={[StyleSheet.absoluteFill, styles.frostedTint]} />
-      )}
-
-      {/* Layer 2: Noise texture — cover mode (repeat is broken on iOS) */}
-      <Image
-        source={noiseSource}
-        style={[StyleSheet.absoluteFill, { opacity: noiseOpacity }]}
-        resizeMode="cover"
+      {/* Layer 1: Multi-stop base gradient */}
+      <LinearGradient
+        colors={m.gradient as unknown as [string, string, ...string[]]}
+        style={StyleSheet.absoluteFill}
       />
 
-      {/* Layer 3a: Brush grain (brushedMetal only) */}
-      {/* grain is 128x4 — too small for cover. Use a thin absolute View with
-          repeating horizontal lines as a fallback for iOS tiling bug */}
-      {material === 'brushedMetal' && (
-        <View style={[StyleSheet.absoluteFill, styles.brushGrain]} pointerEvents="none" />
-      )}
+      {/* Layer 2: Top-edge light catch — 1px bright line at top simulating overhead light */}
+      <View
+        style={[
+          styles.topEdge,
+          { backgroundColor: m.topEdgeColor },
+        ]}
+        pointerEvents="none"
+      />
 
-      {/* Layer 3b: Obsidian crack lines (obsidian only) */}
-      {material === 'obsidian' && (
-        <Image
-          source={obsidianCracksSource}
-          style={[StyleSheet.absoluteFill, { opacity: 0.06 }]}
-          resizeMode="cover"
-        />
-      )}
+      {/* Layer 3: Inner glow — soft light falloff from top edge */}
+      <LinearGradient
+        colors={[m.innerGlowColor, 'transparent']}
+        style={[styles.innerGlow, { height: m.innerGlowHeight }]}
+        pointerEvents="none"
+      />
 
       {/* Layer 4: Energy border (opt-in, isolated animation) */}
       {energyBorder && <EnergyBorder borderRadius={borderRadius} />}
@@ -170,19 +175,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
   },
-  frostedContainer: {
-    backgroundColor: 'rgba(10, 11, 16, 0.85)',
+  topEdge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
-  frostedTint: {
-    backgroundColor: 'rgba(10, 11, 16, 0.6)',
-  },
-  brushGrain: {
-    // Simulates horizontal brush grain lines via a semi-transparent border pattern.
-    // Extremely subtle — creates a directional texture feel.
-    opacity: 0.03,
-    borderTopWidth: 0.5,
-    borderBottomWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+  innerGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   energyBorderContainer: {
     position: 'absolute',
@@ -195,7 +199,6 @@ const styles = StyleSheet.create({
   energyBorderInner: {
     position: 'absolute',
     top: 0,
-    // Extra width so the gradient can scroll through
     left: -100,
     right: -100,
     height: 1,

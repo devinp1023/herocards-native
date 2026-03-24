@@ -34,6 +34,8 @@ import { RC, RO } from '../data/constants';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MissingCard } from '../components/MissingCard';
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
 
@@ -111,87 +113,97 @@ function FilterSidebar({
 
       {/* Sidebar panel */}
       <Animated.View style={[styles.sidebar, slideStyle]}>
-        {/* Header */}
-        <View style={styles.sidebarHeader}>
-          <Text style={styles.sidebarTitle}>FILTERS</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Left-edge light catch — 1px bright line on left border */}
+          <View style={styles.sidebarLeftEdge} pointerEvents="none" />
+          {/* Left-side inner glow — light falloff from left edge */}
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.03)', 'transparent']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.sidebarInnerGlow}
+            pointerEvents="none"
+          />
+          {/* Header */}
+          <View style={styles.sidebarHeader}>
+            <Text style={styles.sidebarTitle}>FILTERS</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidebarScroll}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidebarScroll}>
 
-          {/* ── Rarity ── */}
-          <Text style={styles.sectionLabel}>RARITY</Text>
-          {RARITIES.map(r => {
-            const active = rarity === r;
-            const color  = r === 'All' ? '#4fc3f7' : RC[r]?.color ?? '#fff';
-            return (
-              <TouchableOpacity key={r} style={styles.radioRow} onPress={() => onRarity(r)}>
-                <View style={[styles.radioOuter, { borderColor: active ? color : '#303050' }]}>
-                  {active && <View style={[styles.radioInner, { backgroundColor: color }]} />}
-                </View>
-                <Text style={[styles.radioLabel, { color: active ? color : '#8890b0' }]}>{r}</Text>
-              </TouchableOpacity>
-            );
-          })}
+            {/* ── Rarity ── */}
+            <Text style={styles.sectionLabel}>RARITY</Text>
+            {RARITIES.map(r => {
+              const active = rarity === r;
+              const color  = r === 'All' ? '#4fc3f7' : RC[r]?.color ?? '#fff';
+              return (
+                <TouchableOpacity key={r} style={styles.radioRow} onPress={() => onRarity(r)}>
+                  <View style={[styles.radioOuter, { borderColor: active ? color : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: color }]} />}
+                  </View>
+                  <Text style={[styles.radioLabel, { color: active ? color : '#8890b0' }]}>{r}</Text>
+                </TouchableOpacity>
+              );
+            })}
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          {/* ── Type ── */}
-          <Text style={styles.sectionLabel}>TYPE</Text>
-          {types.map(t => {
-            const active = typeFilter === t;
-            return (
-              <TouchableOpacity key={t} style={styles.radioRow} onPress={() => onType(t)}>
-                <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
-                  {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
-                </View>
-                <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{t}</Text>
-              </TouchableOpacity>
-            );
-          })}
+            {/* ── Type ── */}
+            <Text style={styles.sectionLabel}>TYPE</Text>
+            {types.map(t => {
+              const active = typeFilter === t;
+              return (
+                <TouchableOpacity key={t} style={styles.radioRow} onPress={() => onType(t)}>
+                  <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                  </View>
+                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{t}</Text>
+                </TouchableOpacity>
+              );
+            })}
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          {/* ── Pack ── */}
-          <Text style={styles.sectionLabel}>PACK</Text>
-          {PACKS.map(p => {
-            const active = packFilter === p.value;
-            return (
-              <TouchableOpacity key={p.value} style={styles.radioRow} onPress={() => onPack(p.value)}>
-                <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
-                  {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
-                </View>
-                <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{p.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+            {/* ── Pack ── */}
+            <Text style={styles.sectionLabel}>PACK</Text>
+            {PACKS.map(p => {
+              const active = packFilter === p.value;
+              return (
+                <TouchableOpacity key={p.value} style={styles.radioRow} onPress={() => onPack(p.value)}>
+                  <View style={[styles.radioOuter, { borderColor: active ? '#4fc3f7' : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: '#4fc3f7' }]} />}
+                  </View>
+                  <Text style={[styles.radioLabel, { color: active ? '#4fc3f7' : '#8890b0' }]}>{p.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          {/* ── Sort ── */}
-          <Text style={styles.sectionLabel}>SORT BY</Text>
-          {SORT_OPTIONS.map(s => {
-            const active = sortBy === s.key;
-            return (
-              <TouchableOpacity key={s.key} style={styles.radioRow} onPress={() => onSort(s.key)}>
-                <View style={[styles.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
-                  {active && <View style={[styles.radioInner, { backgroundColor: '#cc6dff' }]} />}
-                </View>
-                <Text style={[styles.radioLabel, { color: active ? '#cc6dff' : '#8890b0' }]}>{s.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+            {/* ── Sort ── */}
+            <Text style={styles.sectionLabel}>SORT BY</Text>
+            {SORT_OPTIONS.map(s => {
+              const active = sortBy === s.key;
+              return (
+                <TouchableOpacity key={s.key} style={styles.radioRow} onPress={() => onSort(s.key)}>
+                  <View style={[styles.radioOuter, { borderColor: active ? '#cc6dff' : '#303050' }]}>
+                    {active && <View style={[styles.radioInner, { backgroundColor: '#cc6dff' }]} />}
+                  </View>
+                  <Text style={[styles.radioLabel, { color: active ? '#cc6dff' : '#8890b0' }]}>{s.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          {/* Clear all */}
-          <TouchableOpacity style={styles.clearAllBtn} onPress={onClear}>
-            <Text style={styles.clearAllText}>CLEAR ALL FILTERS</Text>
-          </TouchableOpacity>
+            {/* Clear all */}
+            <TouchableOpacity style={styles.clearAllBtn} onPress={onClear}>
+              <Text style={styles.clearAllText}>CLEAR ALL FILTERS</Text>
+            </TouchableOpacity>
 
-        </ScrollView>
+          </ScrollView>
       </Animated.View>
     </>
   );
@@ -537,6 +549,22 @@ const styles = StyleSheet.create({
     borderLeftColor: '#1e2040',
     zIndex: 11,
     paddingTop: Platform.OS === 'ios' ? 56 : 16,
+    overflow: 'hidden',
+  },
+  sidebarLeftEdge: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  sidebarInnerGlow: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 40,
   },
   sidebarHeader: {
     flexDirection: 'row',

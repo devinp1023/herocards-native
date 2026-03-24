@@ -45,15 +45,15 @@ The app currently runs in **Expo Go** (per CLAUDE.md). Two new dependencies requ
 - Frosted Glass fallback: opaque dark `View` at `rgba(10,11,16,0.85)` — functional but not blurred
 - MaskedView fallback: Skia `<Text>` with `<LinearGradient>` shader for gradient text (already inside Canvas on HeroCard). For screen title shimmer, skip the mask and use a simple opacity-animated overlay gradient instead.
 
-### Image Tiling on iOS
-`resizeMode="repeat"` on RN `<Image>` is officially supported but **historically buggy** on some iOS versions (blank renders, incorrect tiling offset). Prototype the noise/grain tiling early in Phase 2 on an actual device before committing to the approach.
+### Image Tiling on iOS — CONFIRMED BROKEN
+`resizeMode="repeat"` on RN `<Image>` is **broken on iOS** — images do not tile. Using `resizeMode="cover"` with a large noise PNG looked blurry and bad. **We pivoted `MaterialSurface` to a pure RN gradient-based approach:** multi-stop `LinearGradient` + top-edge light catch (1px bright `View`) + inner glow (gradient fade from top). No image textures are used in `MaterialSurface`.
 
-**Fallback if tiling is broken:** Use Skia `<Image fit="repeat">` inside a lightweight Canvas. But this means `MaterialSurface` would contain a Canvas — read the next warning before going this route.
+**Note:** Skia `<Image>` tiling (used in `HeroCard.tsx` for `assets/noise.png`) is **unaffected** — Skia's image tiling works correctly and remains in use. This issue only applies to RN `<Image>` components.
 
 ### Skia Canvas Nesting
-**Never nest a Skia Canvas inside another Canvas.** The PRD correctly places particle edges and hue rotation inside HeroCard's existing Canvas. But if `MaterialSurface` also uses Skia for textures (see tiling fallback above), you'd get Canvas-inside-Canvas when a panel contains a HeroCard or MiniCard.
+**Never nest a Skia Canvas inside another Canvas.** The PRD correctly places particle edges and hue rotation inside HeroCard's existing Canvas.
 
-**Rule:** `MaterialSurface` must use **pure RN layers only** (Image, View, LinearGradient). All Skia usage is confined to existing Canvases: HeroCard, the custom tab bar, and the amp arcs in BattleScreen.
+**Rule:** `MaterialSurface` must use **pure RN layers only** (View, LinearGradient). All Skia usage is confined to existing Canvases: HeroCard, the custom tab bar, and the amp arcs in BattleScreen. This is already the case with the gradient-based `MaterialSurface` approach.
 
 ### BattleScreen Performance
 BattleScreen is already the heaviest screen in the app:
@@ -62,11 +62,11 @@ BattleScreen is already the heaviest screen in the app:
 - `setTimeout` chains for round sequencing (STEP_MS = 1000ms per step)
 - Multiple animated card swap/lunge/shake animations
 
-Adding on top of that: obsidian material (noise + crack overlay Images), glow trail on drag (4 ghost Views updating per gesture frame), damage haptics, and potential ambient effects — **stress test this screen specifically**. Run the Expo performance monitor and confirm >55fps during an active battle round with all new visual layers enabled.
+Adding on top of that: obsidian material (gradient layers, plus crack overlay Image TBD), glow trail on drag (4 ghost Views updating per gesture frame), damage haptics, and potential ambient effects — **stress test this screen specifically**. Run the Expo performance monitor and confirm >55fps during an active battle round with all new visual layers enabled.
 
 **If BattleScreen drops frames:** Cut in this priority order:
 1. Remove glow trail on drag (most expensive — updates every gesture frame)
-2. Reduce obsidian crack overlay to a single static Image (remove Skia Path animated glow option)
+2. Remove obsidian crack overlay Image if present (keep pure gradient approach)
 3. Disable ambient vignette breathing on this screen only (battle is already visually intense)
 
 ### Legendary Hue Rotation Scope
@@ -110,9 +110,9 @@ Test by setting the hue rotation to an extreme angle (180°) and confirming only
 If you need gradient text inside a list, use Skia `<Text>` with `<LinearGradient>` shader instead — it's cheaper and contained within an existing Canvas.
 
 ### Texture Memory on Older Devices
-`noise-64.png` (64×64) and `brush-grain-128x4.png` (128×4) are tiny and tile cheaply. But `obsidian-cracks.png` at 375×812 is a **full-screen bitmap** that stays in GPU memory for the entire time BattleScreen is mounted — alongside the battle Skia canvases, card images (17 cards have `imageUrl`), and amp arc paths.
+`noise-512.png` and `brush-grain-128x4.png` are **no longer used** by `MaterialSurface` (due to the iOS tiling bug pivot to pure gradients). The memory concern from those assets is resolved.
 
-On iPhone SE / older devices with constrained GPU memory, this could cause texture eviction and frame hitches. **Mitigations:**
+`obsidian-cracks.png` (375×812) is **TBD** — pending BattleScreen testing in Sprint 2.3. If we add it back as a `resizeMode="cover"` overlay on the obsidian material at full-screen size, the original memory concern applies. **Mitigations if we use it:**
 - Use `@2x` / `@3x` asset scaling variants instead of one fixed 375×812 image, so the system loads the appropriate resolution
 - Alternatively, make the crack image smaller (e.g., 187×406) and use `resizeMode="cover"` — the cracks are subtle enough that upscaling won't be visible
 - Unmount the crack overlay Image when BattleScreen is not focused (use `useIsFocused()`) to free the texture
@@ -206,11 +206,11 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 **Sprint 1.2 — Texture assets**
 - Create `assets/textures/` directory
-- Generate and add `noise-64.png` (64×64)
-- Generate and add `brush-grain-128x4.png` (128×4)
-- Generate and add `obsidian-cracks.png` (375×812 or smaller with `@2x/@3x` variants)
-- **Verify:** Assets load in a test Image component with `resizeMode="repeat"` on a real iOS device.
-- **Warnings to check:** Image Tiling on iOS — test repeat rendering on device early. If tiling is broken, flag before Phase 2. Texture Memory — confirm obsidian-cracks asset sizing strategy.
+- Generate and add `noise-512.png` (512×512) and `brush-grain-128x4.png` (128×4) — **NOTE: these were generated but are NOT USED by `MaterialSurface`** due to iOS `resizeMode="repeat"` being broken. They remain in `assets/textures/` as dead assets.
+- Generate and add `obsidian-cracks.png` (375×812 or smaller with `@2x/@3x` variants) — **potentially used** for the BattleScreen obsidian material, pending testing in Sprint 2.3.
+- The existing `assets/noise.png` (256×256) is still used by `HeroCard.tsx`'s Skia Canvas — that is a separate system and works correctly.
+- **Verify:** `obsidian-cracks.png` loads in a test Image component with `resizeMode="cover"` on a real iOS device. Confirm it looks acceptable at full-screen size (not blurry).
+- **Warnings to check:** Texture Memory — confirm obsidian-cracks asset sizing strategy if we proceed with it.
 
 **Sprint 1.3 — Color migration**
 - Find-and-replace status colors: `#ef5350` → `#FF4757`, `#4caf50` → `#2ED573`, `#ff9800` → `#FFBE0B` (1c)
@@ -225,12 +225,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 **Sprint 2.1 — MaterialSurface component**
 - Create `src/components/MaterialSurface.tsx` (2a)
-- Implement `brushedMetal` material: LinearGradient + noise Image + brush-grain Image
-- Implement `obsidian` material: LinearGradient + noise Image + cracks Image
-- Implement `frostedGlass` material: check Expo Go compatibility first. If blur dependency works, use BlurView. If not, use opaque dark fallback.
+- Implement `brushedMetal` material: 4-stop LinearGradient (`#0e0f16` → `#0b0c12` → `#0a0b10` → `#090a0e`) + top-edge light catch (1px `View` at `rgba(255,255,255,0.06)`) + inner glow (40px gradient from `rgba(255,255,255,0.025)` → transparent). No image textures.
+- Implement `obsidian` material: warm 4-stop LinearGradient (`#0d080c` → `#0b0710` → `#09060a` → `#080508`) + red-tinted top edge (`rgba(255,71,87,0.06)`) + red inner glow (50px). No image textures. (Crack overlay PNG is TBD — tested in Sprint 2.3 on BattleScreen.)
+- Implement `frostedGlass` material: 2-stop semi-transparent LinearGradient + top-edge highlight (`rgba(255,255,255,0.08)`) + inner glow (30px). Check Expo Go compatibility for blur dependency. If blur works, use BlurView behind gradient. If not, use opaque dark fallback.
 - Add `energyBorder` prop (renders isolated `Animated.View` — but animation wiring comes in Sprint 3.3)
-- **Verify:** Drop `<MaterialSurface>` into HomeScreen for one panel. Confirm noise tiles correctly, grain is visible at close zoom but subliminal at normal distance.
-- **Warnings to check:** Expo Go vs Custom Dev Client (blur dependency), Image Tiling on iOS, Skia Canvas Nesting (confirm MaterialSurface is pure RN).
+- **Verify:** Drop `<MaterialSurface>` into HomeScreen for one panel. Confirm gradient renders correctly with visible light catch on top edge and subtle inner glow.
+- **Warnings to check:** Expo Go vs Custom Dev Client (blur dependency), Skia Canvas Nesting (confirm MaterialSurface is pure RN — no Canvas, no Image textures).
 
 **Sprint 2.2 — Retrofit screens (batch 1: Home, Collection, Store)**
 - HomeScreen: wrap quest panels, profile card, and battle button container in `<MaterialSurface>`
@@ -244,11 +244,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - CareerScreen: wrap category panels, bottom sheet, node containers
 - ProfileScreen: wrap stats grid, collection progress panels, avatar gallery
 - BattleScreen: root background → `<MaterialSurface material="obsidian">`, card preview modal → `<MaterialSurface material="frostedGlass">`
+  - **Obsidian cracks test:** Try adding `obsidian-cracks.png` as a `resizeMode="cover"` Image overlay on top of the obsidian gradient at full-screen size. If it looks good (cracks are crisp, adds visual depth), keep it. If it looks blurry or bad at this size, discard and keep the pure gradient approach.
 - BattleLobbyScreen: wrap deck selection panels
 - PackOpeningScreen: wrap pack container
 - AuthScreen: wrap login form container
-- **Verify:** All screens render correctly. BattleScreen specifically — confirm obsidian material doesn't conflict with existing Skia canvases.
-- **Warnings to check:** BattleScreen Performance (adding texture layers), Skia Canvas Nesting (BattleScreen has Skia amp arcs), Texture Memory (obsidian-cracks loaded alongside battle assets).
+- **Verify:** All screens render correctly. BattleScreen specifically — confirm obsidian material doesn't conflict with existing Skia canvases. Evaluate obsidian cracks overlay quality.
+- **Warnings to check:** BattleScreen Performance (adding gradient layers + potential crack overlay), Skia Canvas Nesting (BattleScreen has Skia amp arcs), Texture Memory (obsidian-cracks loaded alongside battle assets — only if crack overlay is kept).
 
 **Sprint 2.4 — Gradient borders + elevation system**
 - Create `src/components/GradientBorder.tsx` (2d)
@@ -272,7 +273,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 **Sprint 3.1 — ScreenBackground component**
 - Create `src/components/ScreenBackground.tsx` (3a)
-- Implement per-screen base gradients and texture overlays (grain, hex dots, circuit traces, obsidian fissures)
+- Implement per-screen base gradients (screen identity is achieved through unique base gradients + vignette colors + ambient particles — no texture overlay images)
 - Implement vignette View with **breathing animation** (5s ease-in-out opacity pulse)
 - Wrap all screen root Views in `<ScreenBackground theme="...">` (Home, Collection, Store, Career, Battle, Profile)
 - **Verify:** Navigate between screens — each should have a subtly different visual temperature. The vignette should breathe (barely perceptible at normal viewing).
@@ -545,13 +546,13 @@ translateX.value = withSequence(
 
 Create `assets/textures/` with 3 PNGs:
 
-| File | Size | How to generate |
-|------|------|----------------|
-| `noise-64.png` | 64×64 | Photoshop: solid gray → Filter → Noise → Add Noise (Gaussian, 40%, mono). Export as grayscale PNG. |
-| `brush-grain-128x4.png` | 128×4 | 1px white lines at 3% opacity on transparent, spaced 2–3px apart. Horizontal orientation. |
-| `obsidian-cracks.png` | 375×812 | Jagged branching crack paths in #FF4757 at 15% opacity, 1–2px stroke on transparent. Design 3–5 main cracks with smaller branches. |
+| File | Size | Status | How to generate |
+|------|------|--------|----------------|
+| `noise-512.png` | 512×512 | **Unused** — dead asset (iOS tiling broken) | Photoshop: solid gray → Filter → Noise → Add Noise (Gaussian, 40%, mono). Export as grayscale PNG. |
+| `brush-grain-128x4.png` | 128×4 | **Unused** — dead asset (iOS tiling broken) | 1px white lines at 3% opacity on transparent, spaced 2–3px apart. Horizontal orientation. |
+| `obsidian-cracks.png` | 375×812 | **TBD** — pending BattleScreen test in Sprint 2.3 | Jagged branching crack paths in #FF4757 at 15% opacity, 1–2px stroke on transparent. Design 3–5 main cracks with smaller branches. |
 
-**Total size:** <15KB combined. These tile via `resizeMode="repeat"` (noise, grain) or cover the screen (cracks).
+**Note:** `noise-512.png` and `brush-grain-128x4.png` were generated but are not used by `MaterialSurface` because RN `<Image resizeMode="repeat">` is broken on iOS. They remain in `assets/textures/` as dead assets. `obsidian-cracks.png` may be used as a `resizeMode="cover"` overlay on the BattleScreen obsidian material — pending visual quality testing. The existing `assets/noise.png` (256×256) used by HeroCard's Skia Canvas is unrelated and works correctly.
 
 ### 1d. Migrate status colors
 
@@ -640,11 +641,11 @@ interface Props {
 }
 ```
 
-**Layer structure per material** (see style guide Surface Materials section for full implementation recipes):
+**Layer structure per material** (pure RN gradient-based — no image textures due to iOS tiling bug):
 
-- **brushedMetal:** LinearGradient(`T.grad.surface`) → noise Image(0.04) → brush-grain Image(0.02) → children
-- **frostedGlass:** BlurView(dark, 20) → tint View(rgba 0.6) → noise Image(0.03) → children
-- **obsidian:** LinearGradient(`T.grad.obsidian`) → noise Image(0.05) → cracks Image(0.06) → children
+- **brushedMetal:** 4-stop LinearGradient(`#0e0f16` → `#0b0c12` → `#0a0b10` → `#090a0e`) → top-edge light catch (1px View, `rgba(255,255,255,0.06)`) → inner glow (40px gradient from `rgba(255,255,255,0.025)` → transparent) → children
+- **frostedGlass:** BlurView(dark, 20) or opaque fallback → 2-stop semi-transparent LinearGradient → top-edge highlight (`rgba(255,255,255,0.08)`) → inner glow (30px) → children
+- **obsidian:** warm 4-stop LinearGradient(`#0d080c` → `#0b0710` → `#09060a` → `#080508`) → red-tinted top edge (`rgba(255,71,87,0.06)`) → red inner glow (50px) → children. (Crack overlay Image TBD — tested on BattleScreen in Sprint 2.3.)
 
 All layers use `StyleSheet.absoluteFill` + `pointerEvents="none"` (except children and BlurView).
 
@@ -877,17 +878,16 @@ interface Props {
 Each theme applies:
 1. **Base gradient** — unique per screen (from style guide Screen Identity section)
 2. **Vignette** — a positioned radial gradient View at low opacity, **animated with a breathing pulse** (5s ease-in-out, opacity 0→0.03 center, edges 0.4→0.5)
-3. **Texture overlay** — screen-specific texture (hex dots for collection/career, circuit traces for store, fissures for battle, grain-only for home/profile)
-4. **Ambient particles** — optional, spawned by a shared `<AmbientParticles>` component
+3. **Ambient particles** — optional, spawned by a shared `<AmbientParticles>` component
 
 | Screen | Base Gradient | Vignette Position | Vignette Color | Texture | Particles |
 |--------|--------------|-------------------|----------------|---------|-----------|
-| Home | `#050508 → #060810` | top center | mint 6% | grain only | mint, behind battle button |
-| Collection | `#050508 → #06080a` | top right | mint 4% | grain + hex dots | none |
-| Store | `#050508 → #0a0806` | top center | gold 6% | grain + circuit traces | gold, near featured offers |
-| Career | `#050508 → #080610` | center | violet 4% | grain + hex dots | none |
-| Battle | `#08060a → #0d0810` | bottom center | red 8% | obsidian fissures | none (handled by damage effects) |
-| Profile | `#050508 → #06070c` | top center | white 4% | grain only | none |
+| Home | `#050508 → #060810` | top center | mint 6% | gradient only | mint, behind battle button |
+| Collection | `#050508 → #06080a` | top right | mint 4% | gradient only | none |
+| Store | `#050508 → #0a0806` | top center | gold 6% | gradient only | gold, near featured offers |
+| Career | `#050508 → #080610` | center | violet 4% | gradient only | none |
+| Battle | `#08060a → #0d0810` | bottom center | red 8% | obsidian gradient (cracks TBD) | none (handled by damage effects) |
+| Profile | `#050508 → #06070c` | top center | white 4% | gradient only | none |
 
 **Vignette breathing animation:**
 ```ts
@@ -1202,11 +1202,11 @@ New theme/utility files:
 
 New assets:
 
-| File | Location | Size |
-|------|----------|------|
-| `noise-64.png` | `assets/textures/` | ~2KB |
-| `brush-grain-128x4.png` | `assets/textures/` | ~1KB |
-| `obsidian-cracks.png` | `assets/textures/` | ~8KB |
+| File | Location | Size | Status |
+|------|----------|------|--------|
+| `noise-512.png` | `assets/textures/` | ~2KB | Unused — dead asset (iOS tiling broken) |
+| `brush-grain-128x4.png` | `assets/textures/` | ~1KB | Unused — dead asset (iOS tiling broken) |
+| `obsidian-cracks.png` | `assets/textures/` | ~8KB | TBD — pending BattleScreen test in Sprint 2.3 |
 
 New dependencies:
 

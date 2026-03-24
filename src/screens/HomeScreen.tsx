@@ -71,7 +71,7 @@ function PackStatCard({ packId, collection, cardRoster }: { packId: number; coll
   }));
 
   return (
-    <View style={[packStyles.card, { borderColor: pack.color + '33' }]}>
+    <MaterialSurface style={packStyles.card}>
       <View style={packStyles.header}>
         <View style={[packStyles.packDot, { backgroundColor: pack.color }]} />
         <View style={{ flex: 1 }}>
@@ -91,12 +91,12 @@ function PackStatCard({ packId, collection, cardRoster }: { packId: number; coll
           </View>
         ))}
       </View>
-    </View>
+    </MaterialSurface>
   );
 }
 
 const packStyles = StyleSheet.create({
-  card:       { backgroundColor:'#0a0a18', borderRadius:14, borderWidth:1, padding:16, marginBottom:12 },
+  card:       { borderRadius:14, padding:16, marginBottom:12 },
   header:     { flexDirection:'row', alignItems:'center', gap:10, marginBottom:10 },
   packDot:    { width:12, height:12, borderRadius:6, flexShrink:0 },
   name:       { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:1 },
@@ -205,39 +205,40 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* ── Profile card ── */}
         <TouchableOpacity
-          style={styles.profileCard}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Profile')}
         >
-          {/* Active avatar ring */}
-          <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
-            <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
-          </View>
+          <MaterialSurface style={styles.profileCard} borderRadius={20}>
+            {/* Active avatar ring */}
+            <View style={[styles.avatarRing, { borderColor: avatarColor + '66' }]}>
+              <Text style={[styles.avatarInitial, { color: avatarColor }]}>{avatarSymbol}</Text>
+            </View>
 
-          {/* Username + level */}
-          <View style={styles.profileInfo}>
-            <Text style={styles.username} numberOfLines={1}>{username.toUpperCase()}</Text>
-            <View style={styles.levelRow}>
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelText}>LVL {gs.level}</Text>
+            {/* Username + level */}
+            <View style={styles.profileInfo}>
+              <Text style={styles.username} numberOfLines={1}>{username.toUpperCase()}</Text>
+              <View style={styles.levelRow}>
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelText}>LVL {gs.level}</Text>
+                </View>
+                <Text style={styles.cardCount}>{totalUniqueOwned(gs.collection)} CARDS</Text>
               </View>
-              <Text style={styles.cardCount}>{totalUniqueOwned(gs.collection)} CARDS</Text>
+              <XpBar xpInLevel={gs.xpInLevel} xpNeeded={gs.xpNeeded} />
+              <View style={styles.xpLabelRow}>
+                <Text style={styles.xpLabel}>{gs.xpInLevel.toLocaleString()} / {gs.xpNeeded.toLocaleString()} XP</Text>
+                {!isMaxLevel
+                  ? <Text style={styles.xpNextLabel}>LVL {gs.level + 1}</Text>
+                  : <Text style={[styles.xpNextLabel, { color: '#FFBE0B' }]}>MAX</Text>
+                }
+              </View>
             </View>
-            <XpBar xpInLevel={gs.xpInLevel} xpNeeded={gs.xpNeeded} />
-            <View style={styles.xpLabelRow}>
-              <Text style={styles.xpLabel}>{gs.xpInLevel.toLocaleString()} / {gs.xpNeeded.toLocaleString()} XP</Text>
-              {!isMaxLevel
-                ? <Text style={styles.xpNextLabel}>LVL {gs.level + 1}</Text>
-                : <Text style={[styles.xpNextLabel, { color: '#FFBE0B' }]}>MAX</Text>
-              }
-            </View>
-          </View>
 
-          {/* Credits */}
-          <View style={styles.creditsBox}>
-            <Text style={styles.creditsAmount}>{gs.coins.toLocaleString()}</Text>
-            <Text style={styles.creditsLabel}>CREDITS</Text>
-          </View>
+            {/* Credits */}
+            <View style={styles.creditsBox}>
+              <Text style={styles.creditsAmount}>{gs.coins.toLocaleString()}</Text>
+              <Text style={styles.creditsLabel}>CREDITS</Text>
+            </View>
+          </MaterialSurface>
         </TouchableOpacity>
 
         {/* ── Battle button ── */}
@@ -293,9 +294,8 @@ const styles = StyleSheet.create({
   // Profile card
   profileCard: {
     flexDirection:'row', alignItems:'flex-start', gap:14,
-    backgroundColor:'#0a0a1e', borderRadius:20,
+    borderRadius:20,
     padding:18, marginBottom:20,
-    borderWidth:1, borderColor:'#12122a',
   },
   avatarRing: {
     width:64, height:64, borderRadius:32,

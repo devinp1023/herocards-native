@@ -988,7 +988,7 @@
     <!-- Left: description -->
     <div style="flex:1;min-width:260px">
       <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Brushed Dark Metal</div>
-      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">The primary panel material. Subtle directional grain with noise texture creates a tactile, industrial feel. Used for every standard panel, card, modal, and list container in the app.</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">The primary panel material. A multi-stop gradient with a top-edge light catch and inner glow creates a tactile, industrial feel. No image textures &mdash; depth is achieved through layered gradients and edge treatments. Used for every standard panel, modal, and list container in the app.</div>
       <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: panels, cards, modals, quest rows, list containers, bottom sheets</div>
     </div>
     <!-- Right: layer stack diagram -->
@@ -996,16 +996,16 @@
       <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Base gradient</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient View</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Multi-stop gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (4 stops)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Noise texture</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Top-edge light catch</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">View (1px bright line)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Brush grain</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Inner glow</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (40px fade)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Content</span>
@@ -1020,24 +1020,27 @@
     <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
     <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// Wrapper component — use instead of plain View for all panels</span>
 <span style="color:#00FFAA">&lt;View</span> style={[styles.panel, style]}<span style="color:#00FFAA">&gt;</span>
-  <span style="color:#6e7191">{/* Layer 1: Base gradient */}</span>
+  <span style="color:#6e7191">{/* Layer 1: Multi-stop gradient (4 stops for depth) */}</span>
   <span style="color:#00FFAA">&lt;LinearGradient</span>
-    colors={['#0c0d14', '#0a0b10']}
+    colors={['#0e0f16', '#0b0c12', '#0a0b10', '#090a0e']}
+    locations={[0, 0.3, 0.7, 1]}
     style={StyleSheet.absoluteFill}
   <span style="color:#00FFAA">/&gt;</span>
 
-  <span style="color:#6e7191">{/* Layer 2: Noise texture — tiled 64x64 PNG, fractal noise */}</span>
-  <span style="color:#00FFAA">&lt;Image</span>
-    source={require('../assets/textures/noise-64.png')}
-    style={[StyleSheet.absoluteFill, { opacity: 0.04 }]}
-    resizeMode="repeat"
-  <span style="color:#00FFAA">/&gt;</span>
+  <span style="color:#6e7191">{/* Layer 2: Top-edge light catch (1px bright line) */}</span>
+  <span style="color:#00FFAA">&lt;View</span> style={{
+    position: 'absolute', top: 0, left: 0, right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  }} <span style="color:#00FFAA">/&gt;</span>
 
-  <span style="color:#6e7191">{/* Layer 3: Horizontal brush grain — tiled 128x4 PNG */}</span>
-  <span style="color:#00FFAA">&lt;Image</span>
-    source={require('../assets/textures/brush-grain-128x4.png')}
-    style={[StyleSheet.absoluteFill, { opacity: 0.02 }]}
-    resizeMode="repeat"
+  <span style="color:#6e7191">{/* Layer 3: Inner glow (gradient fade from top) */}</span>
+  <span style="color:#00FFAA">&lt;LinearGradient</span>
+    colors={['rgba(255, 255, 255, 0.025)', 'transparent']}
+    style={{
+      position: 'absolute', top: 0, left: 0, right: 0,
+      height: 40,
+    }}
   <span style="color:#00FFAA">/&gt;</span>
 
   <span style="color:#6e7191">{/* Layer 4: Content */}</span>
@@ -1053,10 +1056,8 @@ panel: {
   padding: 16,
 }</pre>
     <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
-      <strong style="color:#ffffff">Texture assets needed:</strong><br>
-      &bull; <code>noise-64.png</code> &mdash; 64&times;64 fractal noise grayscale PNG. Generate in Photoshop: Filter &rarr; Noise &rarr; Add Noise (Gaussian, 40%, mono) on solid gray.<br>
-      &bull; <code>brush-grain-128x4.png</code> &mdash; 128&times;4 horizontal grain PNG. Generate: 1px white lines at 3% opacity on transparent, spaced 2&ndash;3px apart.<br>
-      &bull; Both use <code>resizeMode="repeat"</code> which tiles the image across the full View. RN's Image component handles this natively on iOS.
+      <strong style="color:#ffffff">No image textures.</strong> RN <code>Image</code> with <code>resizeMode="repeat"</code> is broken on iOS. All depth is achieved through the multi-stop gradient, the 1px top-edge light catch, and the inner glow fade. This is a pure RN solution &mdash; no PNG assets needed for panels.<br>
+      <strong style="color:#ffffff">Note:</strong> Skia-rendered elements (like HeroCard) still use Skia image tiling for noise &mdash; that works correctly. This gradient approach is only for RN panel/surface components.
     </div>
   </div>
 </div>
@@ -1068,23 +1069,23 @@ panel: {
   <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
     <div style="flex:1;min-width:260px">
       <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Frosted Glass</div>
-      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Translucent overlays that blur the content beneath. Creates depth by letting the previous layer show through dimly. Used when overlaying active content without fully obscuring it.</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Translucent overlays that create depth through semi-transparent gradients and edge highlights. BlurView is recommended if available (EAS custom build) but the gradient approach works in Expo Go without extra dependencies. Used when overlaying active content without fully obscuring it.</div>
       <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: modal backdrops, card preview overlays, battle info panels, tooltip backgrounds</div>
     </div>
     <div style="flex:1;min-width:280px">
       <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Blur backdrop</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">View + blurRadius</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Semi-transparent gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (2 stops)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Tint overlay</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">View (rgba fill)</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Top-edge highlight</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">View (1px bright line)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Noise texture</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Inner glow</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (30px fade)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Content</span>
@@ -1096,42 +1097,46 @@ panel: {
 
   <div style="margin-top:20px;background:#050508;border:1px solid #1e2030;border-radius:10px;padding:16px;position:relative">
     <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
-    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// RN does not have native backdrop-filter. Use this pattern:</span>
-
-<span style="color:#6e7191">{/* Layer 1: Blurred snapshot of content behind */}</span>
-<span style="color:#00FFAA">&lt;View</span> style={[StyleSheet.absoluteFill, styles.blurLayer]}<span style="color:#00FFAA">&gt;</span>
-  <span style="color:#6e7191">{/* On iOS: use @react-native-community/blur */}</span>
-  <span style="color:#00FFAA">&lt;BlurView</span>
-    blurType="dark"
-    blurAmount={20}
+    <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// Frosted glass panel — pure gradient approach (works in Expo Go)</span>
+<span style="color:#00FFAA">&lt;View</span> style={[styles.frostedPanel, style]}<span style="color:#00FFAA">&gt;</span>
+  <span style="color:#6e7191">{/* Layer 1: Semi-transparent gradient */}</span>
+  <span style="color:#00FFAA">&lt;LinearGradient</span>
+    colors={['rgba(10, 11, 16, 0.7)', 'rgba(10, 11, 16, 0.85)']}
     style={StyleSheet.absoluteFill}
   <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Layer 2: Top-edge highlight */}</span>
+  <span style="color:#00FFAA">&lt;View</span> style={{
+    position: 'absolute', top: 0, left: 0, right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  }} <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Layer 3: Inner glow (gradient fade from top) */}</span>
+  <span style="color:#00FFAA">&lt;LinearGradient</span>
+    colors={['rgba(255, 255, 255, 0.03)', 'transparent']}
+    style={{
+      position: 'absolute', top: 0, left: 0, right: 0,
+      height: 30,
+    }}
+  <span style="color:#00FFAA">/&gt;</span>
+
+  <span style="color:#6e7191">{/* Content */}</span>
+  {children}
 <span style="color:#00FFAA">&lt;/View&gt;</span>
 
-<span style="color:#6e7191">{/* Layer 2: Semi-transparent tint */}</span>
-<span style="color:#00FFAA">&lt;View</span> style={[StyleSheet.absoluteFill, {
-  backgroundColor: 'rgba(10, 11, 16, 0.6)',
-}]} <span style="color:#00FFAA">/&gt;</span>
-
-<span style="color:#6e7191">{/* Layer 3: Noise for frosted texture */}</span>
-<span style="color:#00FFAA">&lt;Image</span>
-  source={require('../assets/textures/noise-64.png')}
-  style={[StyleSheet.absoluteFill, { opacity: 0.03 }]}
-  resizeMode="repeat"
-<span style="color:#00FFAA">/&gt;</span>
-
-<span style="color:#6e7191">{/* Layer 4: Frosted border (white at low opacity) */}</span>
-<span style="color:#6e7191">// Container border:</span>
-borderWidth: 1,
-borderColor: 'rgba(255, 255, 255, 0.06)',
-borderRadius: 14,
-
-<span style="color:#6e7191">{/* Content */}</span>
-{children}</pre>
+<span style="color:#6e7191">// styles</span>
+frostedPanel: {
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.06)',
+  overflow: 'hidden',
+  padding: 16,
+}</pre>
     <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
-      <strong style="color:#ffffff">Dependencies:</strong> <code>@react-native-community/blur</code> for iOS BlurView. This is an Expo-compatible library.<br>
-      <strong style="color:#ffffff">Alternative (no extra dep):</strong> Capture a snapshot of the content behind, apply Skia blur filter, render as Image. More complex but zero dependencies.<br>
-      <strong style="color:#ffffff">Performance:</strong> BlurView is GPU-accelerated on iOS. Limit to 1&ndash;2 active blur layers per screen. Do not nest BlurViews.
+      <strong style="color:#ffffff">BlurView (optional, EAS build only):</strong> If using a custom EAS build (not Expo Go), you can add <code>@react-native-community/blur</code> as Layer 0 behind the gradient for a true frosted effect. The gradient approach above works everywhere without extra dependencies.<br>
+      <strong style="color:#ffffff">No image textures.</strong> RN <code>Image</code> with <code>resizeMode="repeat"</code> is broken on iOS. The semi-transparent gradient + edge highlight approach replaces the old noise-based frosted texture.<br>
+      <strong style="color:#ffffff">Performance:</strong> Pure View + LinearGradient layers are trivially cheap. No GPU blur overhead.
     </div>
   </div>
 </div>
@@ -1239,30 +1244,34 @@ useEffect(() => {
   <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative">
     <div style="flex:1;min-width:260px">
       <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;color:#ffffff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Cracked Obsidian</div>
-      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Volcanic dark surface with faint red fissure lines glowing beneath. Heavy, ominous, and hot. Used exclusively for battle and combat contexts &mdash; the visual shift signals danger.</div>
+      <div style="font-size:14px;color:#c8cad0;line-height:1.6;margin-bottom:12px">Volcanic dark surface with warm 4-stop gradient, red-tinted edge catch, and red inner glow. Heavy, ominous, and hot. No image textures for the base surface &mdash; crack overlay PNG is optional and pending testing at full-screen size. Used exclusively for battle and combat contexts &mdash; the visual shift signals danger.</div>
       <div style="font-family:monospace;font-size:11px;color:#6e7191">Used by: BattleScreen background, damage flash overlays, boss encounter UI, forfeit confirmation modal</div>
     </div>
     <div style="flex:1;min-width:280px">
       <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Layer Stack (bottom &rarr; top)</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Dark base gradient</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient View</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">1. Warm multi-stop gradient</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (4 stops)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Heavy noise</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image (tiled PNG)</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">2. Red top-edge light catch</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">View (1px red-tinted line)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Fissure crack lines</span>
-          <span style="font-family:monospace;font-size:11px;color:#6e7191">Skia Path + glow</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">3. Red inner glow</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">LinearGradient (50px fade)</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Red vignette pulse</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">4. Crack overlay (optional)</span>
+          <span style="font-family:monospace;font-size:11px;color:#6e7191">Image or Skia Path</span>
+        </div>
+        <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">5. Red vignette pulse</span>
           <span style="font-family:monospace;font-size:11px;color:#6e7191">Animated View</span>
         </div>
         <div style="background:#111218;border:1px solid #1e2030;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:monospace;font-size:12px;color:#ffffff">5. Content</span>
+          <span style="font-family:monospace;font-size:12px;color:#ffffff">6. Content</span>
           <span style="font-family:monospace;font-size:11px;color:#6e7191">children</span>
         </div>
       </div>
@@ -1273,50 +1282,39 @@ useEffect(() => {
     <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:9px;color:#00FFAA;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Implementation Recipe</div>
     <pre style="font-family:monospace;font-size:12px;color:#c8cad0;line-height:1.7;white-space:pre-wrap;margin:0"><span style="color:#6e7191">// BattleScreen background wrapper</span>
 
-<span style="color:#6e7191">{/* Layer 1: Dark warm base */}</span>
+<span style="color:#6e7191">{/* Layer 1: Warm multi-stop gradient (4 stops) */}</span>
 <span style="color:#00FFAA">&lt;LinearGradient</span>
-  colors={['#08060a', '#0d0810']}
+  colors={['#0d080c', '#0b0710', '#09060a', '#080508']}
+  locations={[0, 0.3, 0.7, 1]}
   style={StyleSheet.absoluteFill}
 <span style="color:#00FFAA">/&gt;</span>
 
-<span style="color:#6e7191">{/* Layer 2: Heavy noise (higher opacity than Brushed Metal) */}</span>
-<span style="color:#00FFAA">&lt;Image</span>
-  source={require('../assets/textures/noise-64.png')}
-  style={[StyleSheet.absoluteFill, { opacity: 0.05 }]}
-  resizeMode="repeat"
+<span style="color:#6e7191">{/* Layer 2: Red-tinted top-edge light catch */}</span>
+<span style="color:#00FFAA">&lt;View</span> style={{
+  position: 'absolute', top: 0, left: 0, right: 0,
+  height: 1,
+  backgroundColor: 'rgba(255, 71, 87, 0.06)',
+}} <span style="color:#00FFAA">/&gt;</span>
+
+<span style="color:#6e7191">{/* Layer 3: Red inner glow (gradient fade from top) */}</span>
+<span style="color:#00FFAA">&lt;LinearGradient</span>
+  colors={['rgba(255, 71, 87, 0.04)', 'transparent']}
+  style={{
+    position: 'absolute', top: 0, left: 0, right: 0,
+    height: 50,
+  }}
 <span style="color:#00FFAA">/&gt;</span>
 
-<span style="color:#6e7191">{/* Layer 3: Fissure crack lines — pre-rendered PNG overlay */}</span>
-<span style="color:#6e7191">// Option A (simple): A pre-rendered 375x812 PNG of red crack</span>
-<span style="color:#6e7191">// lines on transparent. Fastest, no Skia overhead.</span>
+<span style="color:#6e7191">{/* Layer 4 (optional): Crack overlay PNG — pending full-screen testing */}</span>
+<span style="color:#6e7191">// If the obsidian-cracks.png looks good at full screen, add:</span>
 <span style="color:#00FFAA">&lt;Image</span>
   source={require('../assets/textures/obsidian-cracks.png')}
   style={[StyleSheet.absoluteFill, { opacity: 0.06 }]}
-  resizeMode="cover"
+  resizeMode="cover"  <span style="color:#6e7191">// cover, NOT repeat (single full-screen image)</span>
 <span style="color:#00FFAA">/&gt;</span>
 
-<span style="color:#6e7191">// Option B (dynamic): Skia Path for animated crack glow</span>
-<span style="color:#00FFAA">&lt;Canvas</span> style={StyleSheet.absoluteFill}<span style="color:#00FFAA">&gt;</span>
-  <span style="color:#00FFAA">&lt;Path</span>
-    path={crackPath} <span style="color:#6e7191">// pre-defined SVG path string</span>
-    color="transparent"
-    style="stroke"
-    strokeWidth={1.5}
-  <span style="color:#00FFAA">&gt;</span>
-    <span style="color:#00FFAA">&lt;Shadow</span> dx={0} dy={0} blur={6}
-      color="rgba(255, 71, 87, 0.3)" <span style="color:#00FFAA">/&gt;</span>
-  <span style="color:#00FFAA">&lt;/Path&gt;</span>
-  <span style="color:#00FFAA">&lt;Path</span> path={crackPath}
-    color="rgba(255, 71, 87, 0.15)"
-    style="stroke" strokeWidth={0.5} <span style="color:#00FFAA">/&gt;</span>
-<span style="color:#00FFAA">&lt;/Canvas&gt;</span>
-
-<span style="color:#6e7191">{/* Layer 4: Red vignette — pulses during combat */}</span>
-<span style="color:#00FFAA">&lt;Animated.View</span> style={[StyleSheet.absoluteFill, {
-  background: 'radial-gradient(...)' <span style="color:#6e7191">// not supported in RN</span>
-}]} <span style="color:#00FFAA">/&gt;</span>
+<span style="color:#6e7191">{/* Layer 5: Red vignette — pulses during combat */}</span>
 <span style="color:#6e7191">// Use expo-linear-gradient with radial approximation:</span>
-<span style="color:#6e7191">// A centered radial vignette = transparent center + dark red edges</span>
 <span style="color:#6e7191">// Animate opacity with Reanimated: 0.3 &rarr; 0.5 over 3s loop</span>
 const vignetteOpacity = useSharedValue(0.3);
 useEffect(() => {
@@ -1326,16 +1324,16 @@ useEffect(() => {
   );
 }, []);</pre>
     <div style="margin-top:12px;font-size:12px;color:#6e7191;line-height:1.6">
-      <strong style="color:#ffffff">Texture assets needed:</strong><br>
-      &bull; <code>noise-64.png</code> &mdash; same asset as Brushed Metal, just at higher opacity (0.05)<br>
-      &bull; <code>obsidian-cracks.png</code> &mdash; 375&times;812 (iPhone screen) red crack lines on transparent. Generate in Photoshop/Illustrator: jagged branching paths in #FF4757 at 15% opacity, 1&ndash;2px stroke. Or use Skia Path (Option B) for animated glow.<br>
-      <strong style="color:#ffffff">Recommended:</strong> Option A (PNG) for the static cracks + Skia Shadow on a simplified Path for the animated glow during damage events. This gives you the best of both: cheap static texture + dramatic animated glow when hits land.
+      <strong style="color:#ffffff">No tiled noise textures.</strong> RN <code>Image</code> with <code>resizeMode="repeat"</code> is broken on iOS. The warm multi-stop gradient + red-tinted edge catch + red inner glow replace the old noise-based approach.<br>
+      &bull; <code>obsidian-cracks.png</code> &mdash; optional 375&times;812 (iPhone screen) red crack lines on transparent, using <code>resizeMode="cover"</code> (single image, not tiled). Pending testing at full-screen size. Alternatively, use Skia Path for animated crack glow during damage events.<br>
+      <strong style="color:#ffffff">Note:</strong> Skia-rendered elements (like HeroCard) still use Skia image tiling for noise &mdash; that works correctly. This gradient approach is only for the RN BattleScreen background.
     </div>
   </div>
 </div>
 
 <div class="note">
-  <strong>Shared texture assets:</strong> All four materials share <code>noise-64.png</code>. Only Brushed Metal adds the <code>brush-grain-128x4.png</code>. Only Cracked Obsidian adds <code>obsidian-cracks.png</code>. Total new assets: 3 small PNGs (&lt;10KB combined). Store in <code>assets/textures/</code>.
+  <strong>RN panels use pure gradients &mdash; no tiled image textures.</strong> RN <code>Image</code> with <code>resizeMode="repeat"</code> is broken on iOS, so Brushed Dark Metal, Frosted Glass, and Cracked Obsidian all use multi-stop <code>LinearGradient</code> + top-edge light catch + inner glow instead of noise PNGs. The only optional image asset is <code>obsidian-cracks.png</code> for the battle screen crack overlay (uses <code>resizeMode="cover"</code>, not <code>"repeat"</code>).<br><br>
+  <strong>Skia-rendered elements (HeroCard shimmer, foil noise) still use Skia image tiling</strong> &mdash; Skia has its own tiling that works correctly on iOS. The <code>noise-64.png</code> asset is still needed for Holographic Foil inside <code>&lt;Canvas&gt;</code>.
 </div>
 
 <!-- ================================================================ -->
@@ -1561,6 +1559,7 @@ useEffect(() => {
 
 <!-- ================================================================ -->
 <h2>Texture Language</h2>
+<div class="warning">IMPORTANT: Texture overlays (noise, scan lines, hex dots, circuit traces, etc.) are achieved via Skia inside Canvas elements (like HeroCard), NOT via RN Image components. RN <code>Image</code> with <code>resizeMode="repeat"</code> is broken on iOS. For RN panels and surfaces, depth is created through layered gradients and edge treatments instead &mdash; see Surface Materials above.</div>
 <p>Textures prevent the UI from feeling like flat CSS divs. Every texture serves a purpose &mdash; grain adds physical tactility, scan lines add sci-fi atmosphere, hex grids suggest technology, and circuit traces imply connectivity.</p>
 
 <div class="texture-grid">

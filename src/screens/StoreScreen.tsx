@@ -15,6 +15,7 @@ import {
 import { isOwned, getLevel } from '../hooks/useGameState';
 import { HeroCard } from '../components/HeroCard';
 import { CardWrapper } from '../components/CardWrapper';
+import { MaterialSurface } from '../components/MaterialSurface';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -107,9 +108,9 @@ function AvatarCard({
 }) {
   const tc = AVATAR_TIER_COLORS[tier] ?? AVATAR_TIER_COLORS['Common'];
   return (
-    <View style={[
+    <MaterialSurface borderRadius={12} style={[
       avStyles.card,
-      { borderColor: isActive ? tc.color : owned ? tc.border : '#1a1a30' },
+      { borderColor: isActive ? tc.color : owned ? tc.border : undefined },
       isActive && { backgroundColor: tc.bg },
     ]}>
       <AvatarCircle symbol={symbol} color={color} size={50} dimmed={locked} />
@@ -141,11 +142,11 @@ function AvatarCard({
           <Text style={avStyles.buyText}>{price.toLocaleString()} CR</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </MaterialSurface>
   );
 }
 const avStyles = StyleSheet.create({
-  card:        { width: AVATAR_CARD_W, backgroundColor: '#0a0a1e', borderRadius: 12, borderWidth: 1.5, padding: 10, alignItems: 'center', gap: 7 },
+  card:        { width: AVATAR_CARD_W, padding: 10, alignItems: 'center', gap: 7 },
   name:        { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#8090a0', textAlign: 'center', letterSpacing: 0.3, lineHeight: 12 },
   lockedBadge: { backgroundColor: '#0f0f1e', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
   lockedText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, color: '#505878', letterSpacing: 0.5 },
@@ -232,10 +233,10 @@ export default function StoreScreen() {
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <View style={styles.topBar}>
         <Text style={styles.storeTitle}>STORE</Text>
-        <View style={styles.creditsChip}>
+        <MaterialSurface borderRadius={10} style={styles.creditsChip}>
           <Text style={styles.creditsVal}>{gs.coins.toLocaleString()}</Text>
           <Text style={styles.creditsLbl}> CR</Text>
-        </View>
+        </MaterialSurface>
       </View>
 
       {/* ── Tab switcher ────────────────────────────────────────────────── */}
@@ -263,7 +264,7 @@ export default function StoreScreen() {
           <>
             {/* Featured deal */}
             <SectionDivider label="FEATURED DEAL" color="#FFBE0B" />
-            <View style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
+            <MaterialSurface borderRadius={16} style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
               <AvatarCircle symbol={featured.symbol} color={featured.color} size={68} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
@@ -317,7 +318,7 @@ export default function StoreScreen() {
                   )}
                 </View>
               </View>
-            </View>
+            </MaterialSurface>
 
             {/* Level-Up Exclusive */}
             <SectionDivider label="LEVEL-UP EXCLUSIVE" color="#00e676" />
@@ -392,8 +393,9 @@ export default function StoreScreen() {
               const alreadyOwned = isOwned(gs.collection, card.id);
               const canAfford  = gs.coins >= price;
               return (
-                <View
+                <MaterialSurface
                   key={card.id}
+                  borderRadius={16}
                   style={[styles.cardOffer, { borderColor: cfg.color + '55' }]}
                 >
                   {/* Left rarity accent strip */}
@@ -437,7 +439,7 @@ export default function StoreScreen() {
                       </TouchableOpacity>
                     )}
                   </View>
-                </View>
+                </MaterialSurface>
               );
             })}
           </>
@@ -465,9 +467,7 @@ const styles = StyleSheet.create({
   storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#FFBE0B', letterSpacing: 3 },
   creditsChip: {
     flexDirection: 'row', alignItems: 'baseline',
-    backgroundColor: '#0a0a1e', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 6,
-    borderWidth: 1, borderColor: '#1a1a30',
   },
   creditsVal: { fontFamily: 'Orbitron_900Black', fontSize: 14, color: '#4fc3f7' },
   creditsLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#404458', letterSpacing: 1 },
@@ -488,7 +488,6 @@ const styles = StyleSheet.create({
   // Featured deal
   featuredCard: {
     flexDirection: 'row', gap: 12, alignItems: 'flex-start',
-    backgroundColor: '#120800', borderRadius: 16, borderWidth: 1.5,
     padding: 16, marginBottom: 24,
   },
   featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: 13, color: '#fff', letterSpacing: 0.5 },
@@ -518,8 +517,7 @@ const styles = StyleSheet.create({
 
   cardOffer: {
     flexDirection: 'row', gap: 14, alignItems: 'flex-start',
-    backgroundColor: '#0a0a1e', borderRadius: 16, borderWidth: 1.5,
-    padding: 16, paddingLeft: 20, marginBottom: 16, overflow: 'hidden',
+    padding: 16, paddingLeft: 20, marginBottom: 16,
   },
   offerAccent:  { position: 'absolute', top: 0, bottom: 0, left: 0, width: 3 },
   offerRight:   { flex: 1, gap: 8, justifyContent: 'flex-start' },
