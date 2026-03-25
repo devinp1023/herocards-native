@@ -419,7 +419,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** `npx tsc --noEmit` passes. All buttons match their style guide variant. Disabled buttons are consistently dimmed at 0.3 opacity.
 - **Warnings to check:** The skew transform (`skewX(-3deg)`) with counter-skew on text (`skewX(3deg)`) is a key style guide detail — don't lose it during migration.
 
-**Sprint 3.9 — Stamina cyan token + remaining one-offs**
+**Sprint 3.9 — Stamina cyan token + remaining one-offs** ✅ COMPLETE
 - **Problem:** Stamina cyan (`#4fc3f7`) is hardcoded in HeroCard, MiniCard, and BattleScreen. Other one-offs: `#ffa726` (win streak), `#ff6b00` (god mode), `#ffc04a` (legendary lock text).
 - **Step 1:** Add `T.domain.stamina: '#4fc3f7'` to `src/theme/theme.ts`.
 - **Step 2:** Replace all `'#4fc3f7'` references in components/screens with `T.domain.stamina`.

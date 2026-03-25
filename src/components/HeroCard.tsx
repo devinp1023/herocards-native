@@ -454,7 +454,7 @@ export function HeroCard({
             <Text style={styles.statTag}>STA</Text>
             <Text style={styles.stamValue}>{displayStam}</Text>
           </View>
-          <View style={[styles.stamTrack, { shadowColor: '#4fc3f7' }]}>
+          <View style={[styles.stamTrack, { shadowColor: T.domain.stamina }]}>
             {Array.from({ length: maxStam }, (_, i) => (
               <View key={i} style={[
                 styles.stamPip,
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: T.font.lg,
     lineHeight: 18,
-    color: '#4fc3f7',
+    color: T.domain.stamina,
   },
   hpBarTrack: {
     width: '100%',
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   stamPipFilled: {
-    backgroundColor: '#4fc3f7',
+    backgroundColor: T.domain.stamina,
   },
   stamPipEmpty: {
     backgroundColor: 'transparent',

@@ -208,7 +208,7 @@ export const MiniCard = React.memo(function MiniCard({
               <Text style={s.statTag}>STA</Text>
               <Text style={s.stamValue}>{displayStam}</Text>
             </View>
-            <View style={[s.stamTrack, { shadowColor: '#4fc3f7' }]}>
+            <View style={[s.stamTrack, { shadowColor: T.domain.stamina }]}>
               {Array.from({ length: maxStam }, (_, i) => (
                 <View key={i} style={[
                   s.stamPip,
@@ -389,7 +389,7 @@ const s = StyleSheet.create({
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: T.font.lg,
     lineHeight: 18,
-    color: '#4fc3f7',
+    color: T.domain.stamina,
   },
   hpBarTrack: {
     width: '100%',
@@ -426,7 +426,7 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   stamPipFilled: {
-    backgroundColor: '#4fc3f7',
+    backgroundColor: T.domain.stamina,
   },
   stamPipEmpty: {
     backgroundColor: 'transparent',

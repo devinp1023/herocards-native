@@ -300,7 +300,7 @@ const s = StyleSheet.create({
   toggleKnobActive: { backgroundColor:T.bg.root, alignSelf:'flex-end' },
   godState:         { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:T.letterSpacing.md },
   godStateOn:       { color:T.status.caution },
-  enterGodBtn:      { backgroundColor:'#ff6b00', borderRadius:12, paddingVertical:16, paddingHorizontal:40 },
+  enterGodBtn:      { backgroundColor:T.domain.godMode, borderRadius:12, paddingVertical:16, paddingHorizontal:40 },
   enterGodText:     { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:T.letterSpacing.lg },
   godHint:          { fontSize:T.font.md, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center', lineHeight:20 },
 });

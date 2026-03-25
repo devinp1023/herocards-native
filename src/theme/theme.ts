@@ -70,6 +70,14 @@ export const T = {
     spd: '#f59e0b',
   },
 
+  // Domain-specific colors — game mechanics with fixed identity
+  domain: {
+    stamina: '#4fc3f7',     // cyan — stamina pips, STA labels, STA bars
+    winStreak: '#ffa726',   // warm orange — win streak display
+    godMode: '#ff6b00',     // bright orange — god mode UI
+    legendaryLock: '#ffc04a', // gold — legendary lock text in battle
+  },
+
   // Font size scale — matches STYLE_GUIDE.html "Font Size Scale" section
   font: {
     xs: 10,      // Orbitron 700 — chips, tags, badges

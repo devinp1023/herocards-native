@@ -565,7 +565,7 @@ const hc = StyleSheet.create({
   col:         { alignItems: 'flex-start' },
   frame:       { borderWidth: 1, borderRadius: 6, overflow: 'hidden' },
   lockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', borderRadius: 5 },
-  lockText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#ffc04a', textAlign: 'center', lineHeight: 10, letterSpacing: 0.3 },
+  lockText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.domain.legendaryLock, textAlign: 'center', lineHeight: 10, letterSpacing: 0.3 },
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
@@ -653,7 +653,7 @@ const evs = StyleSheet.create({
   swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: '#ffeb3b', lineHeight: 16 },
   draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: T.text.muted, lineHeight: 15 },
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.accent.mint, lineHeight: 16 },
-  amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: '#ffa726', lineHeight: 16 },
+  amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.domain.winStreak, lineHeight: 16 },
   ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: T.text.muted, lineHeight: 15 },
 });
 
@@ -873,7 +873,7 @@ function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
   tierColor: string; tierName: string; onBack: () => void;
 }) {
   const outcomeText  = winner === 'player' ? 'VICTORY' : winner === 'tie' ? 'TIE' : 'DEFEAT';
-  const outcomeColor = winner === 'player' ? T.status.vitality : winner === 'tie' ? '#ffa726' : T.status.danger;
+  const outcomeColor = winner === 'player' ? T.status.vitality : winner === 'tie' ? T.domain.winStreak : T.status.danger;
   return (
     <View style={rs.root}>
       <Text style={[rs.outcome, { color: outcomeColor }]}>{outcomeText}</Text>
@@ -900,7 +900,7 @@ const rs = StyleSheet.create({
   rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
   rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 4 },
   rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
-  streak:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: '#ffa726', letterSpacing: T.letterSpacing.md, marginTop: 4 },
+  streak:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.domain.winStreak, letterSpacing: T.letterSpacing.md, marginTop: 4 },
   backBtn:      { paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, marginTop: 8 },
   backText:     { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, letterSpacing: T.button.secondary.letterSpacing },
   tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, textAlign: 'center', marginTop: -8 },
