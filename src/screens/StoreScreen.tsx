@@ -85,7 +85,7 @@ const toastStyles = StyleSheet.create({
     borderRadius: 10, borderWidth: 1,
     padding: 12, alignItems: 'center',
   },
-  text: { fontFamily: 'Orbitron_700Bold', fontSize: 11, letterSpacing: 0.5 },
+  text: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 0.5 },
 });
 
 // ── Section divider with centred label ───────────────────────────────────────
@@ -94,7 +94,7 @@ function SectionDivider({ label, color }: { label: string; color: string }) {
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, marginTop: 4 }}>
       <View style={{ flex: 1, height: 1, backgroundColor: color + '33' }} />
       <Text style={{
-        fontFamily: 'Orbitron_700Bold', fontSize: 10,
+        fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs,
         color, letterSpacing: 2, marginHorizontal: 12,
       }}>
         {label}
@@ -161,15 +161,15 @@ function AvatarCard({
 }
 const avStyles = StyleSheet.create({
   card:        { width: AVATAR_CARD_W, padding: 10, alignItems: 'center', gap: 7 },
-  name:        { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.muted, textAlign: 'center', letterSpacing: 0.3, lineHeight: 12 },
+  name:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, textAlign: 'center', letterSpacing: 0.3, lineHeight: 12 },
   lockedBadge: { backgroundColor: '#0f0f1e', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
-  lockedText:  { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.muted, letterSpacing: 0.5 },
+  lockedText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.5 },
   activeBadge: { borderRadius: 5, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
-  activeText:  { fontFamily: 'Orbitron_700Bold', fontSize: 7, letterSpacing: 1 },
+  activeText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1 },
   equipBtn:    { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, width: '100%', alignItems: 'center' },
-  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.bg.root, letterSpacing: 1 },
+  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: 1 },
   buyBtn:      { backgroundColor: '#0d0d22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 5, width: '100%', alignItems: 'center' },
-  buyText:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.muted, letterSpacing: 0.3 },
+  buyText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.3 },
 });
 
 // ── StoreScreen ───────────────────────────────────────────────────────────────
@@ -514,13 +514,13 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 12,
   },
-  storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: 22, color: '#FFBE0B', letterSpacing: 3 },
+  storeTitle:  { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: '#FFBE0B', letterSpacing: 3 },
   creditsChip: {
     flexDirection: 'row', alignItems: 'baseline',
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  creditsVal: { fontFamily: 'Orbitron_900Black', fontSize: 14, color: T.accent.mint },
-  creditsLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.muted, letterSpacing: 1 },
+  creditsVal: { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.accent.mint },
+  creditsLbl: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 1 },
 
   // Tab row
   tabRow: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   },
   tab:          { flex: 1, paddingVertical: 12, alignItems: 'center' },
   tabActive:    { backgroundColor: '#FFBE0B' },
-  tabText:      { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.text.muted, letterSpacing: 1 },
+  tabText:      { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 1 },
   tabTextActive:{ color: T.bg.root },
 
   // Featured deal
@@ -540,30 +540,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row', gap: 12, alignItems: 'flex-start',
     padding: 16, marginBottom: 24,
   },
-  featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: 13, color: T.text.primary, letterSpacing: 0.5 },
+  featuredName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.text.primary, letterSpacing: 0.5 },
   tierBadge:        { borderRadius: 5, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2 },
-  tierText:         { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 1 },
-  salePrice:        { fontFamily: 'Orbitron_900Black', fontSize: 15, color: '#FFBE0B' },
-  origPrice:        { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: T.text.muted, textDecorationLine: 'line-through' },
+  tierText:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1 },
+  salePrice:        { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: '#FFBE0B' },
+  origPrice:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, textDecorationLine: 'line-through' },
   discountBadge:    { backgroundColor: '#FFBE0B22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#FFBE0B55' },
-  discountText:     { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: '#FFBE0B', letterSpacing: 1 },
-  resetLabel:       { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.text.muted },
+  discountText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#FFBE0B', letterSpacing: 1 },
+  resetLabel:       { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted },
   activeChip:       { alignSelf: 'flex-start', borderRadius: 7, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
-  activeChipText:   { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 1 },
+  activeChipText:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1 },
   featuredEquipBtn: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.bg.root, letterSpacing: 1 },
+  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: 1 },
   featuredBuyBtn:   { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, backgroundColor: 'transparent' },
-  featuredBuyText:  { fontFamily: 'Orbitron_700Bold', fontSize: 10, letterSpacing: 0.5 },
+  featuredBuyText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5 },
 
   // Section sub-label
-  sectionSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 12, color: T.text.muted, marginBottom: 12, marginTop: -8 },
+  sectionSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, marginBottom: 12, marginTop: -8 },
 
   // Avatar grid — 3 columns
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
 
   // Card store
-  cardStoreSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 13, color: T.text.muted, marginBottom: 4 },
-  resetTimer:   { fontFamily: 'Orbitron_700Bold', fontSize: 10, color: '#FFBE0B', letterSpacing: 1, marginBottom: 20 },
+  cardStoreSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, marginBottom: 4 },
+  resetTimer:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#FFBE0B', letterSpacing: 1, marginBottom: 20 },
 
   cardOffer: {
     flexDirection: 'row', gap: 14, alignItems: 'flex-start',
@@ -572,12 +572,12 @@ const styles = StyleSheet.create({
   offerAccent:  { position: 'absolute', top: 0, bottom: 0, left: 0, width: 3 },
   offerRight:   { flex: 1, gap: 8, justifyContent: 'flex-start' },
   rarityPill:   { alignSelf: 'flex-start', borderRadius: 5, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
-  rarityPillText: { fontFamily: 'Orbitron_700Bold', fontSize: 8, letterSpacing: 1 },
-  offerName:    { fontFamily: 'Orbitron_700Bold', fontSize: 13, color: T.text.body, letterSpacing: 0.3, lineHeight: 18 },
-  offerPrice:   { fontFamily: 'Orbitron_900Black', fontSize: 18 },
+  rarityPillText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1 },
+  offerName:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.text.body, letterSpacing: 0.3, lineHeight: 18 },
+  offerPrice:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl },
   ownedBadge:   { backgroundColor: '#00e67620', borderRadius: 7, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#00e67640', alignItems: 'center' },
-  ownedBadgeText: { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: '#00e676', letterSpacing: 1 },
+  ownedBadgeText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#00e676', letterSpacing: 1 },
   buyCardBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, backgroundColor: 'transparent' },
-  buyCardBtnText: { fontFamily: 'Orbitron_700Bold', fontSize: 11, letterSpacing: 1 },
+  buyCardBtnText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 1 },
   buyCardBtnDisabled: { borderColor: T.bg.border },
 });

@@ -32,8 +32,8 @@ const bStyles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, gap: 4,
   },
-  statVal: { fontFamily: 'Orbitron_900Black', fontSize: 18, color: T.accent.mint },
-  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1 },
+  statVal: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
+  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1 },
 });
 
 // ── PackBar ──────────────────────────────────────────────────────────────────
@@ -63,11 +63,11 @@ function PackBar({ packId, collection, cardRoster }: {
 const pStyles = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   dot:      { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  name:     { fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 0.5, width: 100 },
-  count:    { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.primary, width: 52, textAlign: 'right' },
+  name:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, width: 100 },
+  count:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, width: 52, textAlign: 'right' },
   barTrack: { flex: 1, height: 5, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden' },
   barFill:  { height: '100%', borderRadius: 3 },
-  pct:      { fontFamily: 'Orbitron_900Black', fontSize: 11, width: 40, textAlign: 'right' },
+  pct:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, width: 40, textAlign: 'right' },
 });
 
 // ── AvatarItem ───────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ const aStyles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     margin: 5,
   },
-  symbol:    { fontSize: 22, lineHeight: 26 },
+  symbol:    { fontSize: T.font.xl, lineHeight: 26 },
   activeDot: { position: 'absolute', bottom: -2, width: 8, height: 8, borderRadius: 4 },
 });
 
@@ -260,21 +260,21 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: T.accent.mintMuted,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: 26, color: T.accent.mint },
+  avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
   username: {
-    fontFamily: 'Orbitron_900Black', fontSize: 18,
+    fontFamily: 'Orbitron_900Black', fontSize: T.font.xl,
     color: T.text.primary, letterSpacing: 1, marginBottom: 10,
   },
   statRow:     { flexDirection: 'row', alignItems: 'center' },
   hStatBox:    { alignItems: 'center', flex: 1 },
-  hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: 12, color: T.accent.mint },
-  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: 8, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
+  hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.accent.mint },
+  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
   statDivider: { width: 1, height: 24, backgroundColor: T.bg.border, marginHorizontal: 4 },
 
   // Sections
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: 12, color: T.text.body, letterSpacing: 1.5 },
-  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.text.primary, letterSpacing: 1 },
+  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.text.body, letterSpacing: 1.5 },
+  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1 },
 
   // Battle stats grid
   statsGrid:    { gap: 8, marginBottom: 24 },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   collBarTrack: { height: 8, backgroundColor: T.bg.elevated, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
   collBarFill:  { height: '100%', borderRadius: 4, backgroundColor: T.accent.mint, shadowColor: T.accent.mint, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   collPct: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 10, color: T.accent.mint,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.accent.mint,
     letterSpacing: 1, marginBottom: 12, textAlign: 'center',
   },
   dividerThin: { height: 1, backgroundColor: T.bg.border, marginBottom: 12 },
@@ -305,5 +305,5 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: T.status.danger + '33',
     backgroundColor: T.status.danger + '08', marginBottom: 8,
   },
-  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: 11, color: T.status.danger, letterSpacing: 2 },
+  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.status.danger, letterSpacing: 2 },
 });

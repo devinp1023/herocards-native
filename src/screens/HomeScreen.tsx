@@ -113,16 +113,16 @@ const packStyles = StyleSheet.create({
   card:       { borderRadius:14, padding:16, marginBottom:12 },
   header:     { flexDirection:'row', alignItems:'center', gap:10, marginBottom:10 },
   packDot:    { width:12, height:12, borderRadius:6, flexShrink:0 },
-  name:       { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:1 },
-  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, marginTop:2 },
-  pct:        { fontFamily:'Orbitron_900Black', fontSize:20 },
+  name:       { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:1 },
+  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted, marginTop:2 },
+  pct:        { fontFamily:'Orbitron_900Black', fontSize:T.font.xl },
   barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10 },
   barFill:    { height:'100%', borderRadius:3 },
   rarityRow:  { flexDirection:'row', justifyContent:'space-between' },
   rarityItem: { alignItems:'center', gap:3 },
   rarityDot:  { width:6, height:6, borderRadius:3 },
-  rarityCount:{ fontFamily:'Orbitron_700Bold', fontSize:10 },
-  rarityTotal:{ color:T.bg.border, fontFamily:'Orbitron_700Bold', fontSize:8 },
+  rarityCount:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
+  rarityTotal:{ color:T.bg.border, fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
 });
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
@@ -181,15 +181,15 @@ const qStyles = StyleSheet.create({
   cardDone:     { borderColor:T.status.vitality + '33', backgroundColor:T.status.vitality + '08' },
   top:          { flexDirection:'row', alignItems:'center', gap:12, marginBottom:10 },
   iconBox:      { width:34, height:34, borderRadius:8, borderWidth:1, alignItems:'center', justifyContent:'center', flexShrink:0 },
-  iconSymbol:   { fontSize:16, lineHeight:20 },
-  task:         { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.body, letterSpacing:0.3, lineHeight:16 },
+  iconSymbol:   { fontSize:T.font.lg, lineHeight:20 },
+  task:         { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.text.body, letterSpacing:0.3, lineHeight:16 },
   metaRow:      { flexDirection:'row', alignItems:'center', gap:8, marginTop:5 },
   diffBadge:    { paddingHorizontal:7, paddingVertical:2, borderRadius:5, borderWidth:1 },
-  diffText:     { fontFamily:'Orbitron_700Bold', fontSize:8, letterSpacing:1 },
-  reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted },
+  diffText:     { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, letterSpacing:1 },
+  reward:       { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted },
   checkBox:     { backgroundColor:T.status.vitality + '22', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:T.status.vitality + '66' },
-  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:8, color:T.status.vitality, letterSpacing:1 },
-  progressText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.muted },
+  checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.vitality, letterSpacing:1 },
+  progressText: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.text.muted },
   barTrack:     { height:4, backgroundColor:T.bg.elevated, borderRadius:2, overflow:'hidden' },
   barFill:      { height:'100%', borderRadius:2 },
 });
@@ -382,10 +382,10 @@ const styles = StyleSheet.create({
     borderWidth:2, borderColor:T.accent.mintMuted,
     alignItems:'center', justifyContent:'center', flexShrink:0,
   },
-  avatarInitial: { fontFamily:'Orbitron_900Black', fontSize:22, color:T.accent.mint },
+  avatarInitial: { fontFamily:'Orbitron_900Black', fontSize:T.font.xl, color:T.accent.mint },
   profileInfo: { flex:1, gap:2 },
   username: {
-    fontFamily:'Orbitron_900Black', fontSize:16,
+    fontFamily:'Orbitron_900Black', fontSize:T.font.lg,
     color:T.text.primary, letterSpacing:1,
   },
   levelRow: { flexDirection:'row', alignItems:'center', gap:8, marginTop:4 },
@@ -394,14 +394,14 @@ const styles = StyleSheet.create({
     paddingHorizontal:8, paddingVertical:2,
     borderWidth:1, borderColor:T.accent.mintMuted,
   },
-  levelText: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.accent.mint },
-  cardCount: { fontFamily:'Orbitron_700Bold', fontSize:11, color:T.text.muted },
+  levelText: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.accent.mint },
+  cardCount: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.text.muted },
   xpLabelRow: { flexDirection:'row', justifyContent:'space-between', marginTop:3 },
-  xpLabel:    { fontFamily:'monospace', fontSize:9, color:T.text.muted },
-  xpNextLabel:{ fontFamily:'Orbitron_700Bold', fontSize:9, color:T.accent.mint + '88' },
+  xpLabel:    { fontFamily:'monospace', fontSize:T.font.xs, color:T.text.muted },
+  xpNextLabel:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.accent.mint + '88' },
   creditsBox: { alignItems:'center', flexShrink:0 },
-  creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:20, color:T.accent.mint, lineHeight:24 },
-  creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:8, color:T.text.muted, letterSpacing:1 },
+  creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:T.font.xl, color:T.accent.mint, lineHeight:24 },
+  creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:1 },
 
   // Battle button
   battleBtn: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     shadowColor:T.stat.atk, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   battleBtnText: {
-    fontFamily:'Orbitron_900Black', fontSize:20,
+    fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
     color:T.text.primary, letterSpacing:3,
   },
 
@@ -423,23 +423,23 @@ const styles = StyleSheet.create({
     shadowColor:T.accent.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
   packBtnText: {
-    fontFamily:'Orbitron_900Black', fontSize:20,
+    fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
     color:T.text.primary, letterSpacing:3,
   },
   packBtnSub: {
-    fontFamily:'Orbitron_700Bold', fontSize:12,
+    fontFamily:'Orbitron_700Bold', fontSize:T.font.md,
     color:'#ffffffaa', letterSpacing:1,
   },
 
   // Daily quests
   questSection: { marginBottom:24 },
   questHeader:  { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:4 },
-  questDoneLabel: { fontFamily:'Orbitron_700Bold', fontSize:11, letterSpacing:1 },
-  questSub:     { fontFamily:'Rajdhani_600SemiBold', fontSize:12, color:T.text.muted, marginBottom:14 },
+  questDoneLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:1 },
+  questSub:     { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted, marginBottom:14 },
 
   // Section title
   sectionTitle: {
-    fontFamily:'Orbitron_700Bold', fontSize:11,
+    fontFamily:'Orbitron_700Bold', fontSize:T.font.sm,
     color:T.text.muted, letterSpacing:2.5, marginBottom:12,
   },
 });

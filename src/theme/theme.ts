@@ -70,6 +70,17 @@ export const T = {
     spd: '#f59e0b',
   },
 
+  // Font size scale — matches STYLE_GUIDE.html "Font Size Scale" section
+  font: {
+    xs: 10,      // Orbitron — chips, tags, badges, smallest readable labels
+    sm: 12,      // Rajdhani — secondary body, quest descriptions, hints
+    body: 14,    // Rajdhani — primary body text, descriptions
+    md: 14,      // Orbitron — buttons, labels, card names
+    lg: 18,      // Orbitron — section headers
+    xl: 22,      // Orbitron — screen titles
+    xxl: 32,     // Orbitron — hero numbers, level-up, splash
+  },
+
   // Spacing (base unit 4px)
   space: {
     xs: 4,

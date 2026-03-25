@@ -280,7 +280,7 @@ const hStyles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   countText: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 9, letterSpacing: 0.5, marginTop: 6,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, marginTop: 6,
   },
 });
 

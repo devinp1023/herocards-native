@@ -20,6 +20,6 @@ export default function DecksScreen() {
 
 const styles = StyleSheet.create({
   content: { alignItems: 'center', gap: 12 },
-  title: { fontFamily: 'Orbitron_900Black', fontSize: 24, color: T.text.primary, letterSpacing: 3 },
-  sub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: 16, color: T.text.primary },
+  title: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.text.primary, letterSpacing: 3 },
+  sub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.lg, color: T.text.primary },
 });

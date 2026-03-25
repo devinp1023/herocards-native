@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   },
   cardName: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 18,
+    fontSize: T.font.xl,
     color: T.text.primary,
   },
   subtitleOverlay: {
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 13,
+    fontSize: T.font.md,
     color: 'rgba(255,255,255,0.85)',
     letterSpacing: 0.3,
   },
@@ -611,18 +611,18 @@ const styles = StyleSheet.create({
   },
   statTag: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 11,
+    fontSize: T.font.sm,
     color: T.text.primary,
     letterSpacing: 1.5,
   },
   statValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 16,
+    fontSize: T.font.lg,
     lineHeight: 18,
   },
   stamValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 16,
+    fontSize: T.font.lg,
     lineHeight: 18,
     color: '#4fc3f7',
   },
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
   },
   pillValue: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 17,
+    fontSize: T.font.xl,
     color: T.text.primary,
     flex: 1,
     textAlign: 'right',
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
   abilityText: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 16,
+    fontSize: T.font.lg,
     color: T.text.body,
     lineHeight: 20,
   },

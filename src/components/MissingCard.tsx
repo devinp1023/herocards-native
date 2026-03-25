@@ -5,6 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '../data/cards';
 import { RC } from '../data/constants';
+import { T } from '../theme/theme';
 import { CARD_W, CARD_H } from './CardWrapper';
 
 interface MissingCardProps {
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
   },
   cardNum: {
     fontFamily: 'monospace',
-    fontSize: 10,
+    fontSize: T.font.sm,
     letterSpacing: 1,
   },
   pip: {
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
   },
   rarityText: {
     fontFamily: 'monospace',
-    fontSize: 9,
+    fontSize: T.font.xs,
     letterSpacing: 1.5,
   },
 });

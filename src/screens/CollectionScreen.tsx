@@ -504,13 +504,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 22,
+    fontSize: T.font.xl,
     color: T.accent.mint,
     letterSpacing: 2,
   },
   headerSub: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 10,
+    fontSize: T.font.xs,
     color: T.text.muted,
     letterSpacing: 1,
     marginTop: 2,
@@ -539,12 +539,12 @@ const styles = StyleSheet.create({
     backgroundColor: T.accent.mintFaint,
   },
   filterBtnIcon: {
-    fontSize: 14,
+    fontSize: T.font.lg,
     color: T.text.muted,
   },
   filterBtnText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 10,
+    fontSize: T.font.xs,
     color: T.text.muted,
     letterSpacing: 0.5,
   },
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   searchIcon: {
-    fontSize: 18,
+    fontSize: T.font.xl,
     color: T.text.muted,
     marginRight: 6,
   },
@@ -569,10 +569,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     color: T.text.body,
-    fontSize: 14,
+    fontSize: T.font.lg,
   },
   clearBtn: { padding: 4 },
-  clearText: { color: T.text.muted, fontSize: 14 },
+  clearText: { color: T.text.muted, fontSize: T.font.lg },
 
   // Active filter chips
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 6, marginBottom: 6 },
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 9,
+    fontSize: T.font.xs,
     color: T.accent.mint,
     letterSpacing: 0.5,
   },
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   // Results
   resultsText: {
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: T.font.sm,
     color: T.text.muted,
     paddingHorizontal: 16,
     marginBottom: 6,
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: T.bg.root,
   },
   countText: {
-    fontFamily: 'Orbitron_700Bold', fontSize: 8,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs,
     color: T.bg.root, letterSpacing: 0.5,
   },
 
@@ -660,18 +660,18 @@ const styles = StyleSheet.create({
   },
   sidebarTitle: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 14,
+    fontSize: T.font.lg,
     color: T.accent.mint,
     letterSpacing: 2,
   },
   closeBtn: { padding: 4 },
-  closeText: { color: T.text.muted, fontSize: 16 },
+  closeText: { color: T.text.muted, fontSize: T.font.lg },
 
   sidebarScroll: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 8 },
 
   sectionLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 9,
+    fontSize: T.font.xs,
     color: T.text.muted,
     letterSpacing: 2,
     marginBottom: 8,
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   radioLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 11,
+    fontSize: T.font.sm,
     letterSpacing: 0.3,
   },
 
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
   },
   clearAllText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 10,
+    fontSize: T.font.xs,
     color: '#ff6060',
     letterSpacing: 1,
   },

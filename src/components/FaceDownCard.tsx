@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { T } from '../theme/theme';
 import {
   Canvas,
   RoundedRect,
@@ -190,6 +191,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emoji: {
-    fontSize: 36,
+    fontSize: T.font.xxl,
   },
 });

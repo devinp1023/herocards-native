@@ -143,7 +143,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   symbol: {
-    fontSize: 20,
+    fontSize: T.font.xl,
     lineHeight: 24,
   },
   textBlock: {
@@ -152,19 +152,19 @@ const s = StyleSheet.create({
   },
   label: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 8,
+    fontSize: T.font.xs,
     color: T.text.muted,
     letterSpacing: 1.5,
   },
   name: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 13,
+    fontSize: T.font.md,
     color: T.text.primary,
     letterSpacing: 0.5,
   },
   tapHint: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 12,
+    fontSize: T.font.md,
     color: T.accent.mint,
     letterSpacing: 0.5,
   },

@@ -326,7 +326,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Watch a screen title for 6s — a faint light sweep should cross the text. Switch screens — shimmer only runs on focused screen.
 - **Warnings to check:** Expo Go vs Custom Dev Client (MaskedView compatibility). MaskedView Performance — one per screen is fine.
 
-**Sprint 3.5 — Font size tokenization**
+**Sprint 3.5 — Font size tokenization** ✅ COMPLETE
 - **Problem:** Font sizes are hardcoded across 100+ declarations with no system — fontSize 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 26 etc. appear ad-hoc. Same problem we had with colors before tokenization: values drift, inconsistencies emerge, and there's no single place to tune the type scale.
 - **Step 1:** Audit all `fontSize` values across `/src/screens/` and `/src/components/`. Group into a named scale (e.g., `T.font.xs`, `T.font.sm`, `T.font.md`, `T.font.lg`, `T.font.xl`, `T.font.xxl`, `T.font.display`).
 - **Step 2:** Add `T.font` to `src/theme/theme.ts` with the named scale. Each size maps to a specific px value.
@@ -334,6 +334,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Exception:** Skia `<Text>` elements use `fontSize` as a number prop — these can reference `T.font.*` since it resolves to a number.
 - **Verify:** `npx tsc --noEmit` passes. Visual spot-check every screen — text sizes should be identical (this is a mechanical replacement, not a redesign).
 - **Warnings to check:** None — mechanical replacement only. No visual changes expected.
+
+> **IMPORTANT — Tokenization process for all remaining sprints (3.6–3.14):**
+> 1. **Read the style guide first.** Check `STYLE_GUIDE.html` for the canonical values, names, and use cases for the property being tokenized.
+> 2. **Define tokens in `T` that match the style guide exactly.** Don't invent values from what's currently in the codebase — the style guide is the source of truth.
+> 3. **Then apply tokens to the app.** Map existing hardcoded values to the closest style guide token. If a value doesn't match any token, either add a token (if the style guide supports it) or adjust the value to the nearest token.
+> Sprint 3.5 was initially done backwards (audit codebase → create tokens → apply) which produced a scale that didn't match the style guide. This was caught and corrected. Don't repeat this mistake.
 
 **Sprint 3.6 — Skia canvas color audit**
 - Skia elements (`<Path>`, `<Text>`, `<Fill>`, `<Rect>`, `<LinearGradient>`, etc.) use raw string colors — they can't reference `T.*` tokens directly.

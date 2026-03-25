@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 12,
+    fontSize: T.font.md,
     color: T.accent.mint,
     letterSpacing: 1.5,
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   notOwnedText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 10,
+    fontSize: T.font.xs,
     color: '#ff6080',
     letterSpacing: 1.5,
   },
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
 
   cardName: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 28,
+    fontSize: T.font.xxl,
     color: T.text.primary,
     letterSpacing: 1,
     lineHeight: 34,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   ownedRow:        { marginBottom: 10 },
   ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: T.status.vitality + '18', borderColor: T.status.vitality + '55' },
   ownedBadgeMulti: { backgroundColor: T.accent.mint + '18', borderColor: T.accent.mint + '55' },
-  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: 9, color: T.status.vitality, letterSpacing: 1 },
+  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.vitality, letterSpacing: 1 },
   ownedTextMulti:  { color: T.accent.mint },
 
   metaRow: {
@@ -289,17 +289,17 @@ const styles = StyleSheet.create({
   },
   metaDot: {
     color: T.bg.border,
-    fontSize: 16,
+    fontSize: T.font.lg,
   },
   cardId: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 12,
+    fontSize: T.font.md,
     color: T.text.muted,
     letterSpacing: 1,
   },
   packLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 11,
+    fontSize: T.font.sm,
     color: T.text.muted,
     letterSpacing: 0.5,
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 10,
+    fontSize: T.font.xs,
     letterSpacing: 1,
   },
 
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 9,
+    fontSize: T.font.xs,
     color: T.text.muted,
     letterSpacing: 2.5,
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   // Description
   desc: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 17,
+    fontSize: T.font.xl,
     color: T.text.body,
     lineHeight: 26,
   },
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   readMoreText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 9,
+    fontSize: T.font.xs,
     color: T.accent.mint,
     letterSpacing: 1,
   },
@@ -372,12 +372,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 12,
+    fontSize: T.font.md,
     letterSpacing: 1,
   },
   statValue: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 20,
+    fontSize: T.font.xl,
   },
   barTrack: {
     height: 8,
@@ -403,13 +403,13 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 11,
+    fontSize: T.font.sm,
     color: T.text.muted,
     letterSpacing: 1.5,
   },
   totalValue: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 28,
+    fontSize: T.font.xxl,
   },
 
   // Ability
@@ -424,18 +424,18 @@ const styles = StyleSheet.create({
     backgroundColor: T.bg.surface,
   },
   abilityIcon: {
-    fontSize: 28,
+    fontSize: T.font.xxl,
   },
   abilityName: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: 12,
+    fontSize: T.font.md,
     color: T.text.muted,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   abilityDesc: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: 13,
+    fontSize: T.font.md,
     color: T.bg.border,
   },
 });
