@@ -23,6 +23,7 @@ import { AchievementNode, HubNode } from '../components/AchievementNode';
 import { BranchConnector } from '../components/BranchConnector';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { ShimmerTitle } from '../components/ShimmerTitle';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const NODE_SIZE = 48;
@@ -114,7 +115,7 @@ const FeatsPage = React.memo(function FeatsPage({
     >
       {/* Category header */}
       <View style={fpStyles.headerRow}>
-        <Text style={[fpStyles.catLabel, { color: category.color }]}>{category.label}</Text>
+        <ShimmerTitle style={[fpStyles.catLabel, { color: category.color }]}>{category.label}</ShimmerTitle>
         <Text style={[fpStyles.catCount, {
           color: categoryStats.completed === categoryStats.total ? T.status.vitality : T.text.muted,
         }]}>
@@ -293,7 +294,7 @@ const StandardPage = React.memo(function StandardPage({
     >
       {/* Category header */}
       <View style={spStyles.headerRow}>
-        <Text style={[spStyles.catLabel, { color: category.color }]}>{category.label}</Text>
+        <ShimmerTitle style={[spStyles.catLabel, { color: category.color }]}>{category.label}</ShimmerTitle>
         <Text style={[spStyles.catCount, {
           color: categoryStats.completed === categoryStats.total ? T.status.vitality : T.text.muted,
         }]}>

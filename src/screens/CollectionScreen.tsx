@@ -43,6 +43,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { ShimmerTitle } from '../components/ShimmerTitle';
 
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
@@ -364,7 +365,7 @@ export default function CollectionScreen({ navigation }: Props) {
     <ScreenBackground theme="collection">
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>COLLECTION</Text>
+        <ShimmerTitle style={styles.headerTitle}>COLLECTION</ShimmerTitle>
         <Text style={styles.headerSub}>{totalOwned} / {gs.cardRoster.length} owned</Text>
       </View>
 

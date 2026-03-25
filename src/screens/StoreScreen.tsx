@@ -24,6 +24,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { ShimmerTitle } from '../components/ShimmerTitle';
 import AmbientParticles from '../components/AmbientParticles';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
@@ -272,7 +273,7 @@ export default function StoreScreen() {
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <View style={styles.topBar}>
-        <Text style={styles.storeTitle}>STORE</Text>
+        <ShimmerTitle style={styles.storeTitle}>STORE</ShimmerTitle>
         <MaterialSurface borderRadius={10} style={styles.creditsChip}>
           <Text style={styles.creditsVal}>{gs.coins.toLocaleString()}</Text>
           <Text style={styles.creditsLbl}> CR</Text>

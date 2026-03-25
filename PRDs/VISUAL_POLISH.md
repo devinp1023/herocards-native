@@ -310,7 +310,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Particles drift smoothly upward, staggered, 2–4 visible. Navigate away and back — particles resume correctly, no stacking.
 - **Warnings to check:** Reanimated Shared Value Count (~12 new values per screen with particles). SuccessBurst Particle Cleanup — same pool pattern applies here, validate the approach.
 
-**Sprint 3.3 — Ambient animations on existing elements**
+**Sprint 3.3 — Ambient animations on existing elements** ✅ COMPLETE
 - Wire up `energyBorder` animation in `MaterialSurface` (4s linear loop, mint→violet gradient along top edge)
 - Enable on primary panels only: quest panel (Home), featured offer (Store), skill tree container (Career)
 - Add card breathing to `MiniCard.tsx`: scale pulse `1.0→1.005→1.0`, `MOTION.float` timing, viewport-aware via `onViewableItemsChanged`
@@ -319,7 +319,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Collection grid cards breathe subtly. Scroll quickly — cards leaving viewport stop animating. Energy border flows on Home quest panel. Buttons pulse.
 - **Warnings to check:** Energy Border Memoization — confirm isolated Animated.View pattern, run render counter test. Reanimated Shared Value Count — card breathing adds ~12 values on collection screen.
 
-**Sprint 3.4 — Screen title shimmer**
+**Sprint 3.4 — Screen title shimmer** ✅ COMPLETE
 - Add diagonal shimmer sweep to screen titles on Home, Collection, Store, Career
 - Implement with `MaskedView` (if Expo Go compatible) or Reanimated opacity-animated gradient overlay as fallback
 - 45° angle, 6s cycle, 0.05 opacity, focused-only
@@ -408,7 +408,63 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** `npx tsc --noEmit` passes. Visual spot-check — some elements may shift by 1–2px due to rounding. Verify nothing looks broken.
 - **Warnings to check:** The ±2px rounding may cause subtle layout shifts. Compare before/after on Home, Collection, and Battle screens specifically.
 
-**Sprint 3.13 — Stamina cyan token + remaining one-offs**
+**Sprint 3.13 — Button tokens**
+- **Problem:** Buttons across the app have inconsistent heights, padding, border radii, text sizes, and disabled states. The style guide defines 4 button variants but the app doesn't follow them.
+- **Step 1:** Audit all buttons across screens. Map each to one of the 4 style guide variants.
+- **Step 2:** Add `T.button` to `src/theme/theme.ts` matching the style guide exactly:
+  ```
+  T.button: {
+    primary: {
+      // Mint gradient fill, dark text, skewed, shimmer sweep, 4-layer glow
+      bg: ['#00FFCC', '#00FFAA', '#00DD88'],  // 3-stop vertical gradient
+      text: T.bg.root,                         // dark text on bright bg
+      fontFamily: FONTS.orbitronBlack,
+      fontSize: 14,
+      letterSpacing: 2,
+      paddingV: 14, paddingH: 32,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.96,
+    },
+    secondary: {
+      // Transparent bg, mint text, gradient mint border, skewed
+      bg: 'transparent',
+      text: T.accent.mint,
+      borderGradient: [T.accent.mint + '66', T.accent.mint + '22'],  // 135° gradient
+      fontFamily: FONTS.orbitronBold,
+      fontSize: 12,
+      letterSpacing: 1.5,
+      paddingV: 10, paddingH: 24,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.97,
+    },
+    destructive: {
+      // Transparent bg, danger text, gradient danger border, skewed
+      bg: 'transparent',
+      text: T.status.danger,
+      borderGradient: [T.status.danger + '66', T.status.danger + '22'],  // 135° gradient
+      fontFamily: FONTS.orbitronBold,
+      fontSize: 12,
+      letterSpacing: 1.5,
+      paddingV: 10, paddingH: 24,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.97,
+    },
+    disabled: {
+      // Same shape as primary but 0.3 opacity, no glow, no shimmer
+      opacity: 0.3,
+    },
+  }
+  ```
+- **Step 3:** Replace all hardcoded button styles with `T.button.*` tokens across all screens. Every button should reference a variant.
+- **Step 4:** Standardize disabled states — any variant + `T.button.disabled.opacity` applied.
+- **Exception:** Battle action buttons (REST/ATTACK) have unique skewed designs with LinearGradient — keep custom styles but reference tokens where possible.
+- **Verify:** `npx tsc --noEmit` passes. All buttons match their style guide variant. Disabled buttons are consistently dimmed at 0.3 opacity.
+- **Warnings to check:** The skew transform (`skewX(-3deg)`) with counter-skew on text (`skewX(3deg)`) is a key style guide detail — don't lose it during migration.
+
+**Sprint 3.14 — Stamina cyan token + remaining one-offs**
 - **Problem:** Stamina cyan (`#4fc3f7`) is hardcoded in HeroCard, MiniCard, and BattleScreen. Other one-offs: `#ffa726` (win streak), `#ff6b00` (god mode), `#ffc04a` (legendary lock text).
 - **Step 1:** Add `T.domain.stamina: '#4fc3f7'` to `src/theme/theme.ts`.
 - **Step 2:** Replace all `'#4fc3f7'` references in components/screens with `T.domain.stamina`.
