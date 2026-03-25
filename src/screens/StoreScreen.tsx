@@ -21,6 +21,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import AmbientParticles from '../components/AmbientParticles';
 
 // ── Layout constant ───────────────────────────────────────────────────────────
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -240,6 +241,7 @@ export default function StoreScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <ScreenBackground theme="store">
+      <AmbientParticles color={T.accent.gold} count={8} />
       {toast && <Toast msg={toast.msg} color={toast.color} />}
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}

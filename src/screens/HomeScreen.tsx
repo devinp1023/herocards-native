@@ -26,6 +26,7 @@ import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import AmbientParticles from '../components/AmbientParticles';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -230,6 +231,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground theme="home">
+      <AmbientParticles color={T.accent.mint} count={10} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── Profile card ── */}

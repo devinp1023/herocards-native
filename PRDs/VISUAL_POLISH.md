@@ -290,7 +290,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - BattleLobby footer uses `rgba(8,5,10,0.92)` to hide scroll content while allowing vignette bleed.
 - CLAUDE.md updated: never hardcode hex colors, always use `T.*` tokens.
 
-**Sprint 3.1b — Text visibility cleanup**
+**Sprint 3.1b — Text visibility cleanup** ✅ COMPLETE
 - **Problem:** 50+ hardcoded dark gray colors (`#506070`, `#404458`, `#404060`, `#303050`, `#505068`, `#8090a0`) remain across all screens — these create a fourth unofficial text tier darker than `T.text.muted` (#6e7191). Combined with deepened screen gradients, these elements are nearly invisible.
 - **Additionally:** 17 elements at fontSize 7 combined with dark colors are at the edge of legibility (CareerScreen badge labels, BattleLobbyScreen limit text, various card labels).
 - **Migration rules:**
@@ -302,7 +302,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** All text across the app is legible. Section headers no longer disappear into the background. No fontSize below 8px except where space is genuinely constrained (deck slot labels, card pip labels in battle).
 - **Warnings to check:** None — style-only changes.
 
-**Sprint 3.2 — Ambient particles**
+**Sprint 3.2 — Ambient particles** ✅ COMPLETE
 - Create `src/components/AmbientParticles.tsx`
 - Implement particle pool pattern: pre-allocate Views, randomize position/size/opacity/speed
 - Add to HomeScreen (mint particles behind battle button area) and StoreScreen (gold particles near featured offers)
@@ -343,6 +343,78 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - Consolidate stat pill colors if HeroCard and CardDetailScreen use different values for ATK/DEF/SPD — pick the canonical set and use it everywhere.
 - **Verify:** Tab bar colors match mint system. Card shimmer/glow colors align with style guide. Amp arcs use correct accent colors. No leftover cyan in Skia elements (except stamina).
 - **Warnings to check:** None — string color replacements only, no structural changes.
+
+**Sprint 3.7 — Font weight + line height + letter spacing tokens**
+- **Problem:** `fontWeight` is hardcoded as `'700'`, `'600'`, `'900'` etc. across screens. `lineHeight` and `letterSpacing` are mostly absent or inconsistent. These three properties combine with font size to define the full type system.
+- **Step 1:** Add to `src/theme/theme.ts`:
+  ```
+  T.weight: { regular: '400', semibold: '600', bold: '700', black: '900' }
+  T.lineHeight: { tight: 1.1, normal: 1.3, relaxed: 1.5 } (multipliers, applied as fontSize × multiplier)
+  T.letterSpacing: { tight: -0.5, normal: 0, wide: 1, allCaps: 2 }
+  ```
+- **Step 2:** Replace all hardcoded `fontWeight`, `lineHeight`, and `letterSpacing` with `T.*` tokens.
+- **Exception:** Skia text doesn't use RN style props — skip Skia elements.
+- **Verify:** `npx tsc --noEmit` passes. No visual changes — mechanical replacement.
+- **Warnings to check:** None.
+
+**Sprint 3.8 — Opacity tokens**
+- **Problem:** Opacity values (`0.3`, `0.5`, `0.6`, `0.8`, `1`) are hardcoded with no semantic meaning. `opacity: 0.5` could mean "disabled", "muted", "hover", or "subtle" depending on context.
+- **Step 1:** Add to `src/theme/theme.ts`:
+  ```
+  T.opacity: { disabled: 0.35, muted: 0.5, subtle: 0.7, hover: 0.8, full: 1 }
+  ```
+- **Step 2:** Audit all `opacity:` declarations. Map each to the closest semantic token. Replace.
+- **Exception:** Animation target values (e.g., animating from 0→1) use raw numbers — don't tokenize animation endpoints.
+- **Verify:** `npx tsc --noEmit` passes. Spot-check disabled buttons, muted text, hover states.
+- **Warnings to check:** None.
+
+**Sprint 3.9 — Border width tokens**
+- **Problem:** `borderWidth: 1`, `borderWidth: 2`, `borderWidth: 0.5` scattered without semantic meaning.
+- **Step 1:** Add to `src/theme/theme.ts`:
+  ```
+  T.border: { hairline: StyleSheet.hairlineWidth, thin: 1, standard: 1.5, thick: 2 }
+  ```
+- **Step 2:** Replace all hardcoded `borderWidth` values with `T.border.*`.
+- **Exception:** `borderWidth: 0` (used to remove borders) stays as `0`.
+- **Verify:** `npx tsc --noEmit` passes. No visual changes.
+- **Warnings to check:** None.
+
+**Sprint 3.10 — Icon size tokens**
+- **Problem:** `size={16}`, `size={20}`, `size={24}`, `size={28}` on `MaterialCommunityIcons` and other icon components — no system.
+- **Step 1:** Add to `src/theme/theme.ts`:
+  ```
+  T.icon: { xs: 12, sm: 16, md: 20, lg: 24, xl: 28, xxl: 36 }
+  ```
+- **Step 2:** Replace all hardcoded icon `size` props with `T.icon.*`.
+- **Verify:** `npx tsc --noEmit` passes. Icons same sizes.
+- **Warnings to check:** None.
+
+**Sprint 3.11 — Z-index layer tokens**
+- **Problem:** `zIndex: 10`, `zIndex: 99`, `zIndex: 999` scattered — impossible to know the stacking order at a glance.
+- **Step 1:** Add to `src/theme/theme.ts`:
+  ```
+  T.zIndex: { base: 0, card: 10, dropdown: 50, sidebar: 100, overlay: 200, modal: 300, toast: 400 }
+  ```
+- **Step 2:** Replace all hardcoded `zIndex` values with `T.zIndex.*`.
+- **Verify:** `npx tsc --noEmit` passes. Modals, toasts, sidebars still stack correctly.
+- **Warnings to check:** Test sidebar in CollectionScreen (must sit above grid but below modals). Test achievement toast (must sit above everything). Test battle card preview modal.
+
+**Sprint 3.12 — Spacing + radii adoption sweep**
+- **Problem:** `T.space.*` and `T.radius.*` tokens exist but are barely used — screens still reference raw numbers for `padding`, `margin`, `gap`, `borderRadius`.
+- **Step 1:** Audit all `padding`, `margin`, `gap` values. Map to nearest `T.space.*` token. Accept ±2px rounding (e.g., `padding: 14` → `T.space.lg` which is 16).
+- **Step 2:** Audit all `borderRadius` values. Map to nearest `T.radius.*` token.
+- **Step 3:** Replace across all screens and components.
+- **Exception:** One-off spacing that doesn't fit any token (e.g., `marginTop: -3` for visual alignment tricks) stays as raw values.
+- **Verify:** `npx tsc --noEmit` passes. Visual spot-check — some elements may shift by 1–2px due to rounding. Verify nothing looks broken.
+- **Warnings to check:** The ±2px rounding may cause subtle layout shifts. Compare before/after on Home, Collection, and Battle screens specifically.
+
+**Sprint 3.13 — Stamina cyan token + remaining one-offs**
+- **Problem:** Stamina cyan (`#4fc3f7`) is hardcoded in HeroCard, MiniCard, and BattleScreen. Other one-offs: `#ffa726` (win streak), `#ff6b00` (god mode), `#ffc04a` (legendary lock text).
+- **Step 1:** Add `T.domain.stamina: '#4fc3f7'` to `src/theme/theme.ts`.
+- **Step 2:** Replace all `'#4fc3f7'` references in components/screens with `T.domain.stamina`.
+- **Step 3:** Evaluate remaining one-offs. Either add as domain tokens (`T.domain.winStreak`, `T.domain.godMode`) or map to existing tokens if close enough.
+- **Verify:** `npx tsc --noEmit` passes. Stamina pips still cyan.
+- **Warnings to check:** Skia elements use string colors — Skia can reference `T.domain.stamina` since it resolves to a string at runtime.
 
 ---
 
