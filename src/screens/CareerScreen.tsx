@@ -712,10 +712,11 @@ const bsStyles = StyleSheet.create({
     paddingVertical: 14, borderRadius: 12, alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 }, elevation: 6,
+    transform: [{ skewX: '-3deg' }],
   },
   collectBtnText: {
     fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.text.primary,
-    letterSpacing: T.letterSpacing.md,
+    letterSpacing: T.letterSpacing.md, transform: [{ skewX: '3deg' }],
   },
 });
 

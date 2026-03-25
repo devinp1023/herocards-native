@@ -178,8 +178,8 @@ const sb = StyleSheet.create({
   radioInner: { width:8, height:8, borderRadius:4 },
   radioLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:0.3 },
   divider:    { height:1, backgroundColor:T.bg.border, marginVertical:12 },
-  clearBtn:   { marginTop:8, paddingVertical:T.button.destructive.paddingV, borderRadius:T.button.destructive.radius, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011' },
-  clearText:  { fontFamily:T.button.destructive.fontFamily, fontSize:T.button.destructive.fontSize, color:T.button.destructive.text, letterSpacing:T.button.destructive.letterSpacing },
+  clearBtn:   { marginTop:8, paddingVertical:T.button.destructive.paddingV, borderRadius:T.button.destructive.radius, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011', transform:[{ skewX:'-3deg' }] },
+  clearText:  { fontFamily:T.button.destructive.fontFamily, fontSize:T.button.destructive.fontSize, color:T.button.destructive.text, letterSpacing:T.button.destructive.letterSpacing, transform:[{ skewX:'3deg' }] },
 });
 
 // ── DeckSlot ──────────────────────────────────────────────────────────────────
@@ -692,9 +692,9 @@ const s = StyleSheet.create({
   // Footer CTA
   footer:          { position:'absolute', bottom:0, left:0, right:0, backgroundColor:'rgba(8,5,10,0.92)', borderTopWidth:1, borderTopColor:T.bg.border, paddingHorizontal:16, paddingTop:10, paddingBottom: Platform.OS === 'ios' ? 32 : 16 },
   cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.danger, letterSpacing:0.5, marginBottom:6, textAlign:'center' },
-  ctaBtn:          { borderRadius:T.button.primary.radius, paddingVertical:T.button.primary.paddingV, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
+  ctaBtn:          { borderRadius:T.button.primary.radius, paddingVertical:T.button.primary.paddingV, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface, transform:[{ skewX:'-3deg' }] },
   ctaBtnReady:     { backgroundColor:T.accent.mint, borderColor:T.accent.mint },
-  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:T.button.primary.fontSize, color:T.bg.border, letterSpacing:T.button.primary.letterSpacing },
+  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:T.button.primary.fontSize, color:T.bg.border, letterSpacing:T.button.primary.letterSpacing, transform:[{ skewX:'3deg' }] },
   ctaTextReady:    { color:T.button.primary.text },
 
   // Opponent select

@@ -17,6 +17,7 @@ import { STARTING_CREDITS } from '../data/constants';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import LightningStrike from '../components/LightningStrike';
 
 type Mode = 'login' | 'register';
 
@@ -90,6 +91,7 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
 
   return (
     <ScreenBackground theme="neutral">
+    <LightningStrike />
     <KeyboardAvoidingView
       style={s.kav}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -221,17 +223,15 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
                 <ActivityIndicator color={T.bg.root} size="small" />
               </TouchableOpacity>
             ) : (
-              <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={12} innerBackground="transparent">
-                <TouchableOpacity
-                  style={s.submitBtn}
-                  onPress={handle}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
-                    {mode === 'login' ? 'ENTER' : 'CREATE ACCOUNT'}
-                  </Text>
-                </TouchableOpacity>
-              </GradientBorder>
+              <TouchableOpacity
+                style={s.submitBtn}
+                onPress={handle}
+                activeOpacity={0.85}
+              >
+                <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
+                  {mode === 'login' ? 'ENTER' : 'CREATE ACCOUNT'}
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </MaterialSurface>
@@ -284,9 +284,9 @@ const s = StyleSheet.create({
   inputs:           { gap:14 },
   input:            { backgroundColor:T.bg.surface, borderWidth:1, borderColor:T.bg.border, borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:T.text.body, fontSize:T.font.lg, fontFamily:'monospace' },
   error:            { color:T.status.danger, fontSize:T.font.lg, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
-  submitBtn:        { backgroundColor:T.accent.mint, borderRadius:T.button.primary.radius, paddingVertical:T.button.primary.paddingV, alignItems:'center', justifyContent:'center', marginTop:6 },
+  submitBtn:        { backgroundColor:T.accent.mint, borderRadius:T.button.primary.radius, paddingVertical:T.button.primary.paddingV, alignItems:'center', justifyContent:'center', marginTop:6, transform:[{ skewX:'-3deg' }] },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
-  submitText:       { fontSize:T.button.primary.fontSize, fontWeight:'700', color:T.button.primary.text, letterSpacing:T.button.primary.letterSpacing },
+  submitText:       { fontSize:T.button.primary.fontSize, fontWeight:'700', color:T.button.primary.text, letterSpacing:T.button.primary.letterSpacing, transform:[{ skewX:'3deg' }] },
 
   tagline:          { marginTop:20, fontSize:T.font.md, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center' },
 

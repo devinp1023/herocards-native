@@ -409,10 +409,12 @@ const styles = StyleSheet.create({
     gap:12, paddingVertical:18,
     backgroundColor:T.stat.atk, borderRadius:14.5,
     shadowColor:T.stat.atk, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
+    transform:[{ skewX:'-3deg' }],
   },
   battleBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
     color:T.text.primary, letterSpacing:T.letterSpacing.xxl,
+    transform:[{ skewX:'3deg' }],
   },
 
   // Open pack button
@@ -421,14 +423,17 @@ const styles = StyleSheet.create({
     gap:12, paddingVertical:18,
     backgroundColor:T.accent.mint, borderRadius:14.5,
     shadowColor:T.accent.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
+    transform:[{ skewX:'-3deg' }],
   },
   packBtnText: {
     fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
     color:T.text.primary, letterSpacing:T.letterSpacing.xxl,
+    transform:[{ skewX:'3deg' }],
   },
   packBtnSub: {
     fontFamily:'Orbitron_700Bold', fontSize:T.font.md,
     color:'#ffffffaa', letterSpacing:T.letterSpacing.md,
+    transform:[{ skewX:'3deg' }],
   },
 
   // Daily quests

@@ -166,10 +166,10 @@ const avStyles = StyleSheet.create({
   lockedText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.5 },
   activeBadge: { borderRadius: 5, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
   activeText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: T.letterSpacing.xs },
-  equipBtn:    { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, width: '100%', alignItems: 'center' },
-  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: T.letterSpacing.xs },
-  buyBtn:      { backgroundColor: '#0d0d22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 5, width: '100%', alignItems: 'center' },
-  buyText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.3 },
+  equipBtn:    { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, width: '100%', alignItems: 'center', transform: [{ skewX: '-3deg' }] },
+  equipText:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: T.letterSpacing.xs, transform: [{ skewX: '3deg' }] },
+  buyBtn:      { backgroundColor: '#0d0d22', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 5, width: '100%', alignItems: 'center', transform: [{ skewX: '-3deg' }] },
+  buyText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.3, transform: [{ skewX: '3deg' }] },
 });
 
 // ── StoreScreen ───────────────────────────────────────────────────────────────
@@ -530,9 +530,9 @@ const styles = StyleSheet.create({
     borderRadius: 12, borderWidth: 1, borderColor: T.bg.border,
     overflow: 'hidden',
   },
-  tab:          { flex: 1, paddingVertical: T.button.secondary.paddingV, alignItems: 'center', borderRadius: T.button.secondary.radius },
+  tab:          { flex: 1, paddingVertical: T.button.secondary.paddingV, alignItems: 'center', borderRadius: T.button.secondary.radius, transform: [{ skewX: '-3deg' }] },
   tabActive:    { backgroundColor: '#FFBE0B' },
-  tabText:      { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
+  tabText:      { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.text.muted, letterSpacing: T.letterSpacing.xs, transform: [{ skewX: '3deg' }] },
   tabTextActive:{ color: T.bg.root },
 
   // Featured deal
@@ -550,10 +550,10 @@ const styles = StyleSheet.create({
   resetLabel:       { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted },
   activeChip:       { alignSelf: 'flex-start', borderRadius: 7, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   activeChipText:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: T.letterSpacing.xs },
-  featuredEquipBtn: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: T.letterSpacing.xs },
-  featuredBuyBtn:   { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, backgroundColor: 'transparent' },
-  featuredBuyText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5 },
+  featuredEquipBtn: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8, transform: [{ skewX: '-3deg' }] },
+  featuredEquipText:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.bg.root, letterSpacing: T.letterSpacing.xs, transform: [{ skewX: '3deg' }] },
+  featuredBuyBtn:   { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, backgroundColor: 'transparent', transform: [{ skewX: '-3deg' }] },
+  featuredBuyText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, transform: [{ skewX: '3deg' }] },
 
   // Section sub-label
   sectionSub: { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, marginBottom: 12, marginTop: -8 },
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   offerPrice:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl },
   ownedBadge:   { backgroundColor: '#00e67620', borderRadius: 7, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#00e67640', alignItems: 'center' },
   ownedBadgeText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#00e676', letterSpacing: T.letterSpacing.xs },
-  buyCardBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, backgroundColor: 'transparent' },
-  buyCardBtnText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md },
+  buyCardBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, backgroundColor: 'transparent', transform: [{ skewX: '-3deg' }] },
+  buyCardBtnText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md, transform: [{ skewX: '3deg' }] },
   buyCardBtnDisabled: { borderColor: T.bg.border },
 });

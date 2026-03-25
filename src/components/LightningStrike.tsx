@@ -117,7 +117,7 @@ function generateBolt(
 
   // Start at a random position
   let x = Math.random() * screenWidth;
-  let y = Math.random() * screenHeight * 0.7;
+  let y = Math.random() * screenHeight;
   let angle = -90 + (Math.random() - 0.5) * 50; // mostly downward
 
   for (let i = 0; i < numSegments; i++) {

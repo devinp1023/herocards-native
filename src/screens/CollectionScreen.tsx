@@ -716,10 +716,11 @@ const styles = StyleSheet.create({
     borderColor: '#ff4040',
     alignItems: 'center',
     backgroundColor: '#ff000011',
+    transform: [{ skewX: '-3deg' }],
   },
   clearAllText: {
     fontFamily: 'Orbitron_700Bold',
-    fontSize: T.font.xs,
+    fontSize: T.font.xs, transform: [{ skewX: '3deg' }],
     color: '#ff6060',
     letterSpacing: T.letterSpacing.xs,
   },
