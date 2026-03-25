@@ -141,7 +141,7 @@ function AvatarCard({
       {!isActive && owned && !locked && (
         <GradientBorder colors={BORDER_COLORS.gold} borderWidth={1} borderRadius={6} innerBackground="transparent" style={{ width: '100%' }}>
           <TouchableOpacity
-            style={[avStyles.equipBtn, { backgroundColor: tc.color }]}
+            style={[avStyles.equipBtn, { backgroundColor: T.accent.mint }]}
             onPress={onEquip}
             activeOpacity={0.8}
           >
@@ -338,7 +338,7 @@ export default function StoreScreen() {
                     </View>
                   ) : gs.ownedAvatars.includes(featured.id) ? (
                     <TouchableOpacity
-                      style={[styles.featuredEquipBtn, { backgroundColor: featuredTc.color }]}
+                      style={[styles.featuredEquipBtn, { backgroundColor: T.accent.mint }]}
                       onPress={() => handleEquipAvatar(featured.id)}
                       activeOpacity={0.85}
                     >
@@ -530,9 +530,9 @@ const styles = StyleSheet.create({
     borderRadius: 12, borderWidth: 1, borderColor: T.bg.border,
     overflow: 'hidden',
   },
-  tab:          { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  tab:          { flex: 1, paddingVertical: T.button.secondary.paddingV, alignItems: 'center', borderRadius: T.button.secondary.radius },
   tabActive:    { backgroundColor: '#FFBE0B' },
-  tabText:      { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
+  tabText:      { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   tabTextActive:{ color: T.bg.root },
 
   // Featured deal

@@ -335,7 +335,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** `npx tsc --noEmit` passes. Visual spot-check every screen — text sizes should be identical (this is a mechanical replacement, not a redesign).
 - **Warnings to check:** None — mechanical replacement only. No visual changes expected.
 
-> **IMPORTANT — Tokenization process for all remaining sprints (3.6–3.14):**
+> **IMPORTANT — Tokenization process for all remaining sprints (3.6–3.9):**
 > 1. **Read the style guide first.** Check `STYLE_GUIDE.html` for the canonical values, names, and use cases for the property being tokenized.
 > 2. **Define tokens in `T` that match the style guide exactly.** Don't invent values from what's currently in the codebase — the style guide is the source of truth.
 > 3. **Then apply tokens to the app.** Map existing hardcoded values to the closest style guide token. If a value doesn't match any token, either add a token (if the style guide supports it) or adjust the value to the nearest token.
@@ -363,58 +363,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** `npx tsc --noEmit` passes. No visual changes — mechanical replacement.
 - **Warnings to check:** None.
 
-**Sprint 3.8 — Opacity tokens**
-- **Problem:** Opacity values (`0.3`, `0.5`, `0.6`, `0.8`, `1`) are hardcoded with no semantic meaning. `opacity: 0.5` could mean "disabled", "muted", "hover", or "subtle" depending on context.
-- **Step 1:** Add to `src/theme/theme.ts`:
-  ```
-  T.opacity: { disabled: 0.35, muted: 0.5, subtle: 0.7, hover: 0.8, full: 1 }
-  ```
-- **Step 2:** Audit all `opacity:` declarations. Map each to the closest semantic token. Replace.
-- **Exception:** Animation target values (e.g., animating from 0→1) use raw numbers — don't tokenize animation endpoints.
-- **Verify:** `npx tsc --noEmit` passes. Spot-check disabled buttons, muted text, hover states.
-- **Warnings to check:** None.
-
-**Sprint 3.9 — Border width tokens**
-- **Problem:** `borderWidth: 1`, `borderWidth: 2`, `borderWidth: 0.5` scattered without semantic meaning.
-- **Step 1:** Add to `src/theme/theme.ts`:
-  ```
-  T.border: { hairline: StyleSheet.hairlineWidth, thin: 1, standard: 1.5, thick: 2 }
-  ```
-- **Step 2:** Replace all hardcoded `borderWidth` values with `T.border.*`.
-- **Exception:** `borderWidth: 0` (used to remove borders) stays as `0`.
-- **Verify:** `npx tsc --noEmit` passes. No visual changes.
-- **Warnings to check:** None.
-
-**Sprint 3.10 — Icon size tokens**
-- **Problem:** `size={16}`, `size={20}`, `size={24}`, `size={28}` on `MaterialCommunityIcons` and other icon components — no system.
-- **Step 1:** Add to `src/theme/theme.ts`:
-  ```
-  T.icon: { xs: 12, sm: 16, md: 20, lg: 24, xl: 28, xxl: 36 }
-  ```
-- **Step 2:** Replace all hardcoded icon `size` props with `T.icon.*`.
-- **Verify:** `npx tsc --noEmit` passes. Icons same sizes.
-- **Warnings to check:** None.
-
-**Sprint 3.11 — Z-index layer tokens**
-- **Problem:** `zIndex: 10`, `zIndex: 99`, `zIndex: 999` scattered — impossible to know the stacking order at a glance.
-- **Step 1:** Add to `src/theme/theme.ts`:
-  ```
-  T.zIndex: { base: 0, card: 10, dropdown: 50, sidebar: 100, overlay: 200, modal: 300, toast: 400 }
-  ```
-- **Step 2:** Replace all hardcoded `zIndex` values with `T.zIndex.*`.
-- **Verify:** `npx tsc --noEmit` passes. Modals, toasts, sidebars still stack correctly.
-- **Warnings to check:** Test sidebar in CollectionScreen (must sit above grid but below modals). Test achievement toast (must sit above everything). Test battle card preview modal.
-
-**Sprint 3.12 — Spacing + radii adoption sweep**
-- **Problem:** `T.space.*` and `T.radius.*` tokens exist but are barely used — screens still reference raw numbers for `padding`, `margin`, `gap`, `borderRadius`.
-- **Step 1:** Audit all `padding`, `margin`, `gap` values. Map to nearest `T.space.*` token. Accept ±2px rounding (e.g., `padding: 14` → `T.space.lg` which is 16).
-- **Step 2:** Audit all `borderRadius` values. Map to nearest `T.radius.*` token.
-- **Step 3:** Replace across all screens and components.
-- **Exception:** One-off spacing that doesn't fit any token (e.g., `marginTop: -3` for visual alignment tricks) stays as raw values.
-- **Verify:** `npx tsc --noEmit` passes. Visual spot-check — some elements may shift by 1–2px due to rounding. Verify nothing looks broken.
-- **Warnings to check:** The ±2px rounding may cause subtle layout shifts. Compare before/after on Home, Collection, and Battle screens specifically.
-
-**Sprint 3.13 — Button tokens**
+**Sprint 3.8 — Button tokens** ✅ COMPLETE
 - **Problem:** Buttons across the app have inconsistent heights, padding, border radii, text sizes, and disabled states. The style guide defines 4 button variants but the app doesn't follow them.
 - **Step 1:** Audit all buttons across screens. Map each to one of the 4 style guide variants.
 - **Step 2:** Add `T.button` to `src/theme/theme.ts` matching the style guide exactly:
@@ -470,7 +419,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** `npx tsc --noEmit` passes. All buttons match their style guide variant. Disabled buttons are consistently dimmed at 0.3 opacity.
 - **Warnings to check:** The skew transform (`skewX(-3deg)`) with counter-skew on text (`skewX(3deg)`) is a key style guide detail — don't lose it during migration.
 
-**Sprint 3.14 — Stamina cyan token + remaining one-offs**
+**Sprint 3.9 — Stamina cyan token + remaining one-offs**
 - **Problem:** Stamina cyan (`#4fc3f7`) is hardcoded in HeroCard, MiniCard, and BattleScreen. Other one-offs: `#ffa726` (win streak), `#ff6b00` (god mode), `#ffc04a` (legendary lock text).
 - **Step 1:** Add `T.domain.stamina: '#4fc3f7'` to `src/theme/theme.ts`.
 - **Step 2:** Replace all `'#4fc3f7'` references in components/screens with `T.domain.stamina`.

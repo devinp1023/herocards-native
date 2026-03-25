@@ -301,9 +301,9 @@ const styles = StyleSheet.create({
 
   logoutBtn: {
     alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 14, borderRadius: 12,
+    paddingVertical: T.button.destructive.paddingV, borderRadius: T.button.destructive.radius,
     borderWidth: 1, borderColor: T.status.danger + '33',
     backgroundColor: T.status.danger + '08', marginBottom: 8,
   },
-  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.status.danger, letterSpacing: T.letterSpacing.lg },
+  logoutText: { fontFamily: T.button.destructive.fontFamily, fontSize: T.button.destructive.fontSize, color: T.button.destructive.text, letterSpacing: T.button.destructive.letterSpacing },
 });

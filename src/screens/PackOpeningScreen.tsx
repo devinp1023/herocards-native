@@ -433,7 +433,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen]} onPress={() => setPhase('summary')} activeOpacity={0.85}>
-                <Text style={[s.nextBtnText, { color: T.bg.root }]}>SEE RESULTS</Text>
+                <Text style={[s.nextBtnText, { color: T.button.primary.text }]}>SEE RESULTS</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -537,9 +537,9 @@ const s = StyleSheet.create({
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
   tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.bg.border, letterSpacing: T.letterSpacing.lg },
-  nextBtn:        { backgroundColor: T.accent.mint, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
+  nextBtn:        { backgroundColor: T.accent.mint, borderRadius: T.button.primary.radius, paddingVertical: T.button.primary.paddingV, paddingHorizontal: T.button.primary.paddingH },
   nextBtnGreen:   { backgroundColor: T.status.vitality },
-  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.bg.root, letterSpacing: T.letterSpacing.lg },
+  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.button.primary.fontSize, color: T.button.primary.text, letterSpacing: T.button.primary.letterSpacing },
 
   // ── Summary ──
   summaryScroll:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48, alignItems: 'center' },
@@ -549,6 +549,6 @@ const s = StyleSheet.create({
   totalRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.accent.mint },
-  collectBtn:        { backgroundColor: T.accent.mint, borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
-  collectText:       { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.bg.root, letterSpacing: T.letterSpacing.xxl },
+  collectBtn:        { backgroundColor: T.accent.mint, borderRadius: T.button.primary.radius, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
+  collectText:       { fontFamily: T.button.primary.fontFamily, fontSize: T.font.lg, color: T.button.primary.text, letterSpacing: T.letterSpacing.xxl },
 });

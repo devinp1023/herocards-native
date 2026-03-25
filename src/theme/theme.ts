@@ -124,6 +124,50 @@ export const T = {
     vital:   { core: '#2ED573aa', halo: '#2ED57366', bloom: '#2ED57322', wash: '#2ED57311' },
     caution: { core: '#FFBE0Baa', halo: '#FFBE0B66', bloom: '#FFBE0B22', wash: '#FFBE0B11' },
   },
+  // Button variants — matches STYLE_GUIDE.html "Premium Buttons" section
+  button: {
+    primary: {
+      gradient: ['#00FFCC', '#00FFAA', '#00DD88'] as const,
+      text: '#050508',                         // dark text on bright bg
+      fontFamily: 'Orbitron_900Black' as const,
+      fontSize: 14,
+      letterSpacing: 2,
+      paddingV: 14,
+      paddingH: 32,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.96,
+    },
+    secondary: {
+      bg: 'transparent',
+      text: '#00FFAA',
+      borderGradient: ['#00FFAA66', '#00FFAA22'] as const,
+      fontFamily: 'Orbitron_700Bold' as const,
+      fontSize: 12,
+      letterSpacing: 1.5,
+      paddingV: 10,
+      paddingH: 24,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.97,
+    },
+    destructive: {
+      bg: 'transparent',
+      text: '#FF4757',
+      borderGradient: ['#FF475766', '#FF475722'] as const,
+      fontFamily: 'Orbitron_700Bold' as const,
+      fontSize: 12,
+      letterSpacing: 1.5,
+      paddingV: 10,
+      paddingH: 24,
+      radius: 12,
+      skew: -3,
+      pressScale: 0.97,
+    },
+    disabled: {
+      opacity: 0.3,
+    },
+  },
 } as const;
 
 // ---------------------------------------------------------------------------

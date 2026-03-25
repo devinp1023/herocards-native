@@ -284,9 +284,9 @@ const s = StyleSheet.create({
   inputs:           { gap:14 },
   input:            { backgroundColor:T.bg.surface, borderWidth:1, borderColor:T.bg.border, borderRadius:12, paddingHorizontal:16, paddingVertical:14, color:T.text.body, fontSize:T.font.lg, fontFamily:'monospace' },
   error:            { color:T.status.danger, fontSize:T.font.lg, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
-  submitBtn:        { backgroundColor:T.accent.mint, borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
+  submitBtn:        { backgroundColor:T.accent.mint, borderRadius:T.button.primary.radius, paddingVertical:T.button.primary.paddingV, alignItems:'center', justifyContent:'center', marginTop:6 },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
-  submitText:       { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:T.letterSpacing.lg },
+  submitText:       { fontSize:T.button.primary.fontSize, fontWeight:'700', color:T.button.primary.text, letterSpacing:T.button.primary.letterSpacing },
 
   tagline:          { marginTop:20, fontSize:T.font.md, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center' },
 

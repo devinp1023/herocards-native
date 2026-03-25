@@ -901,8 +901,8 @@ const rs = StyleSheet.create({
   rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 4 },
   rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
   streak:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: '#ffa726', letterSpacing: T.letterSpacing.md, marginTop: 4 },
-  backBtn:      { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, borderWidth: 1, marginTop: 8 },
-  backText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.lg },
+  backBtn:      { paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, marginTop: 8 },
+  backText:     { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, letterSpacing: T.button.secondary.letterSpacing },
   tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, textAlign: 'center', marginTop: -8 },
 });
 
@@ -1092,8 +1092,8 @@ const s = StyleSheet.create({
   headerCenter: { alignItems: 'center', paddingHorizontal: 8 },
   roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.lg },
   roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, letterSpacing: T.letterSpacing.md, marginTop: -2 },
-  forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: T.status.danger + '66', backgroundColor: T.status.danger + '18' },
-  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.danger, letterSpacing: T.letterSpacing.md },
+  forfeitBtn:   { marginTop: 4, paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, borderColor: T.status.danger + '66', backgroundColor: T.status.danger + '18' },
+  forfeitText:  { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.button.secondary.text, letterSpacing: T.button.secondary.letterSpacing },
 
   combatZone: { flex: 1, paddingVertical: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
