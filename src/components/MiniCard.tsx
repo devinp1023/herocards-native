@@ -30,7 +30,7 @@ const TYPE_ICONS: Record<string, string> = {
   Cosmic:    'creation',
 };
 import { RC, TYPE_COLORS, RARITY_META } from '../data/constants';
-import { ABILITY_DESC } from '../data/abilities';
+// Ability text removed from MiniCard — only visible on HeroCard
 import { CARD_W, CARD_H } from './CardWrapper';
 import type { BattleProps } from './HeroCard';
 
@@ -55,21 +55,14 @@ const PILL_W    = 82;
 const PILL_GAP  = (INNER_W - 3 * PILL_W) / 2;
 const PILL_R    = 20;
 
-// Ability bar height (3 lines)
-const ABL_H     = 76;
-
 // Image window — fixed height, do not change
 const IMG_Y     = 50;
 const IMG_H     = 170;
 
-// Ability sits 8px below image
-const ABL_Y     = IMG_Y + IMG_H + 8;   // 228
-
-// HP bar + stamina dark pill rows anchored right below ability
-const HPBAR_H   = 36;
-const STAM_H    = 36;
-const HPBAR_Y   = ABL_Y + ABL_H + 1;   // 305
-const STAM_Y    = HPBAR_Y + HPBAR_H + 3; // 344
+// Stats section sits directly below image (ability removed from MiniCard)
+const STATS_Y   = IMG_Y + IMG_H + 8;   // 228
+const STATS_BOTTOM = CARD_H - 12;       // 421
+const STATS_H   = STATS_BOTTOM - STATS_Y; // ~193px available
 
 interface MiniCardProps extends BattleProps {
   card: Card;
@@ -101,8 +94,6 @@ export const MiniCard = React.memo(function MiniCard({
 
   const hp = displayHp;
   const hpBarColor = displayHpPct > 0.5 ? T.status.vitality : displayHpPct > 0.25 ? T.status.caution : T.status.danger;
-  const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
-
   // Rarity glow pulse — higher rarities glow more intensely
   const RARITY_GLOW: Record<string, { min: number; max: number; radius: number; duration: number }> = {
     Common:    { min: 0, max: 0, radius: 0, duration: 0 },       // no glow
@@ -172,13 +163,10 @@ export const MiniCard = React.memo(function MiniCard({
         <Text style={s.cardName} numberOfLines={1}>{card.name}</Text>
       </View>
 
-      {/* ── Alliance / number / rarity (top-right) ── */}
+      {/* ── Card number (top-right) ── */}
       <View style={s.subtitleOverlay}>
         <Text style={s.subtitle} numberOfLines={1}>
-          {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')}
-        </Text>
-        <Text style={s.subtitle} numberOfLines={1}>
-          {card.rarity.toUpperCase()}
+          #{String(card.id).padStart(3, '0')}
         </Text>
       </View>
 
@@ -198,19 +186,7 @@ export const MiniCard = React.memo(function MiniCard({
         )}
       </View>
 
-      {/* ── Ability bar ── */}
-      <View style={s.abilityBar}>
-        {card.ability && abilityDesc ? (
-          <Text style={s.abilityText} numberOfLines={3}>
-            <Text style={s.abilityName}>{card.ability}: </Text>{abilityDesc}
-          </Text>
-        ) : (
-          <Text style={s.abilityText}>No special ability</Text>
-        )}
-      </View>
-      <View style={[s.abilityAccentBar, { backgroundColor: rm.color }]} />
-
-      {/* ── Stats group wrapper — HP, STA, pills in one box ── */}
+      {/* ── Stats group wrapper — HP, STA, pills ── */}
       <View style={s.statsWrapper}>
         <View style={[s.statsAccentBar, { backgroundColor: rm.color }]} />
 
@@ -366,19 +342,19 @@ const s = StyleSheet.create({
     zIndex: 10,
   },
 
-  // Stats group wrapper
+  // Stats group wrapper — fills all space below image
   statsWrapper: {
     position: 'absolute',
     left: PAD,
-    top: HPBAR_Y,
+    top: STATS_Y,
     width: INNER_W,
-    height: PILL_Y + PILL_H - HPBAR_Y,
+    height: STATS_H,
     backgroundColor: 'rgba(0,0,0,0.75)',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 8,
     justifyContent: 'space-between',
   },
   statsAccentBar: {
@@ -390,9 +366,8 @@ const s = StyleSheet.create({
     borderRadius: 2,
   },
   hpSection: {
-    height: HPBAR_H,
     justifyContent: 'flex-start',
-    gap: 4,
+    gap: 6,
   },
   statRowHeader: {
     flexDirection: 'row',
@@ -418,8 +393,8 @@ const s = StyleSheet.create({
   },
   hpBarTrack: {
     width: '100%',
-    height: 10,
-    borderRadius: 5,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: 'rgba(0,0,0,0.4)',
     overflow: 'hidden',
     shadowOffset: { width: 0, height: 0 },
@@ -428,14 +403,13 @@ const s = StyleSheet.create({
   },
   hpBarFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 7,
   },
 
   // Stamina pips
   stamSection: {
-    height: STAM_H,
     justifyContent: 'flex-start',
-    gap: 4,
+    gap: 6,
   },
   stamTrack: {
     flexDirection: 'row',
@@ -447,8 +421,8 @@ const s = StyleSheet.create({
   },
   stamPip: {
     flex: 1,
-    height: 10,
-    borderRadius: 5,
+    height: 14,
+    borderRadius: 7,
     overflow: 'hidden',
   },
   stamPipFilled: {
@@ -468,51 +442,17 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
   },
 
-  // Ability bar
-  abilityAccentBar: {
-    position: 'absolute',
-    left: PAD,
-    top: ABL_Y,
-    width: 3,
-    height: ABL_H,
-    borderRadius: 2,
-  },
-  abilityBar: {
-    position: 'absolute',
-    left: PAD,
-    top: ABL_Y,
-    width: INNER_W,
-    height: ABL_H,
-    borderRadius: 6,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  abilityText: {
-    fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.lg,
-    color: T.text.body,
-    lineHeight: 20,
-  },
-  abilityName: {
-    fontFamily: 'Rajdhani_600SemiBold',
-    color: T.text.primary,
-    letterSpacing: 0.5,
-  },
-
   // Stat pills
   pillRow: {
-    height: PILL_H,
+    height: 32,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   pill: {
     width: PILL_W,
-    height: PILL_H,
-    borderRadius: 20,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: '#ffffffcc',
     flexDirection: 'row',
