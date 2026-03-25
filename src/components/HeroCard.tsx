@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
   },
   pillValue: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: T.font.xl,
+    fontSize: T.font.lg,
     color: T.text.primary,
     flex: 1,
     textAlign: 'right',
