@@ -346,7 +346,7 @@ export function HeroCard({
         {/* Low HP red pulse overlay */}
         {isLowHp && (
           <Rect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H}
-            color="red" opacity={lowHpOpacity} />
+            color="#FF4757" opacity={lowHpOpacity} />
         )}
 
         {/* 3h. Rarity line at top of art window */}

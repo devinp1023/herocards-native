@@ -341,7 +341,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 > 3. **Then apply tokens to the app.** Map existing hardcoded values to the closest style guide token. If a value doesn't match any token, either add a token (if the style guide supports it) or adjust the value to the nearest token.
 > Sprint 3.5 was initially done backwards (audit codebase → create tokens → apply) which produced a scale that didn't match the style guide. This was caught and corrected. Don't repeat this mistake.
 
-**Sprint 3.6 — Skia canvas color audit**
+**Sprint 3.6 — Skia canvas color audit** ✅ COMPLETE
 - Skia elements (`<Path>`, `<Text>`, `<Fill>`, `<Rect>`, `<LinearGradient>`, etc.) use raw string colors — they can't reference `T.*` tokens directly.
 - Audit all Skia color values in: `App.tsx` (tab bar), `HeroCard.tsx`, `MiniCard.tsx`, `FaceDownCard.tsx`, `BranchConnector.tsx`, `AchievementNode.tsx`, and any Skia elements in screen files (BattleScreen amp arcs, etc.)
 - For each hardcoded Skia color, verify it matches the style guide's intended value. Replace outdated hex values (old cyan, old status colors, old backgrounds) with the correct style guide hex equivalents.
