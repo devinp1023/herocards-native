@@ -32,7 +32,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
+  withSequence,
   withTiming,
+  interpolateColor,
   Easing,
 } from 'react-native-reanimated';
 import { T } from '../theme/theme';
@@ -80,40 +82,51 @@ const MATERIALS = {
   },
 } as const;
 
-// ── Energy Border (isolated animated layer) ─────────────────────────────────
-// This is a separate component so its animation never re-renders the parent.
+// ── Energy Border (color-shifting glow) ──────────────────────────────────────
+// The entire border smoothly shifts between mint and violet using
+// interpolateColor on a Reanimated shared value. No positional animation,
+// no seams — the whole border glows and breathes.
 const EnergyBorder = React.memo(({ borderRadius }: { borderRadius: number }) => {
-  const position = useSharedValue(0);
+  const progress = useSharedValue(0);
 
   React.useEffect(() => {
-    position.value = withRepeat(
-      withTiming(1, { duration: 4000, easing: Easing.linear }),
-      -1, // infinite
-      false, // no reverse — continuous loop
+    progress.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
     );
-  }, [position]);
+  }, [progress]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (position.value - 0.5) * 200 }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const color = interpolateColor(
+      progress.value,
+      [0, 0.5, 1],
+      [T.accent.mint + '44', T.accent.violet + '55', T.accent.mint + '44'],
+    );
+    return {
+      borderColor: color,
+      shadowColor: color,
+    };
+  });
 
   return (
-    <View
+    <Animated.View
       style={[
-        styles.energyBorderContainer,
-        { borderTopLeftRadius: borderRadius, borderTopRightRadius: borderRadius },
+        {
+          ...StyleSheet.absoluteFillObject,
+          borderRadius,
+          borderWidth: 1,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.7,
+          shadowRadius: 4,
+        },
+        animatedStyle,
       ]}
       pointerEvents="none"
-    >
-      <Animated.View style={[styles.energyBorderInner, animatedStyle]}>
-        <LinearGradient
-          colors={['transparent', T.accent.mintMuted, T.accent.violetMuted, 'transparent']}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.energyGradient}
-        />
-      </Animated.View>
-    </View>
+    />
   );
 });
 EnergyBorder.displayName = 'EnergyBorder';
@@ -187,23 +200,5 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-  },
-  energyBorderContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    overflow: 'hidden',
-  },
-  energyBorderInner: {
-    position: 'absolute',
-    top: 0,
-    left: -100,
-    right: -100,
-    height: 1,
-  },
-  energyGradient: {
-    flex: 1,
   },
 });

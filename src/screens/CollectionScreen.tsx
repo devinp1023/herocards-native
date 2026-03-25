@@ -22,9 +22,14 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  cancelAnimation,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
+import { RARITY_META } from '../data/constants';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CollectionStackParamList } from '../../App';
 import { isOwned, cardCount, totalUniqueOwned } from '../hooks/useGameState';
@@ -212,6 +217,52 @@ function FilterSidebar({
   );
 }
 
+// ── Rarity glow wrapper for grid cards ────────────────────────────────────────
+const RARITY_GLOW: Record<string, { min: number; max: number; radius: number; duration: number }> = {
+  Common:    { min: 0, max: 0, radius: 0, duration: 0 },
+  Uncommon:  { min: 0, max: 0, radius: 0, duration: 0 },
+  Rare:      { min: 0.1, max: 0.25, radius: 3, duration: 3000 },
+  Epic:      { min: 0.15, max: 0.35, radius: 4, duration: 2500 },
+  Legendary: { min: 0.2, max: 0.5, radius: 6, duration: 2000 },
+};
+
+const GlowingCardSlot = React.memo(({ card, children }: { card: Card; children: React.ReactNode }) => {
+  const cfg = RARITY_GLOW[card.rarity] ?? RARITY_GLOW.Common;
+  const rm = RARITY_META[card.rarity] ?? { color: '#9CA3AF' };
+  const glowOpacity = useSharedValue(cfg.min);
+  // Deterministic stagger based on card id so each card is offset
+  const stagger = (card.id % 17) * 200; // 0–3200ms offset
+
+  useEffect(() => {
+    if (cfg.duration > 0) {
+      glowOpacity.value = withDelay(
+        stagger,
+        withRepeat(
+          withSequence(
+            withTiming(cfg.max, { duration: cfg.duration, easing: Easing.inOut(Easing.ease) }),
+            withTiming(cfg.min, { duration: cfg.duration, easing: Easing.inOut(Easing.ease) }),
+          ),
+          -1,
+          false,
+        ),
+      );
+    }
+    return () => cancelAnimation(glowOpacity);
+  }, []);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    shadowColor: rm.color,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: glowOpacity.value,
+    shadowRadius: cfg.radius,
+    borderRadius: 12,
+  }));
+
+  if (cfg.duration === 0) return <>{children}</>;
+
+  return <Animated.View style={glowStyle}>{children}</Animated.View>;
+});
+
 // ── CollectionScreen ──────────────────────────────────────────────────────────
 export default function CollectionScreen({ navigation }: Props) {
   const gs = useGameStateContext();
@@ -290,16 +341,18 @@ export default function CollectionScreen({ navigation }: Props) {
         activeOpacity={0.85}
         onPress={() => navigation.navigate('CardDetail', { cardId: item.id, owned, ownedCount: count } as never)}
       >
-        <View>
-          <CardWrapper scale={SCALE}>
-            {owned ? <MiniCard card={item} /> : <MissingCard card={item} />}
-          </CardWrapper>
-          {count > 1 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>x{count}</Text>
-            </View>
-          )}
-        </View>
+        <GlowingCardSlot card={item}>
+          <View>
+            <CardWrapper scale={SCALE}>
+              {owned ? <MiniCard card={item} /> : <MissingCard card={item} />}
+            </CardWrapper>
+            {count > 1 && (
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>x{count}</Text>
+              </View>
+            )}
+          </View>
+        </GlowingCardSlot>
       </TouchableOpacity>
     );
   }, [gs.collection, navigation]);

@@ -5,7 +5,10 @@ import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Platform, Dimensions,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing,
+} from 'react-native-reanimated';
+import { useIsFocused } from '@react-navigation/native';
 import { useElevation } from '../theme/elevation';
 import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
@@ -235,6 +238,29 @@ export default function StoreScreen() {
 
   const currentLevel = getLevel(gs.xp);
 
+  const isFocused = useIsFocused();
+
+  // Glow pulse for featured deal buy button
+  const featuredBuyGlow = useSharedValue(0.5);
+  useEffect(() => {
+    if (isFocused) {
+      const pulseConfig = { duration: 1200, easing: Easing.inOut(Easing.ease) };
+      featuredBuyGlow.value = withRepeat(
+        withSequence(withTiming(1, pulseConfig), withTiming(0.5, pulseConfig)),
+        -1, false,
+      );
+    } else {
+      featuredBuyGlow.value = 0.5;
+    }
+  }, [isFocused]);
+
+  const featuredBuyGlowStyle = useAnimatedStyle(() => ({
+    shadowColor:   T.accent.gold,
+    shadowOffset:  { width: 0, height: 0 },
+    shadowOpacity: featuredBuyGlow.value,
+    shadowRadius:  14,
+  }));
+
   const [featuredPressed, setFeaturedPressed] = useState(false);
   const { animatedStyle: featuredElevStyle } = useElevation(featuredPressed ? 'hovered' : 'resting', '#FFBE0B');
 
@@ -284,7 +310,7 @@ export default function StoreScreen() {
               onPressIn={() => setFeaturedPressed(true)}
               onPressOut={() => setFeaturedPressed(false)}
             >
-            <MaterialSurface borderRadius={16} style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
+            <MaterialSurface energyBorder borderRadius={16} style={[styles.featuredCard, { borderColor: '#FFBE0B77' }]}>
               <AvatarCircle symbol={featured.symbol} color={featured.color} size={68} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
@@ -318,23 +344,25 @@ export default function StoreScreen() {
                       <Text style={styles.featuredEquipText}>EQUIP</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity
-                      style={[
-                        styles.featuredBuyBtn,
-                        { borderColor: gs.coins >= salePrice ? '#FFBE0B88' : '#1a1a30' },
-                      ]}
-                      onPress={() => handleBuyAvatar(featured, salePrice)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[
-                        styles.featuredBuyText,
-                        { color: gs.coins >= salePrice ? '#FFBE0B' : T.bg.border },
-                      ]}>
-                        {gs.coins >= salePrice
-                          ? `BUY  ${salePrice.toLocaleString()} CR`
-                          : 'NOT ENOUGH CR'}
-                      </Text>
-                    </TouchableOpacity>
+                    <Animated.View style={[{ borderRadius: 8, alignSelf: 'flex-start' }, featuredBuyGlowStyle]}>
+                      <TouchableOpacity
+                        style={[
+                          styles.featuredBuyBtn,
+                          { borderColor: gs.coins >= salePrice ? '#FFBE0B88' : '#1a1a30' },
+                        ]}
+                        onPress={() => handleBuyAvatar(featured, salePrice)}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={[
+                          styles.featuredBuyText,
+                          { color: gs.coins >= salePrice ? '#FFBE0B' : T.bg.border },
+                        ]}>
+                          {gs.coins >= salePrice
+                            ? `BUY  ${salePrice.toLocaleString()} CR`
+                            : 'NOT ENOUGH CR'}
+                        </Text>
+                      </TouchableOpacity>
+                    </Animated.View>
                   )}
                 </View>
               </View>

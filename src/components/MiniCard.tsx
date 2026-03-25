@@ -3,8 +3,17 @@
 // No Skia canvas, no Reanimated — pure View + StyleSheet.
 // Same 300×433 dimensions as HeroCard so CardWrapper scaling is unchanged.
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { T } from '../theme/theme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
@@ -64,15 +73,18 @@ const STAM_Y    = HPBAR_Y + HPBAR_H + 3; // 344
 
 interface MiniCardProps extends BattleProps {
   card: Card;
+  /** Enable subtle scale breathing animation (collection grid only) */
+  breathing?: boolean;
 }
 
-export function MiniCard({
+export const MiniCard = React.memo(function MiniCard({
   card,
   currentHp,
   maxHp,
   currentStamina,
   isActive = false,
   hpPct,
+  breathing = false,
 }: MiniCardProps) {
   const cfg        = RC[card.rarity] ?? RC.Common;
   const typeColor  = TYPE_COLORS[card.type] ?? '#888888';
@@ -91,6 +103,41 @@ export function MiniCard({
   const hpBarColor = displayHpPct > 0.5 ? T.status.vitality : displayHpPct > 0.25 ? T.status.caution : T.status.danger;
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
 
+  // Rarity glow pulse — higher rarities glow more intensely
+  const RARITY_GLOW: Record<string, { min: number; max: number; radius: number; duration: number }> = {
+    Common:    { min: 0, max: 0, radius: 0, duration: 0 },       // no glow
+    Uncommon:  { min: 0, max: 0, radius: 0, duration: 0 },       // no glow
+    Rare:      { min: 0.15, max: 0.4, radius: 6, duration: 3000 },
+    Epic:      { min: 0.25, max: 0.6, radius: 10, duration: 2500 },
+    Legendary: { min: 0.4, max: 0.85, radius: 14, duration: 2000 },
+  };
+  const glowCfg = RARITY_GLOW[card.rarity] ?? RARITY_GLOW.Common;
+  const glowOpacity = useSharedValue(glowCfg.min);
+  useEffect(() => {
+    if (breathing && glowCfg.duration > 0) {
+      glowOpacity.value = withRepeat(
+        withSequence(
+          withTiming(glowCfg.max, { duration: glowCfg.duration, easing: Easing.inOut(Easing.ease) }),
+          withTiming(glowCfg.min, { duration: glowCfg.duration, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      cancelAnimation(glowOpacity);
+      glowOpacity.value = glowCfg.min;
+    }
+    return () => cancelAnimation(glowOpacity);
+  }, [breathing]);
+
+  const breathStyle = useAnimatedStyle(() => ({
+    borderRadius: CORNER_R,
+    shadowColor: rm.color,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: glowOpacity.value,
+    shadowRadius: glowCfg.radius,
+  }));
+
   const statPills: { icon: 'sword' | 'shield' | 'run-fast'; value: number; bg: string }[] = [
     { icon: 'sword',    value: card.power,   bg: T.stat.atk },
     { icon: 'shield',   value: card.defense, bg: T.stat.def },
@@ -98,8 +145,8 @@ export function MiniCard({
   ];
 
   return (
+    <Animated.View style={breathing ? breathStyle : undefined}>
     <View style={[s.card, { borderColor }]}>
-
 
       {/* Top rarity accent strip */}
       <View style={[s.rarityStrip, { backgroundColor: rm.color }]} />
@@ -210,8 +257,9 @@ export function MiniCard({
       </View>
 
     </View>
+    </Animated.View>
   );
-}
+});
 
 const s = StyleSheet.create({
   card: {

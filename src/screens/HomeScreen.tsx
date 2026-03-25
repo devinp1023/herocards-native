@@ -6,11 +6,11 @@ import {
   StyleSheet, Platform, Dimensions,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence, Easing,
 } from 'react-native-reanimated';
 import { useElevation, ElevationLevel } from '../theme/elevation';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps } from '@react-navigation/native';
+import { CompositeScreenProps, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainTabParamList, HomeStackParamList } from '../../App';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -142,7 +142,7 @@ function QuestCard({ quest, progress }: { quest: Quest; progress: number }) {
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
       >
-        <MaterialSurface style={[qStyles.card, done && qStyles.cardDone]}>
+        <MaterialSurface energyBorder style={[qStyles.card, done && qStyles.cardDone]}>
           <View style={qStyles.top}>
             <View style={[qStyles.iconBox, { borderColor: quest.color + '55', backgroundColor: quest.color + '14' }]}>
               <Text style={[qStyles.iconSymbol, { color: quest.color }]}>{quest.symbol}</Text>
@@ -203,6 +203,42 @@ export default function HomeScreen({ navigation }: Props) {
   const doneCount = todaysQuests.filter(q => (questProgress[q.id] ?? 0) >= q.req.n).length;
 
   const isMaxLevel = gs.level >= 100;
+  const isFocused = useIsFocused();
+
+  // Glow pulse animations
+  const battleGlow = useSharedValue(0.5);
+  const packGlow   = useSharedValue(0.5);
+
+  useEffect(() => {
+    if (isFocused) {
+      const pulseConfig = { duration: 1200, easing: Easing.inOut(Easing.ease) };
+      battleGlow.value = withRepeat(
+        withSequence(withTiming(1, pulseConfig), withTiming(0.5, pulseConfig)),
+        -1, false,
+      );
+      packGlow.value = withRepeat(
+        withSequence(withTiming(1, pulseConfig), withTiming(0.5, pulseConfig)),
+        -1, false,
+      );
+    } else {
+      battleGlow.value = 0.5;
+      packGlow.value   = 0.5;
+    }
+  }, [isFocused]);
+
+  const battleGlowStyle = useAnimatedStyle(() => ({
+    shadowColor:   T.accent.mint,
+    shadowOffset:  { width: 0, height: 0 },
+    shadowOpacity: battleGlow.value,
+    shadowRadius:  14,
+  }));
+
+  const packGlowStyle = useAnimatedStyle(() => ({
+    shadowColor:   T.accent.violet,
+    shadowOffset:  { width: 0, height: 0 },
+    shadowOpacity: packGlow.value,
+    shadowRadius:  14,
+  }));
 
   // Saved battle resume
   const saved = gs.savedBattle;
@@ -277,29 +313,33 @@ export default function HomeScreen({ navigation }: Props) {
         </Animated.View>
 
         {/* ── Battle button ── */}
-        <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent" style={{ marginBottom: 16 }}>
-          <TouchableOpacity
-            style={styles.battleBtn}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('BattleLobby')}
-          >
-            <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
-            <Text style={styles.battleBtnText}>BATTLE</Text>
-          </TouchableOpacity>
-        </GradientBorder>
+        <Animated.View style={[{ borderRadius: 16, marginBottom: 16 }, battleGlowStyle]}>
+          <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
+            <TouchableOpacity
+              style={styles.battleBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('BattleLobby')}
+            >
+              <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
+              <Text style={styles.battleBtnText}>BATTLE</Text>
+            </TouchableOpacity>
+          </GradientBorder>
+        </Animated.View>
 
         {/* ── Open Pack button ── */}
-        <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent" style={{ marginBottom: 20 }}>
-          <TouchableOpacity
-            style={styles.packBtn}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('PackOpening' as never)}
-          >
-            <MaterialCommunityIcons name="cards" size={28} color="#fff" />
-            <Text style={styles.packBtnText}>OPEN PACK</Text>
-            <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
-          </TouchableOpacity>
-        </GradientBorder>
+        <Animated.View style={[{ borderRadius: 16, marginBottom: 20 }, packGlowStyle]}>
+          <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
+            <TouchableOpacity
+              style={styles.packBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('PackOpening' as never)}
+            >
+              <MaterialCommunityIcons name="cards" size={28} color="#fff" />
+              <Text style={styles.packBtnText}>OPEN PACK</Text>
+              <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
+            </TouchableOpacity>
+          </GradientBorder>
+        </Animated.View>
 
         {/* ── Daily Quests ── */}
         <View style={styles.questSection}>
