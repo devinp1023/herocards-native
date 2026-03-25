@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rajdhani_600SemiBold',
     fontSize: T.font.sm,
     color: T.text.primary,
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
   statValue: {
     fontFamily: 'Rajdhani_600SemiBold',

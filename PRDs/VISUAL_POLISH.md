@@ -350,7 +350,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Tab bar colors match mint system. Card shimmer/glow colors align with style guide. Amp arcs use correct accent colors. No leftover cyan in Skia elements (except stamina).
 - **Warnings to check:** None — string color replacements only, no structural changes.
 
-**Sprint 3.7 — Font weight + line height + letter spacing tokens**
+**Sprint 3.7 — Font weight + line height + letter spacing tokens** ✅ COMPLETE
 - **Problem:** `fontWeight` is hardcoded as `'700'`, `'600'`, `'900'` etc. across screens. `lineHeight` and `letterSpacing` are mostly absent or inconsistent. These three properties combine with font size to define the full type system.
 - **Step 1:** Add to `src/theme/theme.ts`:
   ```

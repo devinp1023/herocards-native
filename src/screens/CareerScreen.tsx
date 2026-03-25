@@ -255,8 +255,8 @@ const FeatsPage = React.memo(function FeatsPage({
 const fpStyles = StyleSheet.create({
   container:  { flexGrow: 1, paddingHorizontal: PAGE_PAD, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 60 },
   headerRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: 2 },
-  catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 1 },
+  catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: T.letterSpacing.lg },
+  catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md },
   catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, marginBottom: 20 },
   badgeLabel: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 0.5, marginTop: 4, textAlign: 'center', width: 80 },
 });
@@ -360,8 +360,8 @@ const StandardPage = React.memo(function StandardPage({
 const spStyles = StyleSheet.create({
   container:  { paddingHorizontal: PAGE_PAD, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 60 },
   headerRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: 2 },
-  catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 1 },
+  catLabel:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: T.letterSpacing.lg },
+  catCount:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md },
   catDesc:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, marginBottom: 20 },
   rowLabel:   { marginBottom: 12 },
   rowDivider: { height: 1 },
@@ -660,7 +660,7 @@ const bsStyles = StyleSheet.create({
     alignSelf: 'center', marginBottom: 16,
   },
   name: {
-    fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: 1,
+    fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: T.letterSpacing.md,
     textAlign: 'center', marginBottom: 8,
   },
   tierBadge: {
@@ -668,7 +668,7 @@ const bsStyles = StyleSheet.create({
     borderRadius: 6, marginBottom: 12,
   },
   tierText: {
-    fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 1,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md,
   },
   desc: {
     fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.lg, color: T.text.body,
@@ -699,13 +699,13 @@ const bsStyles = StyleSheet.create({
     fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.accent.mint, marginBottom: 2,
   },
   rewardLabel: {
-    fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.xs,
   },
   rewardDivider: {
     width: 1, height: 28, backgroundColor: T.bg.border,
   },
   statusText: {
-    fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 1,
+    fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md,
     textAlign: 'center',
   },
   collectBtn: {
@@ -715,7 +715,7 @@ const bsStyles = StyleSheet.create({
   },
   collectBtnText: {
     fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.text.primary,
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
 });
 

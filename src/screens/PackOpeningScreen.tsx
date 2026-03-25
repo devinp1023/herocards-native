@@ -112,11 +112,11 @@ const backStyles = StyleSheet.create({
   },
   brandTop: {
     fontFamily: 'Orbitron_900Black', fontSize: T.font.xl,
-    color: T.accent.mint, letterSpacing: 4,
+    color: T.accent.mint, letterSpacing: T.letterSpacing.xxl,
   },
   brandBot: {
     fontFamily: 'Orbitron_700Bold', fontSize: T.font.md,
-    color: '#7c3aed', letterSpacing: 3,
+    color: '#7c3aed', letterSpacing: T.letterSpacing.xxl,
   },
 });
 
@@ -224,11 +224,11 @@ const slot = StyleSheet.create({
   cardWrap:    { alignItems: 'center' },
   badges:      { alignItems: 'center', gap: 6 },
   rarityBadge: { paddingHorizontal: 14, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1.5 },
+  rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: T.letterSpacing.xs },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   newBadge:    { backgroundColor: T.status.vitality + '22', borderColor: T.status.vitality + '66' },
   dupeBadge:   { backgroundColor: T.status.caution + '22', borderColor: T.status.caution + '66' },
-  statusText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 1 },
+  statusText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: T.letterSpacing.xs },
 });
 
 // ── SummaryCard ───────────────────────────────────────────────────────────────
@@ -261,9 +261,9 @@ const sum = StyleSheet.create({
   rarityBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5, borderWidth: 1 },
   rarityText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.8 },
   newBadge:    { backgroundColor: T.status.vitality + '22', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: T.status.vitality + '55' },
-  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.vitality, letterSpacing: 1 },
+  newText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.vitality, letterSpacing: T.letterSpacing.xs },
   dupeBadge:   { backgroundColor: T.status.caution + '18', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: T.status.caution + '55' },
-  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.caution, letterSpacing: 1 },
+  dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.caution, letterSpacing: T.letterSpacing.xs },
 });
 
 // ── PackOpeningScreen ─────────────────────────────────────────────────────────
@@ -492,16 +492,16 @@ export default function PackOpeningScreen({ navigation }: Props) {
 const s = StyleSheet.create({
 
   backBtn:  { paddingHorizontal: 20, paddingVertical: 10 },
-  backText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.accent.mint, letterSpacing: 1.5 },
+  backText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.accent.mint, letterSpacing: T.letterSpacing.md },
 
-  screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.text.primary, letterSpacing: 2, textAlign: 'center', marginBottom: 6 },
+  screenTitle: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.text.primary, letterSpacing: T.letterSpacing.xl, textAlign: 'center', marginBottom: 6 },
   screenSub:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.lg, color: T.text.muted, textAlign: 'center', marginBottom: 24 },
 
   // ── Select ──
   selectScroll: { paddingHorizontal: 20, paddingBottom: 48 },
 
   balanceRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderRadius: 12, padding: 14 },
-  balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 1 },
+  balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
 
   packCardOuter:    { marginBottom: 14 },
@@ -509,17 +509,17 @@ const s = StyleSheet.create({
   packCardDisabled: { opacity: 0.4 },
   packColorBar:     { width: 6 },
   packInfo:         { flex: 1, padding: 18, gap: 6 },
-  packName:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: 1 },
+  packName:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.md },
   packSub:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted },
   packMeta:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  packCards:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 1 },
+  packCards:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   costBadge:        { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   costText:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 0.5 },
   insufficientBadge:{ justifyContent: 'center', paddingRight: 16 },
   insufficientText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#ff4060', letterSpacing: 0.5 },
 
   oddsBox:    { marginTop: 12, borderRadius: 14, padding: 16, gap: 8 },
-  oddsTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 2, marginBottom: 4 },
+  oddsTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 4 },
   oddsRow:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   oddsDot:    { width: 8, height: 8, borderRadius: 4 },
   oddsRarity: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, flex: 1, letterSpacing: 0.5 },
@@ -531,15 +531,15 @@ const s = StyleSheet.create({
   dot:            { width: 8, height: 8, borderRadius: 4, backgroundColor: T.bg.border },
   dotDone:        { backgroundColor: T.accent.mint },
   dotCurrent:     { backgroundColor: T.accent.mint + '66', transform: [{ scale: 1.3 }] },
-  revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 2, marginBottom: 20 },
+  revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 20 },
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
-  revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: 1, textAlign: 'center' },
+  revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
-  tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.bg.border, letterSpacing: 2 },
+  tapHint:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.bg.border, letterSpacing: T.letterSpacing.lg },
   nextBtn:        { backgroundColor: T.accent.mint, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 48 },
   nextBtnGreen:   { backgroundColor: T.status.vitality },
-  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.bg.root, letterSpacing: 2 },
+  nextBtnText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.bg.root, letterSpacing: T.letterSpacing.lg },
 
   // ── Summary ──
   summaryScroll:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48, alignItems: 'center' },
@@ -547,8 +547,8 @@ const s = StyleSheet.create({
   summaryRowCenter:  { justifyContent: 'center' },
   totalsBox:         { borderRadius: 14, padding: 16, gap: 10, width: '100%', marginTop: 4 },
   totalRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: 1 },
+  totalLabel:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   totalVal:          { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.accent.mint },
   collectBtn:        { backgroundColor: T.accent.mint, borderRadius: 14, paddingVertical: 18, paddingHorizontal: 64, marginTop: 16 },
-  collectText:       { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.bg.root, letterSpacing: 3 },
+  collectText:       { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.bg.root, letterSpacing: T.letterSpacing.xxl },
 });

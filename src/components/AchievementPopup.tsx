@@ -154,7 +154,7 @@ const s = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs,
     color: T.text.muted,
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
   name: {
     fontFamily: 'Orbitron_700Bold',

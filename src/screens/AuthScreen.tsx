@@ -278,7 +278,7 @@ const s = StyleSheet.create({
   toggle:           { flexDirection:'row', marginBottom:28, borderRadius:12, overflow:'hidden', borderWidth:1, borderColor:T.bg.elevated },
   toggleBtn:        { flex:1, paddingVertical:12, alignItems:'center', backgroundColor:'transparent' },
   toggleBtnActive:  { backgroundColor:T.accent.mint },
-  toggleText:       { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:1 },
+  toggleText:       { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:T.letterSpacing.md },
   toggleTextActive: { color:T.bg.root },
 
   inputs:           { gap:14 },
@@ -286,21 +286,21 @@ const s = StyleSheet.create({
   error:            { color:T.status.danger, fontSize:T.font.lg, fontFamily:'monospace', textAlign:'center', lineHeight:20 },
   submitBtn:        { backgroundColor:T.accent.mint, borderRadius:12, paddingVertical:18, alignItems:'center', justifyContent:'center', marginTop:6 },
   submitBtnDisabled:{ backgroundColor:'#a0a8c0' },
-  submitText:       { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:2 },
+  submitText:       { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:T.letterSpacing.lg },
 
   tagline:          { marginTop:20, fontSize:T.font.md, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center' },
 
   // God Mode
   godSection:       { marginTop:40, width:'100%', maxWidth:360, borderTopWidth:1, borderTopColor:T.bg.elevated, paddingTop:24, alignItems:'center', gap:16 },
   godRow:           { flexDirection:'row', alignItems:'center', gap:16 },
-  godLabel:         { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:2 },
+  godLabel:         { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:T.letterSpacing.lg },
   toggle2:          { width:64, height:34, borderRadius:17, backgroundColor:'#a0a8c0', justifyContent:'center', paddingHorizontal:3 },
   toggle2Active:    { backgroundColor:T.status.caution },
   toggleKnob:       { width:28, height:28, borderRadius:14, backgroundColor:T.text.body },
   toggleKnobActive: { backgroundColor:T.bg.root, alignSelf:'flex-end' },
-  godState:         { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:1 },
+  godState:         { fontSize:T.font.lg, color:'#d0d4e8', letterSpacing:T.letterSpacing.md },
   godStateOn:       { color:T.status.caution },
   enterGodBtn:      { backgroundColor:'#ff6b00', borderRadius:12, paddingVertical:16, paddingHorizontal:40 },
-  enterGodText:     { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:2 },
+  enterGodText:     { fontSize:T.font.lg, fontWeight:'700', color:T.bg.root, letterSpacing:T.letterSpacing.lg },
   godHint:          { fontSize:T.font.md, color:'#a0a8c0', fontFamily:'monospace', textAlign:'center', lineHeight:20 },
 });

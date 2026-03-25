@@ -857,7 +857,7 @@ const atb = StyleSheet.create({
   btnOuter:   { flex: 1 },
   btnGrad:    { borderWidth: 1.5, borderRadius: 4, paddingVertical: 10, alignItems: 'center', transform: [{ skewX: SKEW }], overflow: 'hidden' },
   btnContent: { transform: [{ skewX: COUNTER_SKEW }], alignItems: 'center' },
-  label:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: 1.5, color: T.text.primary },
+  label:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, letterSpacing: T.letterSpacing.lg, color: T.text.primary },
   labelDis:   { color: T.bg.border },
   sub:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, marginTop: 2, color: '#ffffffaa' },
   subDis:     { color: T.bg.border },
@@ -895,14 +895,14 @@ function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
 }
 const rs = StyleSheet.create({
   root:         { flex: 1, backgroundColor: T.bg.root, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
-  outcome:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.xxl, letterSpacing: 4 },
-  tier:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: 2, marginBottom: 8 },
+  outcome:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.xxl, letterSpacing: T.letterSpacing.xxl },
+  tier:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.lg, marginBottom: 8 },
   rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
-  rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, letterSpacing: 2, marginBottom: 4 },
+  rewardsTitle: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 4 },
   rewardLine:   { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
-  streak:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: '#ffa726', letterSpacing: 1, marginTop: 4 },
+  streak:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: '#ffa726', letterSpacing: T.letterSpacing.md, marginTop: 4 },
   backBtn:      { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, borderWidth: 1, marginTop: 8 },
-  backText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: 1.5 },
+  backText:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.lg },
   tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, textAlign: 'center', marginTop: -8 },
 });
 
@@ -1088,18 +1088,18 @@ const s = StyleSheet.create({
   headerSide:   { flex: 1, alignItems: 'flex-start', gap: 2 },
   avatarCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg.surface },
   avatarSymbol: { fontSize: T.font.lg, fontWeight: '700' },
-  playerName:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.body, letterSpacing: 1 },
+  playerName:   { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.body, letterSpacing: T.letterSpacing.md },
   headerCenter: { alignItems: 'center', paddingHorizontal: 8 },
-  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 2 },
-  roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, letterSpacing: 1, marginTop: -2 },
+  roundNum:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.lg },
+  roundBig:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, letterSpacing: T.letterSpacing.md, marginTop: -2 },
   forfeitBtn:   { marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: T.status.danger + '66', backgroundColor: T.status.danger + '18' },
-  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.danger, letterSpacing: 1 },
+  forfeitText:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.danger, letterSpacing: T.letterSpacing.md },
 
   combatZone: { flex: 1, paddingVertical: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
   vsRow:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 },
   vsDivider:  { flex: 1, height: 1, backgroundColor: T.bg.border },
-  vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: 4, paddingHorizontal: 10 },
+  vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: T.letterSpacing.xxl, paddingHorizontal: 10 },
   logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 
 });

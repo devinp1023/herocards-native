@@ -33,7 +33,7 @@ const bStyles = StyleSheet.create({
     paddingVertical: 14, gap: 4,
   },
   statVal: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
-  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1 },
+  statLbl: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.xs },
 });
 
 // ── PackBar ──────────────────────────────────────────────────────────────────
@@ -263,18 +263,18 @@ const styles = StyleSheet.create({
   avatarInitial: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
   username: {
     fontFamily: 'Orbitron_900Black', fontSize: T.font.xl,
-    color: T.text.primary, letterSpacing: 1, marginBottom: 10,
+    color: T.text.primary, letterSpacing: T.letterSpacing.md, marginBottom: 10,
   },
   statRow:     { flexDirection: 'row', alignItems: 'center' },
   hStatBox:    { alignItems: 'center', flex: 1 },
   hStatVal:    { fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.accent.mint },
-  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1, marginTop: 2 },
+  hStatLbl:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.xs, marginTop: 2 },
   statDivider: { width: 1, height: 24, backgroundColor: T.bg.border, marginHorizontal: 4 },
 
   // Sections
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.text.body, letterSpacing: 1.5 },
-  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: 1 },
+  sectionTitle:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, color: T.text.body, letterSpacing: T.letterSpacing.lg },
+  sectionCount:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, letterSpacing: T.letterSpacing.xs },
 
   // Battle stats grid
   statsGrid:    { gap: 8, marginBottom: 24 },
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   collBarFill:  { height: '100%', borderRadius: 4, backgroundColor: T.accent.mint, shadowColor: T.accent.mint, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   collPct: {
     fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.accent.mint,
-    letterSpacing: 1, marginBottom: 12, textAlign: 'center',
+    letterSpacing: T.letterSpacing.md, marginBottom: 12, textAlign: 'center',
   },
   dividerThin: { height: 1, backgroundColor: T.bg.border, marginBottom: 12 },
 
@@ -305,5 +305,5 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: T.status.danger + '33',
     backgroundColor: T.status.danger + '08', marginBottom: 8,
   },
-  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.status.danger, letterSpacing: 2 },
+  logoutText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.status.danger, letterSpacing: T.letterSpacing.lg },
 });

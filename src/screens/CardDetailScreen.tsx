@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.md,
     color: T.accent.mint,
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
 
   scroll: {
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs,
     color: '#ff6080',
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
 
   // Info panel
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_900Black',
     fontSize: T.font.xxl,
     color: T.text.primary,
-    letterSpacing: 1,
+    letterSpacing: T.letterSpacing.md,
     lineHeight: 34,
     marginBottom: 10,
   },
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   ownedRow:        { marginBottom: 10 },
   ownedBadge:      { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 7, borderWidth: 1, backgroundColor: T.status.vitality + '18', borderColor: T.status.vitality + '55' },
   ownedBadgeMulti: { backgroundColor: T.accent.mint + '18', borderColor: T.accent.mint + '55' },
-  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.vitality, letterSpacing: 1 },
+  ownedText:       { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.vitality, letterSpacing: T.letterSpacing.xs },
   ownedTextMulti:  { color: T.accent.mint },
 
   metaRow: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.md,
     color: T.text.muted,
-    letterSpacing: 1,
+    letterSpacing: T.letterSpacing.md,
   },
   packLabel: {
     fontFamily: 'Orbitron_700Bold',
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs,
-    letterSpacing: 1,
+    letterSpacing: T.letterSpacing.xs,
   },
 
   divider: {
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs,
     color: T.text.muted,
-    letterSpacing: 2.5,
+    letterSpacing: T.letterSpacing.lg,
   },
 
   // Description
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs,
     color: T.accent.mint,
-    letterSpacing: 1,
+    letterSpacing: T.letterSpacing.xs,
   },
 
   // Stats
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.md,
-    letterSpacing: 1,
+    letterSpacing: T.letterSpacing.md,
   },
   statValue: {
     fontFamily: 'Orbitron_900Black',
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.sm,
     color: T.text.muted,
-    letterSpacing: 1.5,
+    letterSpacing: T.letterSpacing.md,
   },
   totalValue: {
     fontFamily: 'Orbitron_900Black',

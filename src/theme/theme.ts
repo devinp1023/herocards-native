@@ -72,13 +72,29 @@ export const T = {
 
   // Font size scale — matches STYLE_GUIDE.html "Font Size Scale" section
   font: {
-    xs: 10,      // Orbitron — chips, tags, badges, smallest readable labels
-    sm: 12,      // Rajdhani — secondary body, quest descriptions, hints
-    body: 14,    // Rajdhani — primary body text, descriptions
-    md: 14,      // Orbitron — buttons, labels, card names
-    lg: 18,      // Orbitron — section headers
-    xl: 22,      // Orbitron — screen titles
-    xxl: 32,     // Orbitron — hero numbers, level-up, splash
+    xs: 10,      // Orbitron 700 — chips, tags, badges
+    sm: 12,      // Rajdhani 600 — secondary body, quest descriptions
+    body: 14,    // Rajdhani 600 — primary body text, descriptions
+    md: 14,      // Orbitron 700 — buttons, labels, card names
+    lg: 18,      // Orbitron 900 — section headers
+    xl: 22,      // Orbitron 900 — screen titles
+    xxl: 32,     // Orbitron 900 — hero numbers, level-up, splash
+  },
+
+  // Letter spacing — paired with font sizes per style guide
+  letterSpacing: {
+    xs: 1,       // chips, tags, badges (T.font.xs)
+    md: 1,       // buttons, labels (T.font.md)
+    lg: 2,       // section headers (T.font.lg)
+    xl: 2,       // screen titles (T.font.xl)
+    xxl: 3,      // hero numbers, splash (T.font.xxl)
+  },
+
+  // Line height — Rajdhani body text needs generous line height for readability
+  lineHeight: {
+    tight: 1.1,    // single-line labels, stat values, pills
+    normal: 1.4,   // standard body text
+    relaxed: 1.6,  // descriptions, multi-line body text
   },
 
   // Spacing (base unit 4px)

@@ -168,18 +168,18 @@ const sb = StyleSheet.create({
   backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor:'rgba(0,0,0,0.55)', zIndex:10 },
   panel:      { position:'absolute', right:0, top:0, bottom:0, width:SIDEBAR_W, backgroundColor:T.bg.surface, borderLeftWidth:1, borderLeftColor:T.bg.border, zIndex:11, paddingTop: Platform.OS === 'ios' ? 56 : 16 },
   header:     { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingBottom:12, borderBottomWidth:1, borderBottomColor:T.bg.border },
-  title:      { fontFamily:'Orbitron_700Bold', fontSize:T.font.lg, color:T.accent.mint, letterSpacing:2 },
+  title:      { fontFamily:'Orbitron_700Bold', fontSize:T.font.lg, color:T.accent.mint, letterSpacing:T.letterSpacing.lg },
   closeBtn:   { padding:4 },
   closeText:  { color:T.text.muted, fontSize:T.font.lg },
   scroll:     { paddingHorizontal:20, paddingBottom:40, paddingTop:8 },
-  sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:2, marginBottom:8, marginTop:4 },
+  sectionLabel:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:T.letterSpacing.lg, marginBottom:8, marginTop:4 },
   radioRow:   { flexDirection:'row', alignItems:'center', paddingVertical:8, gap:12 },
   radioOuter: { width:18, height:18, borderRadius:9, borderWidth:2, alignItems:'center', justifyContent:'center' },
   radioInner: { width:8, height:8, borderRadius:4 },
   radioLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:0.3 },
   divider:    { height:1, backgroundColor:T.bg.border, marginVertical:12 },
   clearBtn:   { marginTop:8, paddingVertical:12, borderRadius:8, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011' },
-  clearText:  { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:'#ff6060', letterSpacing:1 },
+  clearText:  { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:'#ff6060', letterSpacing:T.letterSpacing.md },
 });
 
 // ── DeckSlot ──────────────────────────────────────────────────────────────────
@@ -270,9 +270,9 @@ const grid = StyleSheet.create({
   checkText:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.text.primary },
   cdOverlay:    { backgroundColor:'rgba(0,0,0,0.65)', flexDirection:'column', gap:4 },
   cdTime:       { fontFamily:'Orbitron_900Black', fontSize:T.font.lg, color:T.status.danger },
-  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.danger + '88', letterSpacing:1 },
+  cdLabel:      { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.danger + '88', letterSpacing:T.letterSpacing.md },
   limitOverlay: { backgroundColor:'rgba(0,0,0,0.0)' },
-  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.caution, letterSpacing:1, backgroundColor:T.status.caution + '22', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:T.status.caution + '55' },
+  limitText:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.caution, letterSpacing:T.letterSpacing.md, backgroundColor:T.status.caution + '22', paddingHorizontal:8, paddingVertical:3, borderRadius:4, borderWidth:1, borderColor:T.status.caution + '55' },
 });
 
 // ── OpponentCard ──────────────────────────────────────────────────────────────
@@ -656,7 +656,7 @@ const s = StyleSheet.create({
   // Header
   header:      { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingHorizontal:16, paddingBottom:6, borderBottomWidth:1, borderBottomColor:T.bg.border },
   titleRow:    { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:8 },
-  screenTitle: { fontFamily:'Orbitron_900Black', fontSize:T.font.xl, color:T.text.primary, letterSpacing:1.5 },
+  screenTitle: { fontFamily:'Orbitron_900Black', fontSize:T.font.xl, color:T.text.primary, letterSpacing:T.letterSpacing.xl },
   filterBtn:   { height:36, flexDirection:'row', alignItems:'center', paddingHorizontal:12, borderRadius:10, borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.elevated },
   filterBtnActive: { borderColor:T.accent.mint, backgroundColor:T.accent.mintFaint },
   filterBtnText:   { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:0.5 },
@@ -686,7 +686,7 @@ const s = StyleSheet.create({
 
   // Empty state
   emptyState: { flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:32, gap:10 },
-  emptyTitle: { fontFamily:'Orbitron_700Bold', fontSize:T.font.lg, color:T.text.muted, letterSpacing:1 },
+  emptyTitle: { fontFamily:'Orbitron_700Bold', fontSize:T.font.lg, color:T.text.muted, letterSpacing:T.letterSpacing.md },
   emptySub:   { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.lg, color:T.bg.border, textAlign:'center', lineHeight:20 },
 
   // Footer CTA
@@ -694,16 +694,16 @@ const s = StyleSheet.create({
   cooldownWarning: { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.danger, letterSpacing:0.5, marginBottom:6, textAlign:'center' },
   ctaBtn:          { borderRadius:14, paddingVertical:16, alignItems:'center', borderWidth:1, borderColor:T.bg.border, backgroundColor:T.bg.surface },
   ctaBtnReady:     { backgroundColor:T.accent.mint, borderColor:T.accent.mint },
-  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:T.font.md, color:T.bg.border, letterSpacing:1.5 },
+  ctaText:         { fontFamily:'Orbitron_700Bold', fontSize:T.font.md, color:T.bg.border, letterSpacing:T.letterSpacing.md },
   ctaTextReady:    { color:T.bg.root },
 
   // Opponent select
   oppScroll:        { paddingHorizontal:16, paddingBottom:48 },
   backBtn:          { paddingTop: Platform.OS === 'ios' ? 56 : 16, paddingBottom:16 },
-  backText:         { fontFamily:'Orbitron_700Bold', fontSize:T.font.md, color:T.accent.mint, letterSpacing:1 },
+  backText:         { fontFamily:'Orbitron_700Bold', fontSize:T.font.md, color:T.accent.mint, letterSpacing:T.letterSpacing.md },
   oppSub:           { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.lg, color:T.text.muted, marginBottom:16 },
   deckSummary:      { borderRadius:12, padding:12, marginBottom:16, gap:8 },
-  deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:1.5 },
+  deckSummaryLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:T.letterSpacing.md },
   deckSummaryChips: { flexDirection:'row', flexWrap:'wrap', gap:6 },
   summaryChip:      { paddingHorizontal:8, paddingVertical:3, borderRadius:5, borderWidth:1 },
   summaryChipText:  { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, letterSpacing:0.5 },
