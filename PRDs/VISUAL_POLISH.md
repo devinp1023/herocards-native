@@ -431,7 +431,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 ### Phase 4 — Micro-Interactions & Rarity Tiers
 
-**Sprint 4.1 — AnimatedNumber + SuccessBurst components**
+**Sprint 4.1 — AnimatedNumber + SuccessBurst components** ✅ COMPLETE
 - Create `src/components/AnimatedNumber.tsx` — tick-up with glow flash and optional haptic
 - Create `src/components/SuccessBurst.tsx` — particle pool, imperative fire via ref, 20-particle hard cap
 - Replace static coin display on Home/Store with `<AnimatedNumber>` (gold glow)

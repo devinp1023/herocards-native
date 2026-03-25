@@ -7,6 +7,7 @@ import {
 import { MaterialSurface } from '../components/MaterialSurface';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned, isOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
@@ -160,7 +161,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.hStatBox}>
-                <Text style={styles.hStatVal} numberOfLines={1}>{gs.xp.toLocaleString()}</Text>
+                <AnimatedNumber value={gs.xp} glowColor={T.accent.violet} style={styles.hStatVal} />
                 <Text style={styles.hStatLbl}>XP</Text>
               </View>
               <View style={styles.hStatBox}>
@@ -169,7 +170,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.hStatBox}>
-                <Text style={styles.hStatVal} numberOfLines={1}>{gs.coins.toLocaleString()}</Text>
+                <AnimatedNumber value={gs.coins} glowColor={T.accent.gold} style={styles.hStatVal} />
                 <Text style={styles.hStatLbl}>CR</Text>
               </View>
             </View>

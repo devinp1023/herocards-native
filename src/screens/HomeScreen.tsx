@@ -26,6 +26,7 @@ import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import LightningStrike from '../components/LightningStrike';
 
 type Props = CompositeScreenProps<
@@ -305,7 +306,7 @@ export default function HomeScreen({ navigation }: Props) {
 
             {/* Credits */}
             <View style={styles.creditsBox}>
-              <Text style={styles.creditsAmount}>{gs.coins.toLocaleString()}</Text>
+              <AnimatedNumber value={gs.coins} glowColor={T.accent.gold} style={styles.creditsAmount} />
               <Text style={styles.creditsLabel}>CREDITS</Text>
             </View>
           </MaterialSurface>
