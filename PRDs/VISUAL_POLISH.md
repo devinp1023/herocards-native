@@ -452,11 +452,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Switch tabs — see a brief mint line stretch between old and new tab. Start a battle, drag a card to attack — see colored ghost trail behind the card.
 - **Warnings to check:** BattleScreen Performance — glow trail updates every gesture frame. If frames drop, this is the first cut. ColorMatrix Scope — trail uses type color, not hue rotation (safe).
 
-**Sprint 4.4 — Rarity tier upgrades (Uncommon + Rare)**
-- Upgrade HeroCard shimmer for Uncommon: single sweep, 2s, 1-layer glow
-- Upgrade HeroCard shimmer for Rare: dual sweep (90° offset), 1.5s, foil noise grain, 2-layer glow, blue-tinted gradient border
-- **Verify:** Open card detail for an Uncommon card — subtle shimmer. Open Rare — more active dual shimmer with foil grain. Common cards remain static.
-- **Warnings to check:** None — these are contained within the existing HeroCard Skia Canvas.
+**Sprint 4.4 — Rarity tier upgrades (Uncommon + Rare)** ✅ COMPLETE
+- Uncommon: single sweep shimmer (2s cycle, 0.8× pause), subtle green tint (`rgba(52,211,153,0.25)`), 1-layer RN glow (radius 4)
+- Rare: dual sweep (90° offset, time-staggered at 45%), 1.5s cycle, foil noise grain (0.04 opacity reusing `assets/noise.png`), 2-layer RN glow (radius 12), blue-tinted gradient border (`#5ab4ff`, 1.8px)
+- Pre-configured Epic (3-layer) and Legendary (4-layer) glow in `RARITY_GLOW` for Sprint 4.5
+- Updated `RARITY_META` shimmer flag to `true` for Uncommon and Rare
+- **Warnings resolved:** All changes contained within existing HeroCard Skia Canvas + RN shadow. No new Canvases.
 
 **Sprint 4.5 — Rarity tier upgrades (Epic + Legendary)**
 - Upgrade HeroCard shimmer for Epic: continuous shimmer (1.2s), **particle edges** (8–12 dots orbiting card border), 3-layer glow

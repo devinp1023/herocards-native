@@ -66,8 +66,8 @@ export const TYPE_META: Record<string, TypeMeta> = {
 // ── Rarity visual meta ──────────────────────────────────────────────
 export const RARITY_META: Record<string, { color: string; shimmer: boolean }> = {
   Common:    { color: '#9CA3AF', shimmer: false },
-  Uncommon:  { color: '#34D399', shimmer: false },
-  Rare:      { color: '#60A5FA', shimmer: false },
+  Uncommon:  { color: '#34D399', shimmer: true },
+  Rare:      { color: '#60A5FA', shimmer: true },
   Epic:      { color: '#A78BFA', shimmer: true  },
   Legendary: { color: '#FBBF24', shimmer: true  },
 };

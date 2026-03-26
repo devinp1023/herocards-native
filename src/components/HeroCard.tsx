@@ -87,9 +87,21 @@ const SHIMMER_COLOR: Record<string, string> = {
   Legendary: 'rgba(255,200,50,0.45)',
   Epic:      'rgba(200,100,255,0.45)',
   Rare:      'rgba(80,180,255,0.40)',
+  Uncommon:  'rgba(52,211,153,0.25)',
 };
 const SHIMMER_DURATION: Record<string, number> = {
-  Legendary: 1800, Epic: 2200, Rare: 3000,
+  Legendary: 1800, Epic: 2200, Rare: 1500, Uncommon: 2000,
+};
+// Pause between shimmer sweeps (as fraction of sweep duration)
+const SHIMMER_PAUSE: Record<string, number> = {
+  Legendary: 0.6, Epic: 0.6, Rare: 0.4, Uncommon: 0.8,
+};
+// Rarity glow config (RN shadow on card outer container)
+const RARITY_GLOW: Record<string, { color: string; radius: number } | undefined> = {
+  Uncommon:  { color: '#34D39966', radius: 4 },   // 1-layer: core only
+  Rare:      { color: '#5ab4ff66', radius: 12 },   // 2-layer: core + halo
+  Epic:      { color: '#B14EFF66', radius: 20 },   // 3-layer
+  Legendary: { color: '#FFB80066', radius: 30 },   // 4-layer
 };
 
 // Pre-built shield placeholder path (centred in image window)
@@ -214,12 +226,15 @@ export function HeroCard({
 
   // ── Shimmer sweep ─────────────────────────────────────────────────────────
   const shimmerX = useSharedValue(-CARD_W * 0.6);
+  const shimmerX2 = useSharedValue(-CARD_W * 0.6); // second sweep for Rare+
   const hasShimmer = showShine && !!SHIMMER_COLOR[card.rarity];
+  const isRareOrAbove = card.rarity === 'Rare' || card.rarity === 'Epic' || card.rarity === 'Legendary';
 
   useEffect(() => {
-    if (!hasShimmer) { cancelAnimation(shimmerX); return; }
+    if (!hasShimmer) { cancelAnimation(shimmerX); cancelAnimation(shimmerX2); return; }
     const sweepMs  = SHIMMER_DURATION[card.rarity] ?? 3000;
-    const pauseMs  = sweepMs * 0.6;
+    const pauseFrac = SHIMMER_PAUSE[card.rarity] ?? 0.6;
+    const pauseMs  = sweepMs * pauseFrac;
     shimmerX.value = -CARD_W * 0.6;
     shimmerX.value = withRepeat(
       withSequence(
@@ -229,11 +244,26 @@ export function HeroCard({
       -1,
       false,
     );
-    return () => cancelAnimation(shimmerX);
+    // Second shimmer sweep for Rare+ — 90° offset (horizontal), offset in time
+    if (isRareOrAbove) {
+      shimmerX2.value = -CARD_W * 0.6;
+      shimmerX2.value = withDelay(sweepMs * 0.45, withRepeat(
+        withSequence(
+          withTiming(CARD_W * 1.6, { duration: sweepMs, easing: Easing.linear }),
+          withDelay(pauseMs, withTiming(-CARD_W * 0.6, { duration: 0 })),
+        ),
+        -1,
+        false,
+      ));
+    }
+    return () => { cancelAnimation(shimmerX); cancelAnimation(shimmerX2); };
   }, [hasShimmer, card.rarity]);
 
   const shimmerStart = useDerivedValue(() => ({ x: shimmerX.value - 90, y: 0 }));
   const shimmerEnd   = useDerivedValue(() => ({ x: shimmerX.value + 90, y: CARD_H }));
+  // Second sweep — 90° rotated (top-right to bottom-left diagonal)
+  const shimmer2Start = useDerivedValue(() => ({ x: CARD_W, y: shimmerX2.value - 90 }));
+  const shimmer2End   = useDerivedValue(() => ({ x: 0, y: shimmerX2.value + 90 }));
 
   // ── Tilt on touch ────────────────────────────────────────────────────────
   const rotateX = useSharedValue(0);
@@ -258,9 +288,19 @@ export function HeroCard({
     ],
   }));
 
+  // ── Rarity glow shadow (RN) ────────────────────────────────────────────
+  const rarityGlow = showShine ? RARITY_GLOW[card.rarity] : undefined;
+  const rarityGlowStyle = rarityGlow ? {
+    shadowColor: rarityGlow.color,
+    shadowOffset: { width: 0, height: 0 } as const,
+    shadowOpacity: 1,
+    shadowRadius: rarityGlow.radius,
+    elevation: Math.ceil(rarityGlow.radius / 3),
+  } : undefined;
+
   // ── Render ────────────────────────────────────────────────────────────────
   const card3d = (
-    <Animated.View style={enableTilt ? tiltStyle : undefined}>
+    <Animated.View style={[enableTilt ? tiltStyle : undefined, rarityGlowStyle]}>
       {/* Active outer glow */}
       {isActive && (
         <Animated.View style={[styles.activeGlow, { backgroundColor: typeColor }, activeGlowStyle]} />
@@ -271,15 +311,17 @@ export function HeroCard({
         <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}
           color="#040408" />
 
-        {/* 3d. Gradient border — swaps to type color when active */}
+        {/* 3d. Gradient border — active=type color, Rare shimmer=blue tint, default=white */}
         <RoundedRect x={0.75} y={0.75} width={CARD_W - 1.5} height={CARD_H - 1.5} r={CORNER_R}>
-          <Paint style="stroke" strokeWidth={isActive ? 2 : 1.5}>
+          <Paint style="stroke" strokeWidth={isActive ? 2 : (hasShimmer && card.rarity === 'Rare') ? 1.8 : 1.5}>
             <LinearGradient
               start={vec(CARD_W / 2, 0)}
               end={vec(CARD_W / 2, CARD_H)}
               colors={isActive
                 ? [tm.primary + '88', tm.primary + '44', 'rgba(0,0,0,0.5)']
-                : ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.5)']}
+                : (hasShimmer && card.rarity === 'Rare')
+                  ? ['#5ab4ff44', '#5ab4ff22', 'rgba(0,0,0,0.5)'] /* blue-tinted for Rare */
+                  : ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.5)']}
               positions={[0, 0.4, 1]}
             />
           </Paint>
@@ -376,7 +418,7 @@ export function HeroCard({
           />
         </Rect>
 
-        {/* Shimmer sweep (Rare+ only, when showShine=true) */}
+        {/* Shimmer sweep (Uncommon+, when showShine=true) */}
         {hasShimmer && (
           <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
             <LinearGradient
@@ -385,6 +427,27 @@ export function HeroCard({
               colors={['transparent', SHIMMER_COLOR[card.rarity]!, 'transparent']}
             />
           </RoundedRect>
+        )}
+
+        {/* Second shimmer sweep — 90° offset (Rare+ only) */}
+        {hasShimmer && isRareOrAbove && (
+          <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
+            <LinearGradient
+              start={shimmer2Start}
+              end={shimmer2End}
+              colors={['transparent', SHIMMER_COLOR[card.rarity]!, 'transparent']}
+            />
+          </RoundedRect>
+        )}
+
+        {/* Foil noise grain (Rare+ only) — animated noise at low opacity */}
+        {hasShimmer && isRareOrAbove && noiseImage && (
+          <SkImage
+            image={noiseImage}
+            x={0} y={0} width={CARD_W} height={CARD_H}
+            fit="cover"
+            opacity={0.04}
+          />
         )}
 
       </Canvas>
