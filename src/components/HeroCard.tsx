@@ -32,6 +32,8 @@ import {
   Skia,
   Image as SkImage,
   useImage,
+  Group,
+  ColorMatrix,
 } from '@shopify/react-native-skia';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Card } from '../data/cards';
@@ -90,12 +92,18 @@ const SHIMMER_COLOR: Record<string, string> = {
   Uncommon:  'rgba(52,211,153,0.25)',
 };
 const SHIMMER_DURATION: Record<string, number> = {
-  Legendary: 1800, Epic: 2200, Rare: 1500, Uncommon: 2000,
+  Legendary: 1800, Epic: 1200, Rare: 1500, Uncommon: 2000,
 };
 // Pause between shimmer sweeps (as fraction of sweep duration)
 const SHIMMER_PAUSE: Record<string, number> = {
-  Legendary: 0.6, Epic: 0.6, Rare: 0.4, Uncommon: 0.8,
+  Legendary: 0.6, Epic: 0, Rare: 0.4, Uncommon: 0.8,
 };
+// Particle edge config per rarity (count, size, speed, colors)
+const PARTICLE_EDGES: Record<string, { count: number; size: number; speed: number; opacity: number; colors: string[] } | undefined> = {
+  Epic:      { count: 10, size: 2.5, speed: 8000, opacity: 0.7, colors: ['#B14EFF', '#D98FFF'] },
+  Legendary: { count: 14, size: 3,   speed: 6000, opacity: 0.9, colors: ['#FFB800', '#B14EFF', '#FFD866'] },
+};
+
 // Rarity glow config (RN shadow on card outer container)
 const RARITY_GLOW: Record<string, { color: string; radius: number } | undefined> = {
   Uncommon:  { color: '#34D39966', radius: 4 },   // 1-layer: core only
@@ -265,6 +273,104 @@ export function HeroCard({
   const shimmer2Start = useDerivedValue(() => ({ x: CARD_W, y: shimmerX2.value - 90 }));
   const shimmer2End   = useDerivedValue(() => ({ x: 0, y: shimmerX2.value + 90 }));
 
+  // ── Particle edge orbit (Epic + Legendary) ──────────────────────────────
+  const particleCfg = showShine ? PARTICLE_EDGES[card.rarity] : undefined;
+  const particleT = useSharedValue(0);
+  useEffect(() => {
+    if (!particleCfg) { cancelAnimation(particleT); return; }
+    particleT.value = 0;
+    particleT.value = withRepeat(
+      withTiming(1, { duration: particleCfg.speed, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(particleT);
+  }, [!!particleCfg]);
+
+  // Compute particle positions along card border perimeter
+  const cardPerimeter = 2 * (CARD_W + CARD_H);
+  const particlePositions = useDerivedValue(() => {
+    if (!particleCfg) return [];
+    const t = particleT.value;
+    const positions: { x: number; y: number }[] = [];
+    for (let i = 0; i < particleCfg.count; i++) {
+      const frac = (t + i / particleCfg.count) % 1;
+      const dist = frac * cardPerimeter;
+      let x: number, y: number;
+      if (dist < CARD_W) {
+        // Top edge
+        x = dist; y = 0;
+      } else if (dist < CARD_W + CARD_H) {
+        // Right edge
+        x = CARD_W; y = dist - CARD_W;
+      } else if (dist < 2 * CARD_W + CARD_H) {
+        // Bottom edge
+        x = CARD_W - (dist - CARD_W - CARD_H); y = CARD_H;
+      } else {
+        // Left edge
+        x = 0; y = CARD_H - (dist - 2 * CARD_W - CARD_H);
+      }
+      positions.push({ x, y });
+    }
+    return positions;
+  });
+
+  // ── Legendary hue rotation (ColorMatrix on shimmer only) ──────────────
+  const isLegendary = card.rarity === 'Legendary';
+  const hueAngle = useSharedValue(0);
+  useEffect(() => {
+    if (!isLegendary || !showShine) { cancelAnimation(hueAngle); return; }
+    hueAngle.value = 0;
+    hueAngle.value = withRepeat(
+      withTiming(2 * Math.PI, { duration: 6000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(hueAngle);
+  }, [isLegendary, showShine]);
+
+  // Build hue rotation ColorMatrix (rotate hue in RGB space)
+  const hueMatrix = useDerivedValue(() => {
+    const a = hueAngle.value;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    // Standard hue rotation matrix (luminance-preserving)
+    return [
+      0.213 + cos * 0.787 - sin * 0.213, 0.715 - cos * 0.715 - sin * 0.715, 0.072 - cos * 0.072 + sin * 0.928, 0, 0,
+      0.213 - cos * 0.213 + sin * 0.143, 0.715 + cos * 0.285 + sin * 0.140, 0.072 - cos * 0.072 - sin * 0.283, 0, 0,
+      0.213 - cos * 0.213 - sin * 0.787, 0.715 - cos * 0.715 + sin * 0.715, 0.072 + cos * 0.928 + sin * 0.072, 0, 0,
+      0, 0, 0, 1, 0,
+    ];
+  });
+
+  // ── Legendary living gradient border (gold↔violet animated) ───────────
+  const borderPhase = useSharedValue(0);
+  useEffect(() => {
+    if (!isLegendary || !showShine) { cancelAnimation(borderPhase); return; }
+    borderPhase.value = 0;
+    borderPhase.value = withRepeat(
+      withTiming(1, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true, // reverse — oscillates gold↔violet
+    );
+    return () => cancelAnimation(borderPhase);
+  }, [isLegendary, showShine]);
+
+  const legendaryBorderColors = useDerivedValue(() => {
+    const t = borderPhase.value;
+    // gold=#FFB800 → violet=#B14EFF
+    const r1 = Math.round(255 - t * (255 - 177));
+    const g1 = Math.round(184 - t * (184 - 78));
+    const b1 = Math.round(0 + t * 255);
+    // Reversed: violet → gold
+    const r2 = Math.round(177 + t * (255 - 177));
+    const g2 = Math.round(78 + t * (184 - 78));
+    const b2 = Math.round(255 - t * 255);
+    const c1 = `rgba(${r1},${g1},${b1},0.6)`;
+    const c2 = `rgba(${r2},${g2},${b2},0.3)`;
+    return [c1, c2, c1];
+  });
+
   // ── Tilt on touch ────────────────────────────────────────────────────────
   const rotateX = useSharedValue(0);
   const rotateY = useSharedValue(0);
@@ -311,21 +417,34 @@ export function HeroCard({
         <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}
           color="#040408" />
 
-        {/* 3d. Gradient border — active=type color, Rare shimmer=blue tint, default=white */}
-        <RoundedRect x={0.75} y={0.75} width={CARD_W - 1.5} height={CARD_H - 1.5} r={CORNER_R}>
-          <Paint style="stroke" strokeWidth={isActive ? 2 : (hasShimmer && card.rarity === 'Rare') ? 1.8 : 1.5}>
-            <LinearGradient
-              start={vec(CARD_W / 2, 0)}
-              end={vec(CARD_W / 2, CARD_H)}
-              colors={isActive
-                ? [tm.primary + '88', tm.primary + '44', 'rgba(0,0,0,0.5)']
-                : (hasShimmer && card.rarity === 'Rare')
-                  ? ['#5ab4ff44', '#5ab4ff22', 'rgba(0,0,0,0.5)'] /* blue-tinted for Rare */
-                  : ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.5)']}
-              positions={[0, 0.4, 1]}
-            />
-          </Paint>
-        </RoundedRect>
+        {/* 3d. Gradient border — Legendary living, active=type color, Rare=blue tint, default=white */}
+        {isLegendary && hasShimmer ? (
+          <RoundedRect x={0.75} y={0.75} width={CARD_W - 1.5} height={CARD_H - 1.5} r={CORNER_R}>
+            <Paint style="stroke" strokeWidth={2.2}>
+              <LinearGradient
+                start={vec(0, 0)}
+                end={vec(CARD_W, CARD_H)}
+                colors={legendaryBorderColors}
+                positions={[0, 0.5, 1]}
+              />
+            </Paint>
+          </RoundedRect>
+        ) : (
+          <RoundedRect x={0.75} y={0.75} width={CARD_W - 1.5} height={CARD_H - 1.5} r={CORNER_R}>
+            <Paint style="stroke" strokeWidth={isActive ? 2 : (hasShimmer && card.rarity === 'Rare') ? 1.8 : 1.5}>
+              <LinearGradient
+                start={vec(CARD_W / 2, 0)}
+                end={vec(CARD_W / 2, CARD_H)}
+                colors={isActive
+                  ? [tm.primary + '88', tm.primary + '44', 'rgba(0,0,0,0.5)']
+                  : (hasShimmer && card.rarity === 'Rare')
+                    ? ['#5ab4ff44', '#5ab4ff22', 'rgba(0,0,0,0.5)']
+                    : ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.5)']}
+                positions={[0, 0.4, 1]}
+              />
+            </Paint>
+          </RoundedRect>
+        )}
 
         {/* 3e. Top specular edge */}
         <Rect x={0} y={0} width={CARD_W} height={1.5}>
@@ -418,8 +537,8 @@ export function HeroCard({
           />
         </Rect>
 
-        {/* Shimmer sweep (Uncommon+, when showShine=true) */}
-        {hasShimmer && (
+        {/* Shimmer sweep (Uncommon/Rare/Epic — no hue rotation) */}
+        {hasShimmer && !isLegendary && (
           <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
             <LinearGradient
               start={shimmerStart}
@@ -428,9 +547,7 @@ export function HeroCard({
             />
           </RoundedRect>
         )}
-
-        {/* Second shimmer sweep — 90° offset (Rare+ only) */}
-        {hasShimmer && isRareOrAbove && (
+        {hasShimmer && isRareOrAbove && !isLegendary && (
           <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
             <LinearGradient
               start={shimmer2Start}
@@ -440,14 +557,58 @@ export function HeroCard({
           </RoundedRect>
         )}
 
-        {/* Foil noise grain (Rare+ only) — animated noise at low opacity */}
-        {hasShimmer && isRareOrAbove && noiseImage && (
+        {/* Legendary — shimmer + foil wrapped in holographic hue rotation */}
+        {hasShimmer && isLegendary && (
+          <Group layer={<Paint><ColorMatrix matrix={hueMatrix} /></Paint>}>
+            <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
+              <LinearGradient
+                start={shimmerStart}
+                end={shimmerEnd}
+                colors={['transparent', SHIMMER_COLOR.Legendary!, 'transparent']}
+              />
+            </RoundedRect>
+            <RoundedRect x={0} y={0} width={CARD_W} height={CARD_H} r={CORNER_R}>
+              <LinearGradient
+                start={shimmer2Start}
+                end={shimmer2End}
+                colors={['transparent', SHIMMER_COLOR.Legendary!, 'transparent']}
+              />
+            </RoundedRect>
+            {noiseImage && (
+              <SkImage
+                image={noiseImage}
+                x={0} y={0} width={CARD_W} height={CARD_H}
+                fit="cover"
+                opacity={0.06}
+              />
+            )}
+          </Group>
+        )}
+
+        {/* Foil noise grain (Rare/Epic only — Legendary noise is inside hue group) */}
+        {hasShimmer && isRareOrAbove && !isLegendary && noiseImage && (
           <SkImage
             image={noiseImage}
             x={0} y={0} width={CARD_W} height={CARD_H}
             fit="cover"
             opacity={0.04}
           />
+        )}
+
+        {/* Particle edges (Epic + Legendary) — dots orbiting card border */}
+        {particleCfg && particlePositions.value.length > 0 && (
+          <>
+            {Array.from({ length: particleCfg.count }, (_, i) => (
+              <Circle
+                key={`particle-${i}`}
+                cx={particlePositions.value[i]?.x ?? 0}
+                cy={particlePositions.value[i]?.y ?? 0}
+                r={particleCfg.size}
+                color={particleCfg.colors[i % particleCfg.colors.length]}
+                opacity={particleCfg.opacity}
+              />
+            ))}
+          </>
         )}
 
       </Canvas>

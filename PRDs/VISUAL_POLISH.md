@@ -459,11 +459,13 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - Updated `RARITY_META` shimmer flag to `true` for Uncommon and Rare
 - **Warnings resolved:** All changes contained within existing HeroCard Skia Canvas + RN shadow. No new Canvases.
 
-**Sprint 4.5 — Rarity tier upgrades (Epic + Legendary)**
-- Upgrade HeroCard shimmer for Epic: continuous shimmer (1.2s), **particle edges** (8–12 dots orbiting card border), 3-layer glow
-- Upgrade HeroCard shimmer for Legendary: **holographic hue rotation** (ColorMatrix, 360° over 6s), **living gradient border** (gold↔violet animated), particle edges (12–16, brighter), 4-layer glow
-- **Verify:** Open card detail for Epic — particles orbit the border. Open Legendary — shimmer shifts through holographic colors, border pulses gold↔violet. Confirm card image/text are NOT affected by hue rotation.
-- **Warnings to check:** Legendary Hue Rotation Scope — test at 180° rotation to confirm only shimmer layer rotates. ColorMatrix Scope — never on MiniCard, only full HeroCard.
+**Sprint 4.5 — Rarity tier upgrades (Epic + Legendary)** ✅ COMPLETE
+- Epic: continuous shimmer (1.2s, no pause), particle edges (10 dots, violet, orbiting card border at 8s period), 3-layer glow (radius 20)
+- Legendary: holographic hue rotation (Skia `ColorMatrix` wrapping ONLY shimmer + foil layers, 360° over 6s), living gradient border (gold↔violet oscillating over 3s, 2.2px stroke), particle edges (14 dots, gold+violet alternating, 6s orbit), 4-layer glow (radius 30)
+- `PARTICLE_EDGES` config added for Epic + Legendary (count, size, speed, opacity, colors)
+- Particle positions computed via `useDerivedValue` walking card perimeter (top→right→bottom→left)
+- Hue rotation uses luminance-preserving RGB matrix in `useDerivedValue`
+- **Warnings resolved:** ColorMatrix wraps only shimmer `<Group>`, not card image/text. MiniCard unaffected (pure RN, no Skia). No new Canvases created.
 
 ---
 
