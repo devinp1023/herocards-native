@@ -460,11 +460,10 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Warnings resolved:** All changes contained within existing HeroCard Skia Canvas + RN shadow. No new Canvases.
 
 **Sprint 4.5 — Rarity tier upgrades (Epic + Legendary)** ✅ COMPLETE
-- Epic: continuous shimmer (1.2s, no pause), particle edges (10 dots, violet, orbiting card border at 8s period), 3-layer glow (radius 20)
-- Legendary: holographic hue rotation (Skia `ColorMatrix` wrapping ONLY shimmer + foil layers, 360° over 6s), living gradient border (gold↔violet oscillating over 3s, 2.2px stroke), particle edges (14 dots, gold+violet alternating, 6s orbit), 4-layer glow (radius 30)
-- `PARTICLE_EDGES` config added for Epic + Legendary (count, size, speed, opacity, colors)
-- Particle positions computed via `useDerivedValue` walking card perimeter (top→right→bottom→left)
+- Epic: continuous shimmer (1.2s, no pause), 3-layer glow (radius 20)
+- Legendary: holographic hue rotation (Skia `ColorMatrix` wrapping ONLY shimmer + foil layers, 360° over 6s), 4-layer glow (radius 30)
 - Hue rotation uses luminance-preserving RGB matrix in `useDerivedValue`
+- Particle edges and living gradient border were tried but cut — particles looked bad, living border broke card rendering
 - **Warnings resolved:** ColorMatrix wraps only shimmer `<Group>`, not card image/text. MiniCard unaffected (pure RN, no Skia). No new Canvases created.
 
 ---
