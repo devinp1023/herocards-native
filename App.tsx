@@ -1,8 +1,8 @@
 // ⚠️ react-native-get-random-values MUST be the first import.
 import 'react-native-get-random-values';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, Easing, runOnJS } from 'react-native-reanimated';
 import { View, Text, Image, ActivityIndicator, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -281,9 +281,80 @@ const dividerPathStrs = makeDividerPaths(SCREEN_W);
 
 const CAREER_TAB_INDEX = 4; // CareerTab is the 5th tab (0-indexed)
 
+// Compute the X center of each tab slot
+const TAB_W = SCREEN_W / 5;
+const TAB_CENTERS = [0, 1, 2, 3, 4].map(i => TAB_W * i + TAB_W / 2);
+
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const gs = useGameStateContext();
   const uncollectedCount = gs.uncollectedCount;
+
+  // ── Energy trail animation state ──────────────────────────────────────────
+  const prevIndexRef = useRef(state.index);
+  const trailLeft = useSharedValue(0);
+  const trailRight = useSharedValue(0);
+  const trailOpacity = useSharedValue(0);
+  const hasInitRef = useRef(false);
+
+  useEffect(() => {
+    const currentIndex = state.index;
+    const prevIndex = prevIndexRef.current;
+
+    // Skip initial render
+    if (!hasInitRef.current) {
+      hasInitRef.current = true;
+      prevIndexRef.current = currentIndex;
+      return;
+    }
+
+    if (prevIndex === currentIndex) return;
+
+    const fromX = TAB_CENTERS[prevIndex];
+    const toX = TAB_CENTERS[currentIndex];
+
+    // Reset: place line at old tab center (zero width)
+    trailLeft.value = fromX;
+    trailRight.value = fromX;
+    trailOpacity.value = 1;
+
+    const snapEasing = Easing.out(Easing.cubic);
+
+    // Leading edge races to destination
+    if (toX > fromX) {
+      // Moving right: right edge leads
+      trailRight.value = withTiming(toX, { duration: 200, easing: snapEasing });
+      trailLeft.value = withDelay(50, withTiming(toX, { duration: 200, easing: snapEasing }));
+    } else {
+      // Moving left: left edge leads
+      trailLeft.value = withTiming(toX, { duration: 200, easing: snapEasing });
+      trailRight.value = withDelay(50, withTiming(toX, { duration: 200, easing: snapEasing }));
+    }
+
+    // Fade out after both edges arrive
+    trailOpacity.value = withDelay(280, withTiming(0, { duration: 150 }));
+
+    prevIndexRef.current = currentIndex;
+  }, [state.index]);
+
+  const trailStyle = useAnimatedStyle(() => {
+    const left = Math.min(trailLeft.value, trailRight.value);
+    const right = Math.max(trailLeft.value, trailRight.value);
+    const width = right - left;
+    return {
+      position: 'absolute' as const,
+      left,
+      width: Math.max(width, 2), // min 2px so it's visible at endpoints
+      height: 2,
+      top: 0,
+      opacity: trailOpacity.value,
+      backgroundColor: '#00FFAA',
+      borderRadius: 1,
+      shadowColor: '#00FFAA',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.9,
+      shadowRadius: 4,
+    };
+  });
 
   // Hide tab bar during Battle screen
   const homeRoute = state.routes.find(r => r.name === 'HomeTab');
@@ -315,6 +386,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           return p ? <Path key={i} path={p} color="#1a6b55" style="stroke" strokeWidth={1} /> : null;
         })}
       </Canvas>
+
+      {/* Energy trail — animated mint line between tabs on switch */}
+      <Animated.View style={trailStyle} pointerEvents="none" />
 
       {/* Tab buttons */}
       <View style={tabStyles.bar}>

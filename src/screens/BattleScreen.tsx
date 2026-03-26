@@ -20,7 +20,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
 import { BattleEvent, BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
-import { RC } from '../data/constants';
+import { RC, TYPE_COLORS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { useGameStateContext } from '../context/GameStateContext';
 import { useSession } from '../context/SessionContext';
@@ -451,6 +451,15 @@ const az = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
 });
 
+// ── Glow trail config ────────────────────────────────────────────────────────
+const GHOST_COUNT = 4;
+const GHOST_SPECS = [
+  { size: 20, opacity: 0.4 },
+  { size: 16, opacity: 0.3 },
+  { size: 12, opacity: 0.2 },
+  { size: 8,  opacity: 0.1 },
+] as const;
+
 // ── Hand card — drag onto active slot to swap (or tap to play when selecting) ──
 function HandCard({ card, phase, onSelect, onSwap, index, total,
   playerActiveBoundsRef, onSwapHover, isReturned, playerKillCount, onPreview }: {
@@ -466,6 +475,15 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   const legendaryLock = card.rarity === 'Legendary' && playerKillCount < 3;
   const dragX              = useRef(new Animated.Value(0)).current;
   const dragY              = useRef(new Animated.Value(0)).current;
+
+  // ── Glow trail state ──────────────────────────────────────────────────────
+  const ghostXs = useRef(Array.from({ length: GHOST_COUNT }, () => new Animated.Value(0))).current;
+  const ghostYs = useRef(Array.from({ length: GHOST_COUNT }, () => new Animated.Value(0))).current;
+  const ghostOpacities = useRef(Array.from({ length: GHOST_COUNT }, () => new Animated.Value(0))).current;
+  // Circular position buffer — stores last GHOST_COUNT+1 positions so ghosts lag behind
+  const posBuf = useRef<{ x: number; y: number }[]>(Array.from({ length: GHOST_COUNT + 1 }, () => ({ x: 0, y: 0 }))).current;
+  const bufIdx = useRef(0);
+  const isDragging = useRef(false);
   const phaseRef           = useRef(phase);
   const onSelectRef        = useRef(onSelect);
   const onSwapRef          = useRef(onSwap);
@@ -496,17 +514,48 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
 
   const rotate = dragX.interpolate({ inputRange: [-60, 60], outputRange: ['-10deg', '10deg'], extrapolate: 'clamp' });
 
-  const springBack = () => Animated.parallel([
-    Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-    Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-  ]).start();
+  const fadeOutGhosts = () => {
+    isDragging.current = false;
+    ghostOpacities.forEach(op => {
+      Animated.timing(op, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    });
+  };
+
+  const springBack = () => {
+    fadeOutGhosts();
+    Animated.parallel([
+      Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+      Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
+    ]).start();
+  };
 
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
     onMoveShouldSetPanResponder:  (_, gs) => !legendaryLockRef.current && (phaseRef.current === 'ready' || phaseRef.current === 'selecting') && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
     onPanResponderMove: (_, gs) => {
-      dragX.setValue(gs.dx * 0.7);
-      dragY.setValue(gs.dy * 0.7);
+      const cx = gs.dx * 0.7;
+      const cy = gs.dy * 0.7;
+      dragX.setValue(cx);
+      dragY.setValue(cy);
+      // ── Update glow trail ──────────────────────────────────────────────
+      if (!isDragging.current) {
+        isDragging.current = true;
+        // Reset buffer on drag start
+        for (let i = 0; i < posBuf.length; i++) { posBuf[i] = { x: cx, y: cy }; }
+        bufIdx.current = 0;
+      }
+      // Push current position into circular buffer
+      bufIdx.current = (bufIdx.current + 1) % posBuf.length;
+      posBuf[bufIdx.current] = { x: cx, y: cy };
+      // Assign ghost positions from buffer (oldest → newest lag)
+      for (let g = 0; g < GHOST_COUNT; g++) {
+        // Ghost 0 = most recent trailing pos, Ghost 3 = oldest
+        const age = GHOST_COUNT - g; // 4,3,2,1
+        const bi = (bufIdx.current - age + posBuf.length) % posBuf.length;
+        ghostXs[g].setValue(posBuf[bi].x);
+        ghostYs[g].setValue(posBuf[bi].y);
+        ghostOpacities[g].setValue(GHOST_SPECS[g].opacity);
+      }
       const p = phaseRef.current;
       if (p === 'ready' || p === 'selecting') {
         const bounds = playerBoundsRef.current?.current ?? null;
@@ -530,9 +579,33 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
 
   const color = RC[card.rarity]?.color ?? '#808898';
   const killsNeeded = 3 - playerKillCount;
+  const trailColor = TYPE_COLORS[card.type] ?? '#00FFAA';
 
   return (
     <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : 4, zIndex: total - index }]}>
+      {/* Glow trail ghosts — positioned relative to card origin, behind dragged card */}
+      <View style={gt.container} pointerEvents="none">
+        {ghostXs.map((_, g) => (
+          <Animated.View
+            key={g}
+            style={[
+              gt.ghost,
+              {
+                width: GHOST_SPECS[g].size,
+                height: GHOST_SPECS[g].size,
+                borderRadius: GHOST_SPECS[g].size / 2,
+                backgroundColor: trailColor,
+                shadowColor: trailColor,
+                opacity: ghostOpacities[g],
+                transform: [
+                  { translateX: Animated.subtract(ghostXs[g], GHOST_SPECS[g].size / 2 - HAND_W / 2) },
+                  { translateY: Animated.subtract(ghostYs[g], GHOST_SPECS[g].size / 2 - HAND_H / 2) },
+                ],
+              },
+            ]}
+          />
+        ))}
+      </View>
       <Animated.View
         style={{ transform: [{ translateX: dragX }, { translateY: dragY }, { rotate }] }}
         {...pan.panHandlers}
@@ -566,6 +639,11 @@ const hc = StyleSheet.create({
   frame:       { borderWidth: 1, borderRadius: 6, overflow: 'hidden' },
   lockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', borderRadius: 5 },
   lockText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.domain.legendaryLock, textAlign: 'center', lineHeight: 10, letterSpacing: 0.3 },
+});
+// ── Glow trail styles ────────────────────────────────────────────────────────
+const gt = StyleSheet.create({
+  container: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 },
+  ghost:     { position: 'absolute', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 6, elevation: 6 },
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────

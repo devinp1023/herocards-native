@@ -70,10 +70,27 @@ export async function loadCardRoster(): Promise<Card[]> {
   }
 }
 
+// Recursively strip `undefined` values from an object tree.
+// Firestore rejects documents containing `undefined` — this converts them
+// to clean objects that Firestore can persist.
+function stripUndefined(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) return obj.map(stripUndefined);
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v !== undefined) out[k] = stripUndefined(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
 export async function saveGameData(uid: string, data: PersistedGameData): Promise<void> {
   console.log('[Firebase] saveGameData called, collection size:', Object.keys(data.collection).length);
   try {
-    await setDoc(doc(db, 'users', uid), data, { merge: true });
+    const sanitized = stripUndefined(data);
+    await setDoc(doc(db, 'users', uid), sanitized, { merge: true });
     console.log('[Firebase] saveGameData success');
   } catch (err) {
     console.error('[Firebase] saveGameData FAILED:', err);

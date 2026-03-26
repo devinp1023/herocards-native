@@ -495,7 +495,7 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
   const hpBefore = def.hp;
   def.hp = Math.max(0, def.hp - dmg);
 
-  log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: dmg, bonusDamage: bonus || undefined, typeMultiplier: mult, attackWeight: weight, hpBefore, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: false });
+  log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: dmg, bonusDamage: bonus || 0, typeMultiplier: mult, attackWeight: weight, hpBefore, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: false });
 
   // Amp gain: defender gains Amp from taking damage
   if (amp && dmg > 0) gainAmp(defSide, Math.round(dmg * 0.3));

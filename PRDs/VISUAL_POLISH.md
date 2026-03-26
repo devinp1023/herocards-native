@@ -446,7 +446,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Tap any button — see ripple from touch point + scale(0.96). Primary buttons shimmer when idle. Tap — shimmer pauses, ripple fires, scale bounces.
 - **Warnings to check:** MaskedView Performance — if using MaskedView for button shimmer, limit to 2–3 buttons per screen. Energy Border Memoization — ripple hook must not break parent memo.
 
-**Sprint 4.3 — Tab energy trail + glow trail on drag**
+**Sprint 4.3 — Tab energy trail + glow trail on drag** ✅ COMPLETE
 - Add tab switch energy trail to custom Skia tab bar in `App.tsx` — 2px mint line, `MOTION.snap` easing
 - Add glow trail to battle drag-to-attack gesture — 4 ghost Views, type-color tinted, circular position buffer
 - **Verify:** Switch tabs — see a brief mint line stretch between old and new tab. Start a battle, drag a card to attack — see colored ghost trail behind the card.
