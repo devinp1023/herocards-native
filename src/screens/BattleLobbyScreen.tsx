@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle,
-  withTiming, runOnJS, Easing,
+  withTiming, withRepeat, withSequence, runOnJS, Easing,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
 import { BattleStackParamList } from '../../App';
 import { useGameStateContext } from '../context/GameStateContext';
 import { ALL_CARDS, Card } from '../data/cards';
@@ -28,6 +29,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
+import { useRipple } from '../hooks/useRipple';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'BattleLobby'>;
 type Phase = 'deck' | 'opponent';
@@ -409,6 +411,27 @@ export default function BattleLobbyScreen({ navigation }: Props) {
   const anyOnCooldown  = battleDeck.some(id => isCardOnCooldown(id, gs.battleCooldowns));
   const canStartBattle = deckFull && !anyOnCooldown;
 
+  // Breathing shimmer for CTA button
+  const isFocused = useIsFocused();
+  const ctaShimmer = useSharedValue(0);
+  useEffect(() => {
+    if (isFocused && canStartBattle) {
+      ctaShimmer.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        ), -1, false,
+      );
+    } else {
+      ctaShimmer.value = withTiming(0, { duration: 300 });
+    }
+  }, [isFocused, canStartBattle]);
+  const ctaShimmerStyle = useAnimatedStyle(() => ({
+    opacity: ctaShimmer.value * 0.12,
+  }));
+
+  const ctaRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
+
   const deckCards = useMemo(() =>
     battleDeck.map(id => gs.cardRoster.find(c => c.id === id)),
     [battleDeck, gs.cardRoster],
@@ -616,19 +639,25 @@ export default function BattleLobbyScreen({ navigation }: Props) {
         {anyOnCooldown && (
           <Text style={s.cooldownWarning}>Some deck cards are on cooldown</Text>
         )}
-        <TouchableOpacity
-          style={[s.ctaBtn, canStartBattle && s.ctaBtnReady]}
-          onPress={() => canStartBattle && setPhase('opponent')}
-          activeOpacity={canStartBattle ? 0.85 : 1}
-        >
-          <Text style={[s.ctaText, canStartBattle && s.ctaTextReady]}>
-            {anyOnCooldown
-              ? 'CARDS ON COOLDOWN'
-              : deckFull
-                ? 'CHOOSE OPPONENT  →'
-                : `SELECT ${DECK_SIZE - battleDeck.length} MORE CARD${DECK_SIZE - battleDeck.length !== 1 ? 'S' : ''}`}
-          </Text>
-        </TouchableOpacity>
+        <Animated.View style={[{ borderRadius: T.button.primary.radius }, canStartBattle ? ctaRipple.pressStyle : undefined]}>
+          <TouchableOpacity
+            style={[s.ctaBtn, canStartBattle && s.ctaBtnReady, { overflow: 'hidden' }]}
+            onPress={() => canStartBattle && setPhase('opponent')}
+            activeOpacity={canStartBattle ? 1 : 1}
+            onPressIn={canStartBattle ? ctaRipple.onPressIn : undefined}
+            onPressOut={canStartBattle ? ctaRipple.onPressOut : undefined}
+          >
+            {canStartBattle && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, ctaShimmerStyle]} pointerEvents="none" />}
+            <Text style={[s.ctaText, canStartBattle && s.ctaTextReady]}>
+              {anyOnCooldown
+                ? 'CARDS ON COOLDOWN'
+                : deckFull
+                  ? 'CHOOSE OPPONENT  →'
+                  : `SELECT ${DECK_SIZE - battleDeck.length} MORE CARD${DECK_SIZE - battleDeck.length !== 1 ? 'S' : ''}`}
+            </Text>
+            {canStartBattle && ctaRipple.rippleView}
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       {/* Filter sidebar */}

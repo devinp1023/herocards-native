@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle,
-  withTiming, withSpring, withSequence, withDelay,
+  withTiming, withSpring, withSequence, withDelay, withRepeat,
   Easing, runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +26,7 @@ import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { T } from '../theme/theme';
+import { useRipple } from '../hooks/useRipple';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
 
@@ -278,6 +279,23 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [currentCard, setCurrentCard]     = useState(0);
 
+  // Breathing shimmer for action buttons
+  const btnShimmer = useSharedValue(0);
+  React.useEffect(() => {
+    btnShimmer.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      ), -1, false,
+    );
+  }, []);
+  const btnShimmerStyle = useAnimatedStyle(() => ({
+    opacity: btnShimmer.value * 0.12,
+  }));
+
+  const nextRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
+  const collectRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
+
   // ── Pack select ──────────────────────────────────────────────────────────
   const openPack = (id: number) => {
     const ok = gs.spendCoins(PACK_COST);
@@ -428,13 +446,21 @@ export default function PackOpeningScreen({ navigation }: Props) {
             {revealedCount <= currentCard ? (
               <Text style={s.tapHint}>TAP CARD TO REVEAL</Text>
             ) : currentCard < drawn.length - 1 ? (
-              <TouchableOpacity style={s.nextBtn} onPress={goToNext} activeOpacity={0.85}>
-                <Text style={s.nextBtnText}>NEXT CARD →</Text>
-              </TouchableOpacity>
+              <Animated.View style={[{ borderRadius: T.button.primary.radius }, nextRipple.pressStyle]}>
+                <TouchableOpacity style={[s.nextBtn, { overflow: 'hidden' }]} onPress={goToNext} activeOpacity={1} onPressIn={nextRipple.onPressIn} onPressOut={nextRipple.onPressOut}>
+                  <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, btnShimmerStyle]} pointerEvents="none" />
+                  <Text style={s.nextBtnText}>NEXT CARD →</Text>
+                  {nextRipple.rippleView}
+                </TouchableOpacity>
+              </Animated.View>
             ) : (
-              <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen]} onPress={() => setPhase('summary')} activeOpacity={0.85}>
-                <Text style={[s.nextBtnText, { color: T.button.primary.text }]}>SEE RESULTS</Text>
-              </TouchableOpacity>
+              <Animated.View style={[{ borderRadius: T.button.primary.radius }, nextRipple.pressStyle]}>
+                <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen, { overflow: 'hidden' }]} onPress={() => setPhase('summary')} activeOpacity={1} onPressIn={nextRipple.onPressIn} onPressOut={nextRipple.onPressOut}>
+                  <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, btnShimmerStyle]} pointerEvents="none" />
+                  <Text style={[s.nextBtnText, { color: T.button.primary.text }]}>SEE RESULTS</Text>
+                  {nextRipple.rippleView}
+                </TouchableOpacity>
+              </Animated.View>
             )}
           </View>
         </View>
@@ -478,9 +504,13 @@ export default function PackOpeningScreen({ navigation }: Props) {
             )}
           </MaterialSurface>
 
-          <TouchableOpacity style={s.collectBtn} onPress={collect} activeOpacity={0.85}>
-            <Text style={s.collectText}>COLLECT</Text>
-          </TouchableOpacity>
+          <Animated.View style={[{ borderRadius: T.button.primary.radius }, collectRipple.pressStyle]}>
+            <TouchableOpacity style={[s.collectBtn, { overflow: 'hidden' }]} onPress={collect} activeOpacity={1} onPressIn={collectRipple.onPressIn} onPressOut={collectRipple.onPressOut}>
+              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, btnShimmerStyle]} pointerEvents="none" />
+              <Text style={s.collectText}>COLLECT</Text>
+              {collectRipple.rippleView}
+            </TouchableOpacity>
+          </Animated.View>
         </ScrollView>
       )}
 

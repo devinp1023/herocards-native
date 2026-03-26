@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing,
+} from 'react-native-reanimated';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,6 +21,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import LightningStrike from '../components/LightningStrike';
+import { useRipple } from '../hooks/useRipple';
 
 type Mode = 'login' | 'register';
 
@@ -47,6 +51,22 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Breathing shimmer for submit button
+  const shimmer = useSharedValue(0);
+  useEffect(() => {
+    shimmer.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      ), -1, false,
+    );
+  }, []);
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: shimmer.value * 0.12,
+  }));
+
+  const submitRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
 
   const friendlyError = (code: string) => ERROR_MAP[code] ?? 'Something went wrong. Try again.';
 
@@ -223,15 +243,21 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
                 <ActivityIndicator color={T.bg.root} size="small" />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={s.submitBtn}
-                onPress={handle}
-                activeOpacity={0.85}
-              >
-                <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
-                  {mode === 'login' ? 'ENTER' : 'CREATE ACCOUNT'}
-                </Text>
-              </TouchableOpacity>
+              <Animated.View style={[{ borderRadius: T.button.primary.radius }, submitRipple.pressStyle]}>
+                <TouchableOpacity
+                  style={[s.submitBtn, { overflow: 'hidden' }]}
+                  onPress={handle}
+                  activeOpacity={1}
+                  onPressIn={submitRipple.onPressIn}
+                  onPressOut={submitRipple.onPressOut}
+                >
+                  <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, shimmerStyle]} pointerEvents="none" />
+                  <Text style={[s.submitText, { fontFamily: FONTS.orbitronBold }]}>
+                    {mode === 'login' ? 'ENTER' : 'CREATE ACCOUNT'}
+                  </Text>
+                  {submitRipple.rippleView}
+                </TouchableOpacity>
+              </Animated.View>
             )}
           </View>
         </MaterialSurface>

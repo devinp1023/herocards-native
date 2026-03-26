@@ -439,7 +439,7 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Verify:** Buy something in Store — coin count ticks down with gold glow. Earn XP — XP ticks up with violet glow. Numbers don't jump.
 - **Warnings to check:** SuccessBurst Particle Cleanup — implement pool pattern with `cancelAnimation()` on recycle from day one.
 
-**Sprint 4.2 — Press ripple + button shimmer**
+**Sprint 4.2 — Press ripple + button shimmer** ✅ COMPLETE
 - Create `useRipple()` hook — returns ripple View, onPressIn handler, press animated style
 - Apply to all buttons (primary, secondary, destructive), tappable MiniCards, quest list items
 - Add button shimmer sweep to primary action buttons — diagonal gradient, 3s cycle, pauses on press

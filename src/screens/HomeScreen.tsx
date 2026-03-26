@@ -28,6 +28,7 @@ import { T } from '../theme/theme';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import LightningStrike from '../components/LightningStrike';
+import { useRipple } from '../hooks/useRipple';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, 'Home'>,
@@ -241,6 +242,14 @@ export default function HomeScreen({ navigation }: Props) {
     shadowRadius:  14,
   }));
 
+  // Breathing shimmer overlay (reuses glow shared values)
+  const battleShimmerStyle = useAnimatedStyle(() => ({
+    opacity: battleGlow.value * 0.12,
+  }));
+  const packShimmerStyle = useAnimatedStyle(() => ({
+    opacity: packGlow.value * 0.12,
+  }));
+
   // Saved battle resume
   const saved = gs.savedBattle;
   const hasSavedBattle = saved && saved.version === 1 &&
@@ -265,6 +274,9 @@ export default function HomeScreen({ navigation }: Props) {
 
   const [profilePressed, setProfilePressed] = useState(false);
   const { animatedStyle: profileElevStyle } = useElevation(profilePressed ? 'hovered' : 'resting');
+
+  const battleRipple = useRipple();
+  const packRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
 
   return (
     <ScreenBackground theme="home">
@@ -314,30 +326,38 @@ export default function HomeScreen({ navigation }: Props) {
         </Animated.View>
 
         {/* ── Battle button ── */}
-        <Animated.View style={[{ borderRadius: 16, marginBottom: 16 }, battleGlowStyle]}>
+        <Animated.View style={[{ borderRadius: 16, marginBottom: 16 }, battleGlowStyle, battleRipple.pressStyle]}>
           <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
             <TouchableOpacity
-              style={styles.battleBtn}
-              activeOpacity={0.85}
+              style={[styles.battleBtn, { overflow: 'hidden' }]}
+              activeOpacity={1}
               onPress={() => navigation.navigate('BattleLobby')}
+              onPressIn={battleRipple.onPressIn}
+              onPressOut={battleRipple.onPressOut}
             >
+              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
               <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
               <Text style={styles.battleBtnText}>BATTLE</Text>
+              {battleRipple.rippleView}
             </TouchableOpacity>
           </GradientBorder>
         </Animated.View>
 
         {/* ── Open Pack button ── */}
-        <Animated.View style={[{ borderRadius: 16, marginBottom: 20 }, packGlowStyle]}>
+        <Animated.View style={[{ borderRadius: 16, marginBottom: 20 }, packGlowStyle, packRipple.pressStyle]}>
           <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
             <TouchableOpacity
-              style={styles.packBtn}
-              activeOpacity={0.85}
+              style={[styles.packBtn, { overflow: 'hidden' }]}
+              activeOpacity={1}
               onPress={() => navigation.navigate('PackOpening' as never)}
+              onPressIn={packRipple.onPressIn}
+              onPressOut={packRipple.onPressOut}
             >
+              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
               <MaterialCommunityIcons name="cards" size={28} color="#fff" />
               <Text style={styles.packBtnText}>OPEN PACK</Text>
               <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
+              {packRipple.rippleView}
             </TouchableOpacity>
           </GradientBorder>
         </Animated.View>
