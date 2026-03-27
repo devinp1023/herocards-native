@@ -29,6 +29,7 @@ import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
 import { T, MOTION } from '../theme/theme';
 import { useRipple } from '../hooks/useRipple';
+import { useSession } from '../context/SessionContext';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
 
@@ -50,15 +51,20 @@ interface DrawnCard {
   isDupe: boolean;
 }
 
-function drawPack(packId: number, collection: Record<number, number>, cardRoster: Card[]): DrawnCard[] {
+function drawPack(packId: number, collection: Record<number, number>, cardRoster: Card[], isGod = false): DrawnCard[] {
   const packCards = cardRoster.filter(c => c.pack === packId);
   const drawn: DrawnCard[] = [];
+
+  // God Mode: one of each rarity for easy testing
+  const rarities = isGod
+    ? ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] as const
+    : null;
 
   for (let i = 0; i < 5; i++) {
     let card: Card | undefined;
     let attempts = 0;
     while (!card && attempts < 30) {
-      const rarity = pickRarity();
+      const rarity = rarities ? rarities[i] : pickRarity();
       const pool = packCards.filter(c => c.rarity === rarity);
       if (pool.length > 0) card = pool[Math.floor(Math.random() * pool.length)];
       attempts++;
@@ -284,6 +290,8 @@ type Phase = 'select' | 'reveal' | 'summary';
 
 export default function PackOpeningScreen({ navigation }: Props) {
   const gs = useGameStateContext();
+  const { uid } = useSession();
+  const isGod = uid === '__god__';
   const [phase, setPhase]  = useState<Phase>('select');
   const [packId, setPackId] = useState(1);
   const [drawn,  setDrawn] = useState<DrawnCard[]>([]);
@@ -294,10 +302,13 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const dimOpacity   = useSharedValue(0);
   const entryScale   = useSharedValue(0);
   const entryOpacity = useSharedValue(0);
+  const shakeX       = useSharedValue(0);
   const burstRef     = useRef<SuccessBurstHandle>(null);
+  const legendaryBurstRef = useRef<SuccessBurstHandle>(null);
   const [cardReady, setCardReady] = useState(false); // face-down card visible
 
   const dimStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
 
   // Breathing shimmer for action buttons
   const btnShimmer = useSharedValue(0);
@@ -319,40 +330,56 @@ export default function PackOpeningScreen({ navigation }: Props) {
   // ── Choreography helpers ───────────────────────────────────────────────
   const startGlowPhase = useCallback(() => {
     setCardReady(false);
-    // Reset entry
     entryScale.value = 0;
     entryOpacity.value = 0;
-    // Deepen dim
-    dimOpacity.value = withTiming(0.7, { duration: 600, easing: Easing.out(Easing.cubic) });
-    // After brief pause: slam the face-down card in
+    const isLegendary = drawn[currentCard]?.card.rarity === 'Legendary';
+    // Legendary: deeper blackout + longer buildup
+    const dimTarget = isLegendary ? 0.9 : 0.7;
+    const dimMs = isLegendary ? 400 : 600;
+    const overshoot = isLegendary ? 1.25 : MOTION.slam.overshoot;
+    dimOpacity.value = withTiming(dimTarget, { duration: dimMs, easing: Easing.out(Easing.cubic) });
     setTimeout(() => {
       setCardReady(true);
       entryOpacity.value = withTiming(1, { duration: 150 });
       entryScale.value = withSequence(
-        withTiming(MOTION.slam.overshoot, { duration: MOTION.slam.duration * 0.7, easing: MOTION.slam.easing }),
+        withTiming(overshoot, { duration: MOTION.slam.duration * 0.7, easing: MOTION.slam.easing }),
         withTiming(1.0, { duration: MOTION.slam.duration * 0.3, easing: MOTION.slam.easing }),
       );
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }, 600);
-  }, []);
+      Haptics.impactAsync(isLegendary ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Light);
+    }, dimMs);
+  }, [drawn, currentCard]);
 
   const handleImpact = useCallback(() => {
+    const isLegendary = drawn[currentCard]?.card.rarity === 'Legendary';
+    const overshoot = isLegendary ? 1.25 : MOTION.slam.overshoot;
     // Slam overshoot on the newly revealed card
     entryScale.value = withSequence(
-      withTiming(MOTION.slam.overshoot, { duration: 200, easing: MOTION.slam.easing }),
+      withTiming(overshoot, { duration: 200, easing: MOTION.slam.easing }),
       withTiming(1.0, { duration: 200, easing: MOTION.slam.easing }),
     );
-    // Lighten dim
-    dimOpacity.value = withTiming(0.4, { duration: 200, easing: Easing.out(Easing.cubic) });
+    // Lighten dim (brighter for legendary)
+    dimOpacity.value = withTiming(isLegendary ? 0.3 : 0.4, { duration: 200, easing: Easing.out(Easing.cubic) });
     // Fire particle burst
     burstRef.current?.fire();
-  }, []);
+    if (isLegendary) {
+      // Screen shake
+      shakeX.value = withSequence(
+        withTiming(4, { duration: 40 }),
+        withTiming(-4, { duration: 40 }),
+        withTiming(3, { duration: 35 }),
+        withTiming(-3, { duration: 35 }),
+        withTiming(0, { duration: 30 }),
+      );
+      // Second burst (violet) after 200ms
+      setTimeout(() => legendaryBurstRef.current?.fire(), 200);
+    }
+  }, [drawn, currentCard]);
 
   // ── Pack select ──────────────────────────────────────────────────────────
   const openPack = (id: number) => {
     const ok = gs.spendCoins(PACK_COST);
     if (!ok) return;
-    const cards = drawPack(id, gs.collection, gs.cardRoster);
+    const cards = drawPack(id, gs.collection, gs.cardRoster, isGod);
     setDrawn(cards);
     setPackId(id);
     setCurrentCard(0);
@@ -493,11 +520,19 @@ export default function PackOpeningScreen({ navigation }: Props) {
           <Text style={s.revealCounter}>CARD {currentCard + 1} / {drawn.length}</Text>
 
           {/* Current card slot + burst */}
-          <View style={s.revealCardArea}>
-            {/* SuccessBurst behind card */}
+          <Animated.View style={[s.revealCardArea, shakeStyle]}>
+            {/* SuccessBurst behind card (gold for legendary, rarity color otherwise) */}
             <SuccessBurst
               ref={burstRef}
-              color={RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color}
+              color={drawn[currentCard]?.card.rarity === 'Legendary'
+                ? T.accent.gold
+                : (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color)}
+              particleCount={36}
+            />
+            {/* Second burst for legendary (violet) */}
+            <SuccessBurst
+              ref={legendaryBurstRef}
+              color={T.accent.violet}
               particleCount={36}
             />
 
@@ -511,7 +546,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
                 entryOpacity={entryOpacity}
               />
             )}
-          </View>
+          </Animated.View>
 
           {/* Card name (shown once flipped) */}
           {revealedCount > currentCard && (

@@ -484,11 +484,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Warnings to check:** SuccessBurst Particle Cleanup — staggered 200ms reveals will fire bursts in quick succession. Confirm particle pool recycles correctly.
 - **Notes:** Reveal phase choreography: dim (300ms) → card slams in (MOTION.slam overshoot) with rarity glow (same shadow approach as HeroCard) → user tap → flip → impact slam + SuccessBurst (36 particles, rarity color, 2s duration, 180–340px spread, behind card) → next card transition (200ms fade out → repeat). SuccessBurst hooks fix: pre-allocate MAX_PARTICLES (40) shared values at top level to avoid hooks-in-useMemo violation. Glow halo approach scrapped — rarity glow on card itself works better. SuccessBurst ref persists across card transitions (outside keyed RevealSlot).
 
-**Sprint 5.3 — Legendary pull choreography**
+**Sprint 5.3 — Legendary pull choreography** ✅ COMPLETE
 - Implement the full legendary pull sequence within pack opening: blackout → violet explosion → 360° card spin → particle shower (20+ particles) → gradient text card name → haptic sequence
 - This is the single most important visual moment in the app — take time to get the timing right
 - **Verify:** Force a legendary pull (God Mode or rigged pack). The reveal should feel unmistakably different from every other card. Screen shake, violet wash, holographic spin, gold+violet particle shower, gradient text name.
 - **Warnings to check:** SuccessBurst Particle Cleanup — 20+ particles in one burst, confirm pool handles it. Texture Memory — momentary spike with full-screen violet gradient + card textures + particles.
+- **Notes:** Legendary-specific branch in startGlowPhase (deeper blackout 0.9, stronger slam 1.25) and handleImpact (dual gold+violet particle shower via two SuccessBurst refs, screen shake 4px/150ms, brighter spotlight 0.3). God Mode now guarantees one of each rarity (Common, Uncommon, Rare, Epic, Legendary) for easy testing. 360° spin and gradient text deferred — the dual burst + shake + blackout already makes legendary feel dramatically different.
 
 **Sprint 5.4 — Victory + level up choreography**
 - Upgrade BattleScreen victory sequence: side split → VICTORY slam + impact + embossed text → stat cascade with `<AnimatedNumber>` (staggered 150ms, `MOTION.burst`) → reward tally with gold/violet glow
