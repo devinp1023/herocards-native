@@ -37,6 +37,7 @@ import { GameStateContext }   from './src/context/GameStateContext';
 import { useGameStateContext } from './src/context/GameStateContext';
 import { useGameState }       from './src/hooks/useGameState';
 import { AchievementPopup }  from './src/components/AchievementPopup';
+import { LevelUpToast }      from './src/components/LevelUpToast';
 import { FAMILY_CATEGORY_MAP } from './src/data/achievements';
 import { ACHIEVEMENT_CATEGORIES } from './src/data/constants';
 import { T } from './src/theme/theme';
@@ -593,6 +594,18 @@ function AchievementOverlay() {
   );
 }
 
+function LevelUpOverlay() {
+  const gs = useGameStateContext();
+  const inBattle = useIsBattleActive();
+  return (
+    <LevelUpToast
+      levelUpInfo={gs.levelUpInfo}
+      onDismiss={gs.clearLevelUp}
+      suppressed={inBattle}
+    />
+  );
+}
+
 // ── GameStateProvider — owns the single shared GameState instance ─────────────
 // Placed above NavigationContainer so all screens share one instance.
 // key={uid} causes a clean remount (and re-init of useState) when uid changes,
@@ -688,8 +701,9 @@ export default function App() {
               )}
             </RootStack.Navigator>
           </NavigationContainer>
-          {/* Global achievement toast — rendered on top of all navigation */}
+          {/* Global toasts — rendered on top of all navigation */}
           {session && <AchievementOverlay />}
+          {session && <LevelUpOverlay />}
           </GameStateProvider>
         </SessionContext.Provider>
       </FontContext.Provider>
