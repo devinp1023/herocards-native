@@ -115,6 +115,8 @@ export interface GameState {
   level: number;
   xpInLevel: number;
   xpNeeded: number;
+  levelUpInfo: { oldLevel: number; newLevel: number } | null;
+  clearLevelUp: () => void;
   collection: Record<number, number>;  // card id → count owned
   activeAvatar: string;
   ownedAvatars: string[];
@@ -156,7 +158,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   const [coins,      setCoins]      = useState(() =>
     isGod ? 99999 : (initialData?.coins ?? STARTING_CREDITS));
   const [xp,         setXp]         = useState(() =>
-    isGod ? 45000 : (initialData?.xp ?? 0));
+    isGod ? (XP_THRESHOLDS[10] - 50) : (initialData?.xp ?? 0)); // God Mode: just below Level 11 for easy level-up testing
   const [collection, setCollection] = useState<Record<number, number>>(() => {
     if (isGod) return Object.fromEntries(ALL_CARDS.map(c => [c.id, 1]));
     if (initialData?.collection) {
@@ -211,6 +213,17 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   const level      = getLevel(xp);
   const xpInLevel  = xp - xpForLevel(level);
   const xpNeeded   = (xpForLevel(level + 1) || xpForLevel(level)) - xpForLevel(level);
+
+  // ── Level-up detection ──────────────────────────────────────────────────
+  const [levelUpInfo, setLevelUpInfo] = useState<{ oldLevel: number; newLevel: number } | null>(null);
+  const prevLevelRef = useRef(level);
+  useEffect(() => {
+    if (level > prevLevelRef.current) {
+      setLevelUpInfo({ oldLevel: prevLevelRef.current, newLevel: level });
+    }
+    prevLevelRef.current = level;
+  }, [level]);
+  const clearLevelUp = useCallback(() => setLevelUpInfo(null), []);
 
   // ── Daily quest reset + login quest ──────────────────────────────────────
   useEffect(() => {
@@ -419,7 +432,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   return {
     cardRoster,
     battleCooldowns,
-    coins, xp, level, xpInLevel, xpNeeded,
+    coins, xp, level, xpInLevel, xpNeeded, levelUpInfo, clearLevelUp,
     collection, activeAvatar, ownedAvatars,
     packsOpened, totalTrades,
     questDate, questProgress,

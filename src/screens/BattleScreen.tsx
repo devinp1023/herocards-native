@@ -13,8 +13,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Canvas, Path as SkPath, Skia } from '@shopify/react-native-skia';
 import ReAnimated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withDelay, Easing,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
@@ -29,7 +30,8 @@ import { MiniCard } from '../components/MiniCard';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
-import { T } from '../theme/theme';
+import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
+import { T, MOTION } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
@@ -945,34 +947,136 @@ const atb = StyleSheet.create({
 });
 
 // ── Result screen ─────────────────────────────────────────────────────────────
-function ResultScreen({ winner, rewards, tierColor, tierName, onBack }: {
+function ResultScreen({ winner, rewards, tierColor, tierName, onBack, levelUpInfo, onClearLevelUp }: {
   winner: 'player' | 'ai' | 'tie';
   rewards: { credits: number; xp: number; streakBonus: boolean } | null;
   tierColor: string; tierName: string; onBack: () => void;
+  levelUpInfo: { oldLevel: number; newLevel: number } | null;
+  onClearLevelUp: () => void;
 }) {
   const outcomeText  = winner === 'player' ? 'VICTORY' : winner === 'tie' ? 'TIE' : 'DEFEAT';
   const outcomeColor = winner === 'player' ? T.status.vitality : winner === 'tie' ? T.domain.winStreak : T.status.danger;
+  const isVictory = winner === 'player';
+
+  // ── Panel entrance animation ────────────────────────────────────────────
+  const panelY       = useSharedValue(300);
+  const panelOpacity = useSharedValue(0);
+  const titleScale   = useSharedValue(0);
+  const reward1Op    = useSharedValue(0);
+  const reward1X     = useSharedValue(30);
+  const reward2Op    = useSharedValue(0);
+  const reward2X     = useSharedValue(30);
+  const reward3Op    = useSharedValue(0);
+  const reward3X     = useSharedValue(30);
+  const burstRef     = React.useRef<SuccessBurstHandle>(null);
+
+  // ── Level-up overlay ────────────────────────────────────────────────────
+  const [showLevelUp, setShowLevelUp] = React.useState(false);
+  const luOverlay  = useSharedValue(0);
+  const luScale    = useSharedValue(0);
+  const luNumOp    = useSharedValue(0);
+  const luBurstRef = React.useRef<SuccessBurstHandle>(null);
+
+  React.useEffect(() => {
+    // Panel slides up
+    panelY.value = withSpring(0, { damping: 16, stiffness: 120 });
+    panelOpacity.value = withTiming(1, { duration: 300 });
+    // Title slam after 200ms
+    titleScale.value = withDelay(200, withSequence(
+      withTiming(1.3, { duration: MOTION.slam.duration * 0.6, easing: MOTION.slam.easing }),
+      withTiming(1.0, { duration: MOTION.slam.duration * 0.4, easing: MOTION.slam.easing }),
+    ));
+    // Reward lines stagger
+    if (rewards) {
+      reward1Op.value = withDelay(500, withTiming(1, { duration: 200 }));
+      reward1X.value  = withDelay(500, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
+      reward2Op.value = withDelay(650, withTiming(1, { duration: 200 }));
+      reward2X.value  = withDelay(650, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
+      if (rewards.streakBonus) {
+        reward3Op.value = withDelay(800, withTiming(1, { duration: 200 }));
+        reward3X.value  = withDelay(800, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
+      }
+    }
+    // Victory burst
+    if (isVictory) {
+      setTimeout(() => burstRef.current?.fire(), 300);
+    }
+    // Level-up overlay after 1.5s
+    if (levelUpInfo) {
+      setTimeout(() => {
+        setShowLevelUp(true);
+        luOverlay.value = withTiming(0.8, { duration: 300, easing: Easing.out(Easing.cubic) });
+        luScale.value = withSequence(
+          withTiming(1.3, { duration: MOTION.slam.duration * 0.6, easing: MOTION.slam.easing }),
+          withTiming(1.0, { duration: MOTION.slam.duration * 0.4, easing: MOTION.slam.easing }),
+        );
+        luNumOp.value = withDelay(300, withTiming(1, { duration: 200 }));
+        luBurstRef.current?.fire();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Auto-dismiss after 2.5s
+        setTimeout(() => {
+          luOverlay.value = withTiming(0, { duration: 300 });
+          luScale.value = withTiming(0, { duration: 300 });
+          luNumOp.value = withTiming(0, { duration: 200 });
+          setTimeout(() => { setShowLevelUp(false); onClearLevelUp(); }, 300);
+        }, 2500);
+      }, 1500);
+    }
+  }, []);
+
+  const panelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: panelY.value }],
+    opacity: panelOpacity.value,
+  }));
+  const titleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: titleScale.value }],
+  }));
+  const r1Style = useAnimatedStyle(() => ({ opacity: reward1Op.value, transform: [{ translateX: reward1X.value }] }));
+  const r2Style = useAnimatedStyle(() => ({ opacity: reward2Op.value, transform: [{ translateX: reward2X.value }] }));
+  const r3Style = useAnimatedStyle(() => ({ opacity: reward3Op.value, transform: [{ translateX: reward3X.value }] }));
+  const luOverlayStyle = useAnimatedStyle(() => ({ opacity: luOverlay.value }));
+  const luTextStyle = useAnimatedStyle(() => ({ transform: [{ scale: luScale.value }] }));
+  const luNumStyle = useAnimatedStyle(() => ({ opacity: luNumOp.value }));
+
   return (
     <View style={rs.root}>
-      <Text style={[rs.outcome, { color: outcomeColor }]}>{outcomeText}</Text>
-      {winner === 'tie' && <Text style={rs.tieNote}>Last Effort — both last cards fell simultaneously</Text>}
-      <Text style={[rs.tier, { color: tierColor }]}>{tierName.toUpperCase()}</Text>
-      {rewards && (
-        <MaterialSurface material="brushedMetal" style={rs.rewardsBox}>
-          <Text style={rs.rewardsTitle}>REWARDS</Text>
-          <Text style={rs.rewardLine}>+{rewards.credits} Credits</Text>
-          <Text style={rs.rewardLine}>+{rewards.xp} XP</Text>
-          {rewards.streakBonus && <Text style={rs.streak}>WIN STREAK BONUS x2</Text>}
-        </MaterialSurface>
+      {/* Victory burst behind panel */}
+      {isVictory && <SuccessBurst ref={burstRef} color={T.accent.gold} particleCount={36} />}
+
+      <ReAnimated.View style={[rs.panel, panelStyle]}>
+        <ReAnimated.Text style={[rs.outcome, { color: outcomeColor }, titleStyle]}>{outcomeText}</ReAnimated.Text>
+        {winner === 'tie' && <Text style={rs.tieNote}>Last Effort — both last cards fell simultaneously</Text>}
+        <Text style={[rs.tier, { color: tierColor }]}>{tierName.toUpperCase()}</Text>
+        {rewards && (
+          <MaterialSurface material="brushedMetal" style={rs.rewardsBox}>
+            <Text style={rs.rewardsTitle}>REWARDS</Text>
+            <ReAnimated.Text style={[rs.rewardLine, r1Style]}>+{rewards.credits} Credits</ReAnimated.Text>
+            <ReAnimated.Text style={[rs.rewardLine, r2Style]}>+{rewards.xp} XP</ReAnimated.Text>
+            {rewards.streakBonus && <ReAnimated.Text style={[rs.streak, r3Style]}>WIN STREAK BONUS x2</ReAnimated.Text>}
+          </MaterialSurface>
+        )}
+        <TouchableOpacity style={[rs.backBtn, { borderColor: tierColor + '88' }]} onPress={onBack} activeOpacity={0.8}>
+          <Text style={[rs.backText, { color: tierColor }]}>BACK TO LOBBY</Text>
+        </TouchableOpacity>
+      </ReAnimated.View>
+
+      {/* Level-up overlay */}
+      {showLevelUp && levelUpInfo && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <ReAnimated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }, luOverlayStyle]} />
+          <View style={rs.luCenter}>
+            <SuccessBurst ref={luBurstRef} color={T.accent.violet} particleCount={36} />
+            <ReAnimated.Text style={[rs.luTitle, luTextStyle]}>LEVEL UP</ReAnimated.Text>
+            <ReAnimated.Text style={[rs.luNumber, luNumStyle]}>{levelUpInfo.newLevel}</ReAnimated.Text>
+          </View>
+        </View>
       )}
-      <TouchableOpacity style={[rs.backBtn, { borderColor: tierColor + '88' }]} onPress={onBack} activeOpacity={0.8}>
-        <Text style={[rs.backText, { color: tierColor }]}>BACK TO LOBBY</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 const rs = StyleSheet.create({
-  root:         { flex: 1, backgroundColor: T.bg.root, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
+  root:         { flex: 1, backgroundColor: T.bg.root, alignItems: 'center', justifyContent: 'center' },
+  panel:        { alignItems: 'center', gap: 16, paddingHorizontal: 32, width: '100%' },
   outcome:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.xxl, letterSpacing: T.letterSpacing.xxl },
   tier:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.lg, marginBottom: 8 },
   rewardsBox:   { borderRadius: 14, padding: 20, width: '100%', alignItems: 'center', gap: 6 },
@@ -982,6 +1086,9 @@ const rs = StyleSheet.create({
   backBtn:      { paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, marginTop: 8, transform: [{ skewX: '-3deg' }] },
   backText:     { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, letterSpacing: T.button.secondary.letterSpacing, transform: [{ skewX: '3deg' }] },
   tieNote:      { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, textAlign: 'center', marginTop: -8 },
+  luCenter:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  luTitle:      { fontFamily: 'Orbitron_900Black', fontSize: 36, color: T.accent.violet, letterSpacing: T.letterSpacing.xxl },
+  luNumber:     { fontFamily: 'Orbitron_900Black', fontSize: 72, color: T.accent.gold, letterSpacing: T.letterSpacing.xl, marginTop: 8 },
 });
 
 // ── BattleScreen ──────────────────────────────────────────────────────────────
@@ -1026,6 +1133,8 @@ export default function BattleScreen({ navigation, route }: Props) {
         winner={battle.winner} rewards={battle.rewards}
         tierColor={battle.tierColor} tierName={battle.tierName}
         onBack={() => navigation.goBack()}
+        levelUpInfo={gs.levelUpInfo}
+        onClearLevelUp={gs.clearLevelUp}
       />
     );
   }

@@ -491,11 +491,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Warnings to check:** SuccessBurst Particle Cleanup — 20+ particles in one burst, confirm pool handles it. Texture Memory — momentary spike with full-screen violet gradient + card textures + particles.
 - **Notes:** Legendary-specific branch in startGlowPhase (deeper blackout 0.9, stronger slam 1.25) and handleImpact (dual gold+violet particle shower via two SuccessBurst refs, screen shake 4px/150ms, brighter spotlight 0.3). God Mode now guarantees one of each rarity (Common, Uncommon, Rare, Epic, Legendary) for easy testing. 360° spin and gradient text deferred — the dual burst + shake + blackout already makes legendary feel dramatically different.
 
-**Sprint 5.4 — Victory + level up choreography**
+**Sprint 5.4 — Victory + level up choreography** ✅ COMPLETE
 - Upgrade BattleScreen victory sequence: side split → VICTORY slam + impact + embossed text → stat cascade with `<AnimatedNumber>` (staggered 150ms, `MOTION.burst`) → reward tally with gold/violet glow
 - Upgrade level-up moment: violet burst → gradient text level number + slam (overshoot 1.3x) → XP bar shatter (`<SuccessBurst>`) → reward cascade with `<AnimatedNumber>`
 - **Verify:** Win a battle — victory sequence is choreographed and dramatic, not just a results screen appearing. Level up — number slams in, bar shatters, rewards cascade.
 - **Warnings to check:** BattleScreen Performance — victory sequence adds multiple simultaneous animations on an already heavy screen. Confirm >55fps during the cascade. Reanimated Shared Value Count — multiple AnimatedNumbers rendering simultaneously during stat cascade.
+- **Notes:** Victory choreography: panel slides up (spring), outcome text slams (scale 0→1.3→1.0), reward lines stagger in from right (150ms apart), gold SuccessBurst behind panel on victory. Level-up: detected in useGameState via prevLevel ref comparison, exposed as `levelUpInfo`/`clearLevelUp`. Overlay appears 1.5s after victory: dark overlay, "LEVEL UP" slam (violet), level number (gold, 72pt), violet SuccessBurst, auto-dismisses after 2.5s. God Mode XP set to `XP_THRESHOLDS[10] - 50` (just below Level 11) so any battle win triggers level-up.
 
 **Sprint 5.5 — Achievement earned choreography + final polish**
 - Upgrade AchievementPopup with full sequence: slam slide-in → gradient violet border + 3-layer glow → icon burst → particle pop → haptic
