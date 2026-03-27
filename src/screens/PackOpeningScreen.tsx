@@ -115,9 +115,9 @@ const backStyles = StyleSheet.create({
   diamond: {
     width: 48, height: 48,
     backgroundColor: '#1a0a30',
-    borderWidth: 2, borderColor: '#7c3aed',
+    borderWidth: 2, borderColor: T.accent.violet,
     transform: [{ rotate: '45deg' }],
-    shadowColor: '#7c3aed', shadowOffset: { width: 0, height: 0 },
+    shadowColor: T.accent.violet, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8, shadowRadius: 12,
   },
   brandTop: {
@@ -126,7 +126,7 @@ const backStyles = StyleSheet.create({
   },
   brandBot: {
     fontFamily: 'Orbitron_700Bold', fontSize: T.font.md,
-    color: '#7c3aed', letterSpacing: T.letterSpacing.xxl,
+    color: T.accent.violet, letterSpacing: T.letterSpacing.xxl,
   },
 });
 

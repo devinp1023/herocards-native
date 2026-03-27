@@ -168,7 +168,7 @@ const AnimatedHomeIcon = React.memo(({ focused, size }: { focused: boolean; size
       {/* Unselected SVG layer */}
       <Animated.View style={[{ position: 'absolute', top: 0, left: 0, width: size, height: size }, unselectedStyle]}>
         <Canvas style={{ width: size, height: size }}>
-          <Path path={HOME_PATH_50} color="#ffffff" />
+          <Path path={HOME_PATH_50} color={T.text.primary} />
         </Canvas>
       </Animated.View>
       {/* Selected PNG layer */}
@@ -348,9 +348,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       height: 2,
       top: 0,
       opacity: trailOpacity.value,
-      backgroundColor: '#00FFAA',
+      backgroundColor: T.accent.mint,
       borderRadius: 1,
-      shadowColor: '#00FFAA',
+      shadowColor: T.accent.mint,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.9,
       shadowRadius: 4,
@@ -424,7 +424,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   <MaterialCommunityIcons
                     name={iconName}
                     size={iconSize}
-                    color={focused ? T.accent.mint : '#ffffff'}
+                    color={focused ? T.accent.mint : T.text.primary}
                   />
                 )}
                 {/* Badge for Career tab */}
@@ -493,13 +493,13 @@ const tabStyles = StyleSheet.create({
   badge: {
     position: 'absolute', top: -4, right: -8,
     minWidth: 16, height: 16, borderRadius: 8,
-    backgroundColor: '#ef4444',
+    backgroundColor: T.status.danger,
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
     fontFamily: 'Orbitron_700Bold', fontSize: 8,
-    color: '#ffffff', letterSpacing: 0,
+    color: T.text.primary, letterSpacing: 0,
   },
 });
 
@@ -684,7 +684,7 @@ export default function App() {
       }}>
         <SessionContext.Provider value={session ? { ...session, logout: () => { signOut(auth); setSession(null); } } : { uid: '', username: '', logout: () => {} }}>
           <GameStateProvider key={session?.uid ?? ''} uid={session?.uid ?? ''} initialData={gameData} cardRoster={cardRoster}>
-          <NavigationContainer ref={navigationRef} theme={{ dark: true, colors: { primary: T.accent.mint, background: '#08081a', card: '#08081a', text: '#ffffff', border: '#1e1e3a', notification: T.accent.mint } }}>
+          <NavigationContainer ref={navigationRef} theme={{ dark: true, colors: { primary: T.accent.mint, background: '#08081a', card: '#08081a', text: T.text.primary, border: '#1e1e3a', notification: T.accent.mint } }}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
               {!session ? (
                 <RootStack.Screen name="Auth">

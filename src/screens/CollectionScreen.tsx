@@ -727,15 +727,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ff4040',
+    borderColor: T.status.danger,
     alignItems: 'center',
-    backgroundColor: '#ff000011',
+    backgroundColor: T.status.danger + '11',
     transform: [{ skewX: '-3deg' }],
   },
   clearAllText: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.xs, transform: [{ skewX: '3deg' }],
-    color: '#ff6060',
+    color: T.status.danger,
     letterSpacing: T.letterSpacing.xs,
   },
 });

@@ -57,7 +57,7 @@ function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number })
     <View style={xpStyles.track}>
       <Animated.View style={[xpStyles.fill, barStyle]}>
         <LinearGradient
-          colors={['#B14EFF', '#cc6dff']}
+          colors={[T.accent.violet, '#cc6dff']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={xpStyles.gradient}
@@ -69,7 +69,7 @@ function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number })
 
 const xpStyles = StyleSheet.create({
   track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6 },
-  fill:  { height: '100%', borderRadius: 3, shadowColor: '#B14EFF', shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
+  fill:  { height: '100%', borderRadius: 3, shadowColor: T.accent.violet, shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
   gradient: { flex: 1, borderRadius: 3 },
 });
 
@@ -81,7 +81,7 @@ function PackStatCard({ packId, collection, cardRoster }: { packId: number; coll
   const pct       = packCards.length > 0 ? Math.round(owned.length / packCards.length * 100) : 0;
 
   const statsByRarity = RARITIES.map(r => ({
-    r, color: RC[r]?.color ?? '#fff',
+    r, color: RC[r]?.color ?? T.text.primary,
     count: owned.filter(c => c.rarity === r).length,
     total: packCards.filter(c => c.rarity === r).length,
   }));
@@ -335,8 +335,8 @@ export default function HomeScreen({ navigation }: Props) {
               onPressIn={battleRipple.onPressIn}
               onPressOut={battleRipple.onPressOut}
             >
-              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
-              <MaterialCommunityIcons name="sword-cross" size={28} color="#fff" />
+              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
+              <MaterialCommunityIcons name="sword-cross" size={28} color={T.text.primary} />
               <Text style={styles.battleBtnText}>BATTLE</Text>
               {battleRipple.rippleView}
             </TouchableOpacity>
@@ -353,8 +353,8 @@ export default function HomeScreen({ navigation }: Props) {
               onPressIn={packRipple.onPressIn}
               onPressOut={packRipple.onPressOut}
             >
-              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
-              <MaterialCommunityIcons name="cards" size={28} color="#fff" />
+              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
+              <MaterialCommunityIcons name="cards" size={28} color={T.text.primary} />
               <Text style={styles.packBtnText}>OPEN PACK</Text>
               <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
               {packRipple.rippleView}

@@ -432,7 +432,7 @@ export default function CareerScreen() {
   });
 
   const [selectedTier, setSelectedTier] = useState<AchievementTier | null>(null);
-  const [selectedColor, setSelectedColor] = useState('#ffffff');
+  const [selectedColor, setSelectedColor] = useState<string>(T.text.primary);
   const [lastCollectedId, setLastCollectedId] = useState<string | null>(null);
   const celebrationScale = useSharedValue(1);
   const sheetY = useSharedValue(600);
@@ -494,7 +494,7 @@ export default function CareerScreen() {
   const handleNodePress = useCallback((tier: AchievementTier) => {
     const catId = ACHIEVEMENT_CATEGORIES[activeIndex]?.id as AchievementCategoryId;
     const cat = ACHIEVEMENT_CATEGORIES.find(c => c.id === catId);
-    openSheet(tier, cat?.color ?? '#ffffff');
+    openSheet(tier, cat?.color ?? T.text.primary);
   }, [activeIndex, openSheet]);
 
   const handleHubPress = useCallback(() => {}, []);

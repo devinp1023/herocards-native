@@ -181,7 +181,7 @@ const sb = StyleSheet.create({
   radioInner: { width:8, height:8, borderRadius:4 },
   radioLabel: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:0.3 },
   divider:    { height:1, backgroundColor:T.bg.border, marginVertical:12 },
-  clearBtn:   { marginTop:8, paddingVertical:T.button.destructive.paddingV, borderRadius:T.button.destructive.radius, borderWidth:1, borderColor:'#ff4040', alignItems:'center', backgroundColor:'#ff000011', transform:[{ skewX:'-3deg' }] },
+  clearBtn:   { marginTop:8, paddingVertical:T.button.destructive.paddingV, borderRadius:T.button.destructive.radius, borderWidth:1, borderColor:T.status.danger, alignItems:'center', backgroundColor:T.status.danger+'11', transform:[{ skewX:'-3deg' }] },
   clearText:  { fontFamily:T.button.destructive.fontFamily, fontSize:T.button.destructive.fontSize, color:T.button.destructive.text, letterSpacing:T.button.destructive.letterSpacing, transform:[{ skewX:'3deg' }] },
 });
 
