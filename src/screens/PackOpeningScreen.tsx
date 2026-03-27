@@ -498,7 +498,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
             <SuccessBurst
               ref={burstRef}
               color={RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color}
-              particleCount={16}
+              particleCount={36}
             />
 
             {cardReady && (

@@ -21,7 +21,7 @@ type Props = {
 const PARTICLE_SIZE = 6;
 const DURATION = 2000;
 const STAGGER = 12;
-const MAX_PARTICLES = 20;
+const MAX_PARTICLES = 40;
 
 /* ---------- single particle ---------- */
 
