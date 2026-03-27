@@ -190,10 +190,21 @@ function RevealSlot({ drawn, onRevealed, onImpact, autoReveal, entryScale, entry
 
   const cfg = RC[drawn.card.rarity] ?? RC.Common;
 
+  // Rarity glow — same approach as HeroCard's RARITY_GLOW
+  const rarityGlowStyle = {
+    shadowColor: cfg.color,
+    shadowOffset: { width: 0, height: 0 } as const,
+    shadowOpacity: 1,
+    shadowRadius: drawn.card.rarity === 'Legendary' ? 30
+      : drawn.card.rarity === 'Epic' ? 20
+      : drawn.card.rarity === 'Rare' ? 12 : 4,
+    elevation: 10,
+  };
+
   return (
     <View style={slot.root}>
       <TouchableOpacity onPress={triggerReveal} activeOpacity={0.9} disabled={done}>
-        <Animated.View style={[slot.cardWrap, cardStyle]}>
+        <Animated.View style={[slot.cardWrap, cardStyle, rarityGlowStyle]}>
           <CardWrapper scale={REVEAL_SCALE}>
             {showFront
               ? <HeroCard card={drawn.card} showShine={drawn.card.rarity === 'Legendary' || drawn.card.rarity === 'Epic'} />
@@ -281,18 +292,12 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
   // ── Choreography shared values ─────────────────────────────────────────
   const dimOpacity   = useSharedValue(0);
-  const glowScale    = useSharedValue(0.5);
-  const glowOpacity  = useSharedValue(0);
   const entryScale   = useSharedValue(0);
   const entryOpacity = useSharedValue(0);
   const burstRef     = useRef<SuccessBurstHandle>(null);
   const [cardReady, setCardReady] = useState(false); // face-down card visible
 
   const dimStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
-  const glowAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glowScale.value }],
-    opacity: glowOpacity.value,
-  }));
 
   // Breathing shimmer for action buttons
   const btnShimmer = useSharedValue(0);
@@ -317,14 +322,9 @@ export default function PackOpeningScreen({ navigation }: Props) {
     // Reset entry
     entryScale.value = 0;
     entryOpacity.value = 0;
-    // Animate glow buildup (800ms)
-    glowScale.value = 0.5;
-    glowOpacity.value = 0;
-    glowScale.value = withTiming(1.0, { duration: 800, easing: Easing.out(Easing.cubic) });
-    glowOpacity.value = withTiming(0.45, { duration: 800, easing: Easing.out(Easing.cubic) });
     // Deepen dim
-    dimOpacity.value = withTiming(0.7, { duration: 800, easing: Easing.out(Easing.cubic) });
-    // After glow buildup: slam the face-down card in
+    dimOpacity.value = withTiming(0.7, { duration: 600, easing: Easing.out(Easing.cubic) });
+    // After brief pause: slam the face-down card in
     setTimeout(() => {
       setCardReady(true);
       entryOpacity.value = withTiming(1, { duration: 150 });
@@ -333,7 +333,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
         withTiming(1.0, { duration: MOTION.slam.duration * 0.3, easing: MOTION.slam.easing }),
       );
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }, 800);
+    }, 600);
   }, []);
 
   const handleImpact = useCallback(() => {
@@ -342,9 +342,6 @@ export default function PackOpeningScreen({ navigation }: Props) {
       withTiming(MOTION.slam.overshoot, { duration: 200, easing: MOTION.slam.easing }),
       withTiming(1.0, { duration: 200, easing: MOTION.slam.easing }),
     );
-    // Flash glow then fade
-    glowOpacity.value = 0.6;
-    glowOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
     // Lighten dim
     dimOpacity.value = withTiming(0.4, { duration: 200, easing: Easing.out(Easing.cubic) });
     // Fire particle burst
@@ -495,13 +492,8 @@ export default function PackOpeningScreen({ navigation }: Props) {
           </View>
           <Text style={s.revealCounter}>CARD {currentCard + 1} / {drawn.length}</Text>
 
-          {/* Current card slot + glow halo + burst */}
+          {/* Current card slot + burst */}
           <View style={s.revealCardArea}>
-            {/* Glow halo — large soft circle rendered above dim overlay */}
-            <Animated.View pointerEvents="none" style={[s.glowHalo, {
-              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '25',
-            }, glowAnimStyle]} />
-
             {cardReady && (
               <RevealSlot
                 key={currentCard}
@@ -653,13 +645,7 @@ const s = StyleSheet.create({
   dotDone:        { backgroundColor: T.accent.mint },
   dotCurrent:     { backgroundColor: T.accent.mint + '66', transform: [{ scale: 1.3 }] },
   revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 20 },
-  revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  glowHalo: {
-    position: 'absolute',
-    width: CARD_W * REVEAL_SCALE * 1.6,
-    height: CARD_H * REVEAL_SCALE * 1.3,
-    borderRadius: CARD_W * REVEAL_SCALE * 0.8,
-  },
+  revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
