@@ -11,12 +11,14 @@ import Animated, {
   withTiming,
   withSpring,
   withDelay,
+  withSequence,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
 import { Achievement } from '../data/achievements';
 import { GradientBorder, BORDER_COLORS } from './GradientBorder';
-import { T, glowShadow } from '../theme/theme';
+import { SuccessBurst, SuccessBurstHandle } from './SuccessBurst';
+import { T, MOTION, glowShadow } from '../theme/theme';
 
 const DISPLAY_MS  = 3500;  // how long the toast is visible
 const SLIDE_IN_MS = 380;
@@ -30,10 +32,13 @@ interface Props {
 }
 
 export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = false }: Props) {
-  const translateY = useSharedValue(100);
-  const opacity    = useSharedValue(0);
-  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isShowing  = useRef(false);
+  const translateY  = useSharedValue(100);
+  const opacity     = useSharedValue(0);
+  const toastScale  = useSharedValue(1);
+  const badgeScale  = useSharedValue(0);
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isShowing   = useRef(false);
+  const burstRef    = useRef<SuccessBurstHandle>(null);
 
   const dismiss = () => {
     isShowing.current = false;
@@ -57,10 +62,22 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   useEffect(() => {
     if (!achievement || suppressed) return;
 
-    // Slide in
+    // Slam slide-in with overshoot
     isShowing.current = true;
-    translateY.value = withSpring(0, { damping: 16, stiffness: 140 });
+    translateY.value = withSpring(0, { damping: 14, stiffness: 160 });
     opacity.value    = withTiming(1, { duration: SLIDE_IN_MS });
+    toastScale.value = withSequence(
+      withTiming(MOTION.slam.overshoot, { duration: MOTION.slam.duration * 0.6, easing: MOTION.slam.easing }),
+      withTiming(1.0, { duration: MOTION.slam.duration * 0.4, easing: MOTION.slam.easing }),
+    );
+    // Badge burst after slam settles
+    badgeScale.value = 0;
+    badgeScale.value = withDelay(300, withSequence(
+      withTiming(1.3, { duration: 150, easing: Easing.out(Easing.cubic) }),
+      withTiming(1.0, { duration: 150, easing: Easing.out(Easing.cubic) }),
+    ));
+    // Particle pop
+    setTimeout(() => burstRef.current?.fire(), 350);
 
     // Auto-dismiss after DISPLAY_MS
     timerRef.current = setTimeout(dismiss, DISPLAY_MS);
@@ -68,8 +85,11 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   }, [achievement?.id, suppressed]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+    transform: [{ translateY: translateY.value }, { scale: toastScale.value }],
     opacity: opacity.value,
+  }));
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
   }));
 
   if (!achievement || suppressed) return null;
@@ -86,9 +106,12 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
             {/* Left accent strip */}
             <View style={[s.strip, { backgroundColor: achievement.color }]} />
 
-            {/* Symbol badge */}
-            <View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }]}>
-              <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
+            {/* Symbol badge with burst */}
+            <View style={{ position: 'relative' }}>
+              <SuccessBurst ref={burstRef} color={achievement.color} particleCount={12} />
+              <Animated.View style={[s.badge, { borderColor: achievement.color + '66', backgroundColor: achievement.color + '18' }, badgeStyle]}>
+                <Text style={[s.symbol, { color: achievement.color }]}>{achievement.symbol}</Text>
+              </Animated.View>
             </View>
 
             {/* Text */}

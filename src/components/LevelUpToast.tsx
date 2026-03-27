@@ -9,12 +9,15 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
+  withDelay,
+  withSequence,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { GradientBorder, BORDER_COLORS } from './GradientBorder';
-import { T } from '../theme/theme';
+import { SuccessBurst, SuccessBurstHandle } from './SuccessBurst';
+import { T, MOTION } from '../theme/theme';
 
 const DISPLAY_MS  = 3000;
 const SLIDE_IN_MS = 380;
@@ -27,9 +30,12 @@ interface Props {
 }
 
 export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Props) {
-  const translateY = useSharedValue(100);
-  const opacity    = useSharedValue(0);
-  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const translateY  = useSharedValue(100);
+  const opacity     = useSharedValue(0);
+  const toastScale  = useSharedValue(1);
+  const badgeScale  = useSharedValue(0);
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const burstRef    = useRef<SuccessBurstHandle>(null);
 
   const dismiss = () => {
     opacity.value = withTiming(0, { duration: FADE_OUT_MS, easing: Easing.out(Easing.quad) },
@@ -41,9 +47,21 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
   useEffect(() => {
     if (!levelUpInfo || suppressed) return;
 
-    // Slide in
-    translateY.value = withSpring(0, { damping: 16, stiffness: 140 });
+    // Slam slide-in with overshoot
+    translateY.value = withSpring(0, { damping: 14, stiffness: 160 });
     opacity.value    = withTiming(1, { duration: SLIDE_IN_MS });
+    toastScale.value = withSequence(
+      withTiming(MOTION.slam.overshoot, { duration: MOTION.slam.duration * 0.6, easing: MOTION.slam.easing }),
+      withTiming(1.0, { duration: MOTION.slam.duration * 0.4, easing: MOTION.slam.easing }),
+    );
+    // Badge burst after slam settles
+    badgeScale.value = 0;
+    badgeScale.value = withDelay(300, withSequence(
+      withTiming(1.3, { duration: 150, easing: Easing.out(Easing.cubic) }),
+      withTiming(1.0, { duration: 150, easing: Easing.out(Easing.cubic) }),
+    ));
+    // Particle pop
+    setTimeout(() => burstRef.current?.fire(), 350);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     // Auto-dismiss
@@ -52,8 +70,11 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
   }, [levelUpInfo?.newLevel, suppressed]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+    transform: [{ translateY: translateY.value }, { scale: toastScale.value }],
     opacity: opacity.value,
+  }));
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
   }));
 
   if (!levelUpInfo || suppressed) return null;
@@ -67,8 +88,11 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
       >
         <View style={s.toast}>
           <View style={s.strip} />
-          <View style={s.badge}>
-            <Text style={s.arrow}>▲</Text>
+          <View style={{ position: 'relative' }}>
+            <SuccessBurst ref={burstRef} color={T.accent.violet} particleCount={12} />
+            <Animated.View style={[s.badge, badgeStyle]}>
+              <Text style={s.arrow}>▲</Text>
+            </Animated.View>
           </View>
           <View style={s.textBlock}>
             <Text style={s.label}>LEVEL UP</Text>

@@ -203,10 +203,12 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     initialData?.questProgress ?? {});
 
   // ── Achievement state ─────────────────────────────────────────────────────
+  // God Mode: only a few achievements pre-earned so the rest trigger naturally during testing
+  const GOD_EARNED = ['card_collector_1', 'pack_rat_1', 'uncommon_ground_1'];
   const [earnedAchievements, setEarnedAchievements] = useState<string[]>(() =>
-    isGod ? ACHIEVEMENTS.map(a => a.id) : (initialData?.earnedAchievements ?? []));
+    isGod ? GOD_EARNED : (initialData?.earnedAchievements ?? []));
   const [collectedAchievements, setCollectedAchievements] = useState<string[]>(() =>
-    isGod ? ACHIEVEMENTS.map(a => a.id) : (initialData?.collectedAchievements ?? []));
+    isGod ? GOD_EARNED : (initialData?.collectedAchievements ?? []));
   const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
 
   // ── Derived XP progress ───────────────────────────────────────────────────
