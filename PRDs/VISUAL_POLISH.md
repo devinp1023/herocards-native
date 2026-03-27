@@ -498,12 +498,13 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Warnings to check:** BattleScreen Performance — victory sequence adds multiple simultaneous animations on an already heavy screen. Confirm >55fps during the cascade. Reanimated Shared Value Count — multiple AnimatedNumbers rendering simultaneously during stat cascade.
 - **Notes:** Victory choreography: panel slides up (spring), outcome text slams (scale 0→1.3→1.0), reward lines stagger in from right (150ms apart), gold SuccessBurst behind panel on victory. Level-up: detected in useGameState via prevLevel ref comparison, exposed as `levelUpInfo`/`clearLevelUp`. Overlay appears 1.5s after victory: dark overlay, "LEVEL UP" slam (violet), level number (gold, 72pt), violet SuccessBurst, auto-dismisses after 2.5s. God Mode XP set to `XP_THRESHOLDS[10] - 50` (just below Level 11) so any battle win triggers level-up.
 
-**Sprint 5.5 — Achievement earned choreography + final polish**
+**Sprint 5.5 — Achievement earned choreography + final polish** ✅ COMPLETE
 - Upgrade AchievementPopup with full sequence: slam slide-in → gradient violet border + 3-layer glow → icon burst → particle pop → haptic
 - Final polish pass across all screens: spot-check every material, glow, ambient animation, and micro-interaction
 - Fix any visual inconsistencies found during the full walkthrough
 - **Verify:** Earn an achievement — toast feels impactful with burst and glow. Full app walkthrough: every screen has its identity, every surface is a material, every interaction has feedback.
 - **Warnings to check:** All warnings — do a final audit. Confirm BattleScreen >55fps, particle pools are clean, no Canvas nesting, no memoization breaks. Phase 5 depends on Phase 4 components.
+- **Notes:** Both AchievementPopup and LevelUpToast upgraded with identical choreography: MOTION.slam overshoot on slide-in, badge scale burst (0→1.3→1.0), SuccessBurst (12 particles) from badge. God Mode now starts with only 3 achievements pre-earned so the rest trigger naturally during testing. Final polish pass deferred — user will test and flag specific issues.
 
 ---
 
