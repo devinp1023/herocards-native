@@ -203,12 +203,19 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     initialData?.questProgress ?? {});
 
   // ── Achievement state ─────────────────────────────────────────────────────
-  // God Mode: only a few achievements pre-earned so the rest trigger naturally during testing
-  const GOD_EARNED = ['card_collector_1', 'uncommon_ground_1'];
+  // God Mode: pre-earn everything already satisfied by initial state so toasts
+  // don't flood on startup. Only new actions (opening packs, winning battles) trigger toasts.
+  const godEarned = useMemo(() => {
+    if (!isGod) return [];
+    const godCollection = Object.fromEntries(cardRoster.map(c => [c.id, 1]));
+    const godLevel = getLevel(XP_THRESHOLDS[10] - 50);
+    const godAvatars = [...new Set([...AVATARS.map(a => a.id), ...LEVEL_AVATARS.map(a => a.id)])];
+    return computeNewAchievements(godCollection, 0, godLevel, 0, godAvatars, [], cardRoster, {}).map(a => a.id);
+  }, [isGod, cardRoster]);
   const [earnedAchievements, setEarnedAchievements] = useState<string[]>(() =>
-    isGod ? GOD_EARNED : (initialData?.earnedAchievements ?? []));
+    isGod ? godEarned : (initialData?.earnedAchievements ?? []));
   const [collectedAchievements, setCollectedAchievements] = useState<string[]>(() =>
-    isGod ? GOD_EARNED : (initialData?.collectedAchievements ?? []));
+    isGod ? godEarned : (initialData?.collectedAchievements ?? []));
   const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
 
   // ── Derived XP progress ───────────────────────────────────────────────────
