@@ -103,7 +103,7 @@ const SuccessBurst = forwardRef<SuccessBurstHandle, Props>(
 
           // Random direction and distance
           const angle = Math.random() * Math.PI * 2;
-          const distance = 80 + Math.random() * 120; // 80–200
+          const distance = 180 + Math.random() * 160; // 180–340
           const targetX = Math.cos(angle) * distance;
           const targetY = Math.sin(angle) * distance;
           const delay = i * STAGGER;
