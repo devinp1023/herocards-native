@@ -285,6 +285,62 @@ const sum = StyleSheet.create({
   dupeText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.status.caution, letterSpacing: T.letterSpacing.xs },
 });
 
+// ── PackStatCard ──────────────────────────────────────────────────────────────
+const PACK_RARITIES = ['Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
+
+function PackStatCard({ packId, collection, cardRoster }: { packId: number; collection: Record<number, number>; cardRoster: Card[] }) {
+  const pack      = PACKS[packId];
+  const packCards = cardRoster.filter(c => c.pack === packId);
+  const owned     = packCards.filter(c => isOwned(collection, c.id));
+  const pct       = packCards.length > 0 ? Math.round(owned.length / packCards.length * 100) : 0;
+
+  const statsByRarity = PACK_RARITIES.map(r => ({
+    r, color: RC[r]?.color ?? T.text.primary,
+    count: owned.filter(c => c.rarity === r).length,
+    total: packCards.filter(c => c.rarity === r).length,
+  }));
+
+  return (
+    <MaterialSurface style={ps.card}>
+      <View style={ps.header}>
+        <View style={[ps.packDot, { backgroundColor: pack.color }]} />
+        <View style={{ flex: 1 }}>
+          <Text style={[ps.name, { color: pack.color }]}>{pack.name.toUpperCase()}</Text>
+          <Text style={ps.sub}>{pack.subtitle}</Text>
+        </View>
+        <Text style={[ps.pct, { color: pack.color }]}>{pct}%</Text>
+      </View>
+      <View style={[ps.barTrack, { backgroundColor: pack.color + '18' }]}>
+        <View style={[ps.barFill, { width: `${pct}%` as any, backgroundColor: pack.color, shadowColor: pack.color, shadowOpacity: 0.5, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } }]} />
+      </View>
+      <View style={ps.rarityRow}>
+        {statsByRarity.map(({ r, color, count, total }) => (
+          <View key={r} style={ps.rarityItem}>
+            <View style={[ps.rarityDot, { backgroundColor: color }]} />
+            <Text style={[ps.rarityCount, { color }]}>{count}<Text style={ps.rarityTotal}>/{total}</Text></Text>
+          </View>
+        ))}
+      </View>
+    </MaterialSurface>
+  );
+}
+
+const ps = StyleSheet.create({
+  card:       { borderRadius:14, padding:16, marginBottom:12 },
+  header:     { flexDirection:'row', alignItems:'center', gap:10, marginBottom:10 },
+  packDot:    { width:12, height:12, borderRadius:6, flexShrink:0 },
+  name:       { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:T.letterSpacing.md },
+  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted, marginTop:2 },
+  pct:        { fontFamily:'Orbitron_900Black', fontSize:T.font.xl },
+  barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10 },
+  barFill:    { height:'100%', borderRadius:3 },
+  rarityRow:  { flexDirection:'row', justifyContent:'space-between' },
+  rarityItem: { alignItems:'center', gap:3 },
+  rarityDot:  { width:6, height:6, borderRadius:3 },
+  rarityCount:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
+  rarityTotal:{ color:T.text.muted, fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
+});
+
 // ── PackOpeningScreen ─────────────────────────────────────────────────────────
 const SCREEN_W = Dimensions.get('window').width;
 type Phase = 'select' | 'reveal' | 'summary';
@@ -460,38 +516,58 @@ export default function PackOpeningScreen({ navigation }: Props) {
             <Text style={s.balanceVal}>{gs.coins.toLocaleString()} CR</Text>
           </MaterialSurface>
 
-          {[1, 2].map(id => {
-            const p = PACKS[id];
-            const canAfford = gs.coins >= PACK_COST;
-            return (
-              <TouchableOpacity
-                key={id}
-                style={[s.packCardOuter, !canAfford && s.packCardDisabled]}
-                onPress={() => openPack(id)}
-                activeOpacity={0.8}
-                disabled={!canAfford}
-              >
-                <MaterialSurface style={s.packCard} borderRadius={18}>
-                  <View style={[s.packColorBar, { backgroundColor: p.color }]} />
-                  <View style={s.packInfo}>
-                    <Text style={[s.packName, { color: p.color }]}>{p.name.toUpperCase()}</Text>
-                    <Text style={s.packSub}>{p.subtitle}</Text>
-                    <View style={s.packMeta}>
+          <View style={s.packsRow}>
+            {[1, 2].map(id => {
+              const p = PACKS[id];
+              const canAfford = gs.coins >= PACK_COST;
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[s.packTouchable, !canAfford && s.packCardDisabled]}
+                  onPress={() => openPack(id)}
+                  activeOpacity={0.8}
+                  disabled={!canAfford}
+                >
+                  <View style={[s.packOuter, { borderColor: p.color + '55', shadowColor: p.color }]}>
+                    {/* Top accent strip */}
+                    <View style={[s.packStrip, { backgroundColor: p.color }]} />
+
+                    {/* Foil tear notch */}
+                    <View style={[s.packTearNotch, { backgroundColor: p.color + '33', borderColor: p.color + '55' }]}>
+                      <View style={[s.packTearInner, { backgroundColor: p.color + '18' }]} />
+                    </View>
+
+                    {/* Icon */}
+                    <View style={[s.packIconRing, { borderColor: p.color + '44', backgroundColor: p.color + '14' }]}>
+                      <MaterialCommunityIcons name={p.icon as any} size={36} color={p.color} />
+                    </View>
+
+                    {/* Pack name — fixed height so both packs align */}
+                    <View style={s.packNameBox}>
+                      <Text style={[s.packName, { color: p.color }]} numberOfLines={2}>{p.name.toUpperCase()}</Text>
+                    </View>
+                    <View style={s.packSubBox}>
+                      <Text style={s.packSub} numberOfLines={2}>{p.subtitle}</Text>
+                    </View>
+
+                    {/* Bottom section — pushed to end */}
+                    <View style={s.packBottom}>
                       <Text style={s.packCards}>5 CARDS</Text>
                       <View style={[s.costBadge, { borderColor: p.color + '55', backgroundColor: p.color + '18' }]}>
                         <Text style={[s.costText, { color: p.color }]}>{PACK_COST} CR</Text>
                       </View>
                     </View>
+
+                    {!canAfford && (
+                      <View style={s.insufficientOverlay}>
+                        <Text style={s.insufficientText}>NOT ENOUGH CR</Text>
+                      </View>
+                    )}
                   </View>
-                  {!canAfford && (
-                    <View style={s.insufficientBadge}>
-                      <Text style={s.insufficientText}>NOT ENOUGH CR</Text>
-                    </View>
-                  )}
-                </MaterialSurface>
-              </TouchableOpacity>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
           <MaterialSurface style={s.oddsBox}>
             <Text style={s.oddsTitle}>PULL RATES</Text>
@@ -503,6 +579,10 @@ export default function PackOpeningScreen({ navigation }: Props) {
               </View>
             ))}
           </MaterialSurface>
+
+          <Text style={s.packProgressTitle}>PACK PROGRESS</Text>
+          <PackStatCard packId={1} collection={gs.collection} cardRoster={gs.cardRoster} />
+          <PackStatCard packId={2} collection={gs.collection} cardRoster={gs.cardRoster} />
         </ScrollView>
       )}
 
@@ -656,18 +736,37 @@ const s = StyleSheet.create({
   balanceLabel:{ fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   balanceVal:  { fontFamily: 'Orbitron_900Black', fontSize: T.font.xl, color: T.accent.mint },
 
-  packCardOuter:    { marginBottom: 14 },
-  packCard:         { flexDirection: 'row', borderRadius: 18, overflow: 'hidden' },
+  packsRow:         { flexDirection: 'row', gap: 14, marginBottom: 14, alignItems: 'stretch' },
+  packTouchable:    { flex: 1 },
   packCardDisabled: { opacity: 0.4 },
-  packColorBar:     { width: 6 },
-  packInfo:         { flex: 1, padding: 18, gap: 6 },
-  packName:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.md, letterSpacing: T.letterSpacing.md },
-  packSub:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted },
-  packMeta:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  packOuter: {
+    flex: 1,
+    borderRadius: 18, borderWidth: 1.5, overflow: 'hidden',
+    backgroundColor: T.bg.surface, alignItems: 'center',
+    paddingBottom: 18,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.35, shadowRadius: 12,
+  },
+  packStrip:        { height: 5, width: '100%' },
+  packTearNotch: {
+    width: 48, height: 14, borderBottomLeftRadius: 10, borderBottomRightRadius: 10,
+    borderWidth: 1, borderTopWidth: 0, alignItems: 'center', justifyContent: 'flex-end',
+    marginBottom: 16,
+  },
+  packTearInner: { width: 24, height: 4, borderRadius: 2, marginBottom: 3 },
+  packIconRing: {
+    width: 64, height: 64, borderRadius: 32,
+    borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 12,
+  },
+  packNameBox:      { height: 36, justifyContent: 'center', paddingHorizontal: 10 },
+  packName:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
+  packSubBox:       { height: 40, justifyContent: 'flex-start', paddingHorizontal: 8 },
+  packSub:          { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, textAlign: 'center', marginTop: 4 },
+  packBottom:       { alignItems: 'center', gap: 8, marginTop: 'auto' as any, paddingTop: 14 },
   packCards:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.xs },
   costBadge:        { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   costText:         { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, letterSpacing: 0.5 },
-  insufficientBadge:{ justifyContent: 'center', paddingRight: 16 },
+  insufficientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', paddingVertical: 8, alignItems: 'center' },
   insufficientText: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#ff4060', letterSpacing: 0.5 },
 
   oddsBox:    { marginTop: 12, borderRadius: 14, padding: 16, gap: 8 },
@@ -676,6 +775,8 @@ const s = StyleSheet.create({
   oddsDot:    { width: 8, height: 8, borderRadius: 4 },
   oddsRarity: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, flex: 1, letterSpacing: 0.5 },
   oddsChance: { fontFamily: 'Orbitron_900Black', fontSize: T.font.md, color: T.text.muted },
+
+  packProgressTitle: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.sm, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginTop: 20, marginBottom: 12 },
 
   // ── Reveal ──
   revealRoot:     { flex: 1, alignItems: 'center', paddingTop: 8 },

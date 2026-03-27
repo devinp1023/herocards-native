@@ -8,18 +8,17 @@ import {
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence, Easing,
 } from 'react-native-reanimated';
-import { useElevation, ElevationLevel } from '../theme/elevation';
+import { useElevation } from '../theme/elevation';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainTabParamList, HomeStackParamList } from '../../App';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSession } from '../context/SessionContext';
-import { isOwned, totalUniqueOwned } from '../hooks/useGameState';
+import { totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
-import { ALL_CARDS } from '../data/cards';
-import { RC, PACK_COST } from '../data/constants';
-import { PACKS, AVATARS, LEVEL_AVATARS } from '../data/packs';
+import { PACK_COST } from '../data/constants';
+import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
@@ -37,8 +36,6 @@ type Props = CompositeScreenProps<
 
 const SCREEN_W = Dimensions.get('window').width;
 const XP_BAR_W = SCREEN_W - 40 - 32; // panel padding
-
-const RARITIES = ['Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
 
 // ── XP bar component ──────────────────────────────────────────────────────────
 function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number }) {
@@ -71,60 +68,6 @@ const xpStyles = StyleSheet.create({
   track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6 },
   fill:  { height: '100%', borderRadius: 3, shadowColor: T.accent.violet, shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
   gradient: { flex: 1, borderRadius: 3 },
-});
-
-// ── PackStatCard ──────────────────────────────────────────────────────────────
-function PackStatCard({ packId, collection, cardRoster }: { packId: number; collection: Record<number, number>; cardRoster: import('../data/cards').Card[] }) {
-  const pack      = PACKS[packId];
-  const packCards = cardRoster.filter(c => c.pack === packId);
-  const owned     = packCards.filter(c => isOwned(collection, c.id));
-  const pct       = packCards.length > 0 ? Math.round(owned.length / packCards.length * 100) : 0;
-
-  const statsByRarity = RARITIES.map(r => ({
-    r, color: RC[r]?.color ?? T.text.primary,
-    count: owned.filter(c => c.rarity === r).length,
-    total: packCards.filter(c => c.rarity === r).length,
-  }));
-
-  return (
-    <MaterialSurface style={packStyles.card}>
-      <View style={packStyles.header}>
-        <View style={[packStyles.packDot, { backgroundColor: pack.color }]} />
-        <View style={{ flex: 1 }}>
-          <Text style={[packStyles.name, { color: pack.color }]}>{pack.name.toUpperCase()}</Text>
-          <Text style={packStyles.sub}>{pack.subtitle}</Text>
-        </View>
-        <Text style={[packStyles.pct, { color: pack.color }]}>{pct}%</Text>
-      </View>
-      <View style={[packStyles.barTrack, { backgroundColor: pack.color + '18' }]}>
-        <View style={[packStyles.barFill, { width: `${pct}%` as any, backgroundColor: pack.color, shadowColor: pack.color, shadowOpacity: 0.5, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } }]} />
-      </View>
-      <View style={packStyles.rarityRow}>
-        {statsByRarity.map(({ r, color, count, total }) => (
-          <View key={r} style={packStyles.rarityItem}>
-            <View style={[packStyles.rarityDot, { backgroundColor: color }]} />
-            <Text style={[packStyles.rarityCount, { color }]}>{count}<Text style={packStyles.rarityTotal}>/{total}</Text></Text>
-          </View>
-        ))}
-      </View>
-    </MaterialSurface>
-  );
-}
-
-const packStyles = StyleSheet.create({
-  card:       { borderRadius:14, padding:16, marginBottom:12 },
-  header:     { flexDirection:'row', alignItems:'center', gap:10, marginBottom:10 },
-  packDot:    { width:12, height:12, borderRadius:6, flexShrink:0 },
-  name:       { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:T.letterSpacing.md },
-  sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted, marginTop:2 },
-  pct:        { fontFamily:'Orbitron_900Black', fontSize:T.font.xl },
-  barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10 },
-  barFill:    { height:'100%', borderRadius:3 },
-  rarityRow:  { flexDirection:'row', justifyContent:'space-between' },
-  rarityItem: { alignItems:'center', gap:3 },
-  rarityDot:  { width:6, height:6, borderRadius:3 },
-  rarityCount:{ fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
-  rarityTotal:{ color:T.text.muted, fontFamily:'Orbitron_700Bold', fontSize:T.font.xs },
 });
 
 // ── QuestCard ─────────────────────────────────────────────────────────────────
@@ -375,11 +318,6 @@ export default function HomeScreen({ navigation }: Props) {
             <QuestCard key={quest.id} quest={quest} progress={questProgress[quest.id] ?? 0} />
           ))}
         </View>
-
-        {/* ── Pack completion stats ── */}
-        <Text style={styles.sectionTitle}>PACK PROGRESS</Text>
-        <PackStatCard packId={1} collection={gs.collection} cardRoster={gs.cardRoster} />
-        <PackStatCard packId={2} collection={gs.collection} cardRoster={gs.cardRoster} />
 
       </ScrollView>
     </ScreenBackground>
