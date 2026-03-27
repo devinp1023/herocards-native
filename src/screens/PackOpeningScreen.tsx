@@ -494,6 +494,13 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
           {/* Current card slot + burst */}
           <View style={s.revealCardArea}>
+            {/* SuccessBurst behind card */}
+            <SuccessBurst
+              ref={burstRef}
+              color={RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color}
+              particleCount={16}
+            />
+
             {cardReady && (
               <RevealSlot
                 key={currentCard}
@@ -504,13 +511,6 @@ export default function PackOpeningScreen({ navigation }: Props) {
                 entryOpacity={entryOpacity}
               />
             )}
-
-            {/* SuccessBurst over card area */}
-            <SuccessBurst
-              ref={burstRef}
-              color={RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color}
-              particleCount={16}
-            />
           </View>
 
           {/* Card name (shown once flipped) */}
