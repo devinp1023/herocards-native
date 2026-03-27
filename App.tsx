@@ -689,7 +689,10 @@ export default function App() {
     );
   }
 
-  const handleLogin = (uid: string, username: string) => setSession({ uid, username });
+  // handleLogin is intentionally a no-op — onAuthStateChanged handles session
+  // setup after loading game data, preventing a race where GameStateProvider
+  // mounts before Firestore data is ready.
+  const handleLogin = (_uid: string, _username: string) => {};
   const handleEnterGodMode = () => setSession({ uid: '__god__', username: 'GOD' });
 
   return (

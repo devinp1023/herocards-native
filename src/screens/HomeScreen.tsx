@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, Text, ScrollView, TouchableOpacity, Image,
   StyleSheet, Platform, Dimensions,
 } from 'react-native';
 import Animated, {
@@ -280,7 +280,7 @@ export default function HomeScreen({ navigation }: Props) {
                 onPressOut={battleRipple.onPressOut}
               >
                 <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
-                <MaterialCommunityIcons name="sword-cross" size={36} color={T.text.primary} />
+                <Image source={require('../../assets/nav-icons/battle.png')} style={styles.battleIcon} />
                 <Text style={styles.actionBtnText}>BATTLE</Text>
                 {battleRipple.rippleView}
               </TouchableOpacity>
@@ -298,7 +298,7 @@ export default function HomeScreen({ navigation }: Props) {
                 onPressOut={packRipple.onPressOut}
               >
                 <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
-                <MaterialCommunityIcons name="cards" size={36} color={T.text.primary} />
+                <Image source={require('../../assets/nav-icons/open-pack.png')} style={styles.packIcon} />
                 <Text style={styles.actionBtnText}>OPEN PACK</Text>
                 {packRipple.rippleView}
               </TouchableOpacity>
@@ -370,6 +370,8 @@ const styles = StyleSheet.create({
     aspectRatio:1, alignItems:'center', justifyContent:'center',
     gap:10, borderRadius:14.5,
   },
+  battleIcon: { width:80, height:70, resizeMode:'contain', tintColor:T.text.primary },
+  packIcon:   { width:60, height:70, resizeMode:'contain', tintColor:T.text.primary },
   battleBtn: {
     backgroundColor:T.accent.violet,
     shadowColor:T.accent.violet, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,

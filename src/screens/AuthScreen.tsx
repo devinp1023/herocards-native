@@ -92,7 +92,7 @@ export default function AuthScreen({ onLogin, godMode, onToggleGodMode, onEnterG
         await setDoc(doc(db, 'users', cred.user.uid), {
           username:   username.trim(),
           coins:      STARTING_CREDITS,
-          collection: [],
+          collection: {},
           questDate:  '',
           createdAt:  serverTimestamp(),
         });

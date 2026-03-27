@@ -38,7 +38,7 @@ export async function loadGameData(uid: string): Promise<PersistedGameData | nul
     return {
       coins:              typeof d.coins === 'number'          ? d.coins : 0,
       xp:                 typeof d.xp === 'number'             ? d.xp : 0,
-      collection:         d.collection         ?? {},
+      collection:         (d.collection && !Array.isArray(d.collection)) ? d.collection : {},
       activeAvatar:       typeof d.activeAvatar === 'string'   ? d.activeAvatar : 'a1',
       ownedAvatars:       Array.isArray(d.ownedAvatars)        ? d.ownedAvatars : ['a1'],
       packsOpened:        typeof d.packsOpened === 'number'    ? d.packsOpened : 0,
