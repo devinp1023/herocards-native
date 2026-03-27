@@ -10,7 +10,6 @@ import { ALL_CARDS, Card } from '../data/cards';
 import { XP_THRESHOLDS, STARTING_CREDITS, MAX_SAVED_DECKS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
-import { hasBattleCooldown } from '../data/constants';
 import { DAILY_QUESTS, getTodaysQuests, Quest } from '../data/quests';
 import { SavedDeck, sanitizeDeck } from '../data/decks';
 import { saveGameData, PersistedGameData } from './useFirebase';
@@ -110,7 +109,6 @@ function computeNewAchievements(
 
 export interface GameState {
   cardRoster: Card[];                       // live card list from Firestore (falls back to ALL_CARDS)
-  battleCooldowns: Record<number, number>;  // card id → cooldown start timestamp (ms)
   coins: number;
   xp: number;
   level: number;
@@ -141,7 +139,6 @@ export interface GameState {
   incrementTrades: (n?: number) => void;
   advanceQuest: (type: Quest['req']['type'], opts?: { rarity?: string; alliance?: string }) => void;
   dismissAchievement: () => void;
-  addBattleCooldowns: (cardIds: number[]) => void;
   battleWinStreak: number;
   recordBattleResult: (winner: 'player' | 'ai' | 'tie', tenacityProtected: boolean) => void;
   battleStats: Record<string, number>;
@@ -186,12 +183,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     isGod ? {} : (initialData?.battleStats ?? {}));
 
   // ── Battle state ─────────────────────────────────────────────────────────
-  const [battleCooldowns, setBattleCooldowns] = useState<Record<number, number>>(() => {
-    if (!initialData?.battleCooldowns) return {};
-    return Object.fromEntries(
-      Object.entries(initialData.battleCooldowns).map(([k, v]) => [parseInt(k, 10), v]),
-    );
-  });
   const [battleWinStreak, setBattleWinStreak] = useState(() =>
     isGod ? 0 : (initialData?.battleWinStreak ?? 0));
 
@@ -325,7 +316,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     packsOpened,     totalTrades,
     questDate,       questProgress,
     earnedAchievements, collectedAchievements,
-    battleCooldowns: Object.fromEntries(Object.entries(battleCooldowns)),
     battleWinStreak,
     battleStats:     Object.fromEntries(Object.entries(battleStats)),
     savedBattle:     savedBattle,
@@ -349,7 +339,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, collectedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle, savedDecks]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, collectedAchievements, battleWinStreak, battleStats, savedBattle, savedDecks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -469,21 +459,8 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     // 'tie': streak unchanged (per PRD — Last Effort edge case, neither side earns a win)
   };
 
-  const addBattleCooldowns = (cardIds: number[]) => {
-    const now = Date.now();
-    setBattleCooldowns(prev => {
-      const next = { ...prev };
-      for (const id of cardIds) {
-        const card = cardRoster.find(c => c.id === id);
-        if (card && hasBattleCooldown(card.rarity)) next[id] = now;
-      }
-      return next;
-    });
-  };
-
   return {
     cardRoster,
-    battleCooldowns,
     coins, xp, level, xpInLevel, xpNeeded, levelUpInfo, clearLevelUp,
     collection, activeAvatar, ownedAvatars,
     packsOpened, totalTrades,
@@ -494,7 +471,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     equipAvatar, purchaseAvatar,
     incrementPacksOpened, incrementTrades,
     advanceQuest, dismissAchievement,
-    addBattleCooldowns,
     battleWinStreak, recordBattleResult,
     battleStats, recordBattleStats,
     savedBattle, saveBattleState, clearBattleState,

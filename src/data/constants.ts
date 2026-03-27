@@ -83,30 +83,6 @@ export const DECK_SIZE = 10;
 // ── Starting credits ────────────────────────────────────────────────
 export const STARTING_CREDITS = 350;
 
-// ── Battle cooldowns ─────────────────────────────────────────────────
-// Only Legendary and Epic cards go on cooldown after battle.
-export const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
-
-export function hasBattleCooldown(rarity: string): boolean {
-  return rarity === 'Legendary' || rarity === 'Epic';
-}
-export function isCardOnCooldown(cardId: number, cooldowns: Record<number, number>): boolean {
-  const ts = cooldowns[cardId];
-  return ts ? Date.now() - ts < COOLDOWN_MS : false;
-}
-export function cooldownRemaining(cardId: number, cooldowns: Record<number, number>): number {
-  const ts = cooldowns[cardId];
-  if (!ts) return 0;
-  return Math.max(0, COOLDOWN_MS - (Date.now() - ts));
-}
-export function formatCooldown(ms: number): string {
-  if (ms <= 0) return 'Ready';
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
 // ── Battle rewards per tier ──────────────────────────────────────────
 export const BATTLE_REWARDS: Record<number, { winCredits: number; winXp: number; lossCredits: number; lossXp: number }> = {
   1: { winCredits: 50,  winXp: 100, lossCredits: 10, lossXp: 25 },

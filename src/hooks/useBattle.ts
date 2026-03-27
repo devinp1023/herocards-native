@@ -438,7 +438,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     if (w === 'player') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     gs.addCoins(r.credits);
     gs.addXp(r.xp);
-    gs.addBattleCooldowns(playerDeckIds);
     gs.recordBattleResult(w, tenacityProtected);
     gs.recordBattleStats(bs);
     refresh();
