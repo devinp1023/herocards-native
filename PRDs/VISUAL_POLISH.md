@@ -470,11 +470,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 
 ### Phase 5 — Wow Moment Choreography & Haptics
 
-**Sprint 5.1 — Haptic pairing across existing moments**
+**Sprint 5.1 — Haptic pairing across existing moments** ✅ COMPLETE
 - Wire haptic calls to all existing moments per the haptic pairing map
 - Pack crack: Medium impact. Card reveals: Light impact (staggered). Victory: notification Success. Achievement earned: Light impact. Achievement collected: Medium impact. Damage dealt: Medium impact. Heavy attack: Heavy impact.
 - **Verify:** Play through a battle — feel haptics on attacks and victory. Open a pack — feel crack and card reveals. Earn an achievement — feel toast haptic.
 - **Warnings to check:** None — haptics are fire-and-forget, no performance concerns.
+- **Notes:** Card reveals already had rarity-tiered haptics (Common=Light, Rare=Medium, Epic=Heavy, Legendary=Success notification). Achievement collected updated from Success notification to Medium impact per spec. Incoming AI hits also fire haptics so player feels both dealing and receiving damage. Requires physical device to test (no haptics on iOS Simulator).
 
 **Sprint 5.2 — Pack opening choreography**
 - Upgrade PackOpeningScreen with full sequence: dim → glow buildup (800ms) → crack + impact → staggered card reveals (200ms apart) using `MOTION.slam`

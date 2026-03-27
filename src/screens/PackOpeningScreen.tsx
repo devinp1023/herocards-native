@@ -306,6 +306,8 @@ export default function PackOpeningScreen({ navigation }: Props) {
     setCurrentCard(0);
     setRevealedCount(0);
     setPhase('reveal');
+    // Haptic: pack crack
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   // ── Reveal phase ─────────────────────────────────────────────────────────

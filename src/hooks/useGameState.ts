@@ -246,6 +246,8 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     const newIds = newlyEarned.map(a => a.id);
     setEarnedAchievements(prev => [...prev, ...newIds]);
     setPendingAchievements(prev => [...prev, ...newlyEarned]);
+    // Haptic: achievement earned
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Rewards are NOT granted here — player must collect manually via Career screen
   }, [collection, packsOpened, level, totalTrades, ownedAvatars, battleStats]);
 
@@ -372,7 +374,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
       setXp(prev => prev + ach.xp);
       setCoins(prev => prev + ach.credits);
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
 
   const recordBattleStats = (delta: Record<string, number>) => {

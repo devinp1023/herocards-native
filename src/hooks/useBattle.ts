@@ -10,6 +10,7 @@
 //   both non-attack        → no combat this round
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import * as Haptics from 'expo-haptics';
 import { TIER_INFO } from '../data/constants';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
@@ -433,6 +434,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     setRewards(r);
     setWinner(w);
     setPhase('done');
+    // Haptic: victory or defeat
+    if (w === 'player') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     gs.addCoins(r.credits);
     gs.addXp(r.xp);
     gs.addBattleCooldowns(playerDeckIds);
@@ -618,6 +621,17 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   //  Free hit     │  step1: AI action shown  step1: AI action shown
   //               │  step2: player hits AI   —
   //
+  // ── Haptic helpers ──────────────────────────────────────────────────────────
+  const hapticForAttack = (w: AttackWeight, isPlayer: boolean) => {
+    if (!isPlayer) return; // only fire haptics for player-visible hits
+    if (w === 'heavy') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+  const hapticForIncomingHit = (w: AttackWeight) => {
+    if (w === 'heavy') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
   const attack = useCallback((weight: AttackWeight) => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
@@ -643,6 +657,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       // Step 2 (t=STEP_MS): player's free hit
       setTimeout(() => {
         const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
+        hapticForAttack(weight, true);
         gainAmp(p, WEIGHT_AMP[weight]);
         checkPostPlayerAttack();
         setTypeRevealed(true);
@@ -693,6 +708,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       // Step 1 (t=0): first hit
       const staminaBeforeR1 = sSide.active.stamina; // for Stamina Leech check
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
+      if (fSide === p) hapticForAttack(fWeight, true);
+      else hapticForIncomingHit(fWeight);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
       if (fSide === p) checkPostPlayerAttack();
       setTypeRevealed(true);
@@ -718,6 +735,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
           const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
+          if (sSide === p) hapticForAttack(sWeight, true);
+          else hapticForIncomingHit(sWeight);
           gainAmp(sSide, WEIGHT_AMP[sWeight]);
           if (sSide === p) checkPostPlayerAttack();
           if (sSide === p) { setAiHitKey(k => k + 1); }
@@ -777,6 +796,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       setTimeout(() => {
         const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
         const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        hapticForIncomingHit(aiWeight);
         gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
@@ -838,6 +858,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       setTimeout(() => {
         const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
         const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        hapticForIncomingHit(aiWeight);
         gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
@@ -943,6 +964,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         setSwapOutCardId(null);
         const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
         const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+        hapticForIncomingHit(aiWeight);
         gainAmp(a, WEIGHT_AMP[aiWeight]);
         setPlayerHitKey(k => k + 1);
         setAiAttackKey(k => k + 1);
