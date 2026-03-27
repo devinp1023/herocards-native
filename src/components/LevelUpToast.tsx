@@ -14,6 +14,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { GradientBorder, BORDER_COLORS } from './GradientBorder';
 import { SuccessBurst, SuccessBurstHandle } from './SuccessBurst';
@@ -22,6 +23,7 @@ import { T, MOTION } from '../theme/theme';
 const DISPLAY_MS  = 3000;
 const SLIDE_IN_MS = 380;
 const FADE_OUT_MS = 280;
+const SWIPE_THRESHOLD = 80;
 
 interface Props {
   levelUpInfo: { oldLevel: number; newLevel: number } | null;
@@ -31,6 +33,7 @@ interface Props {
 
 export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Props) {
   const translateY  = useSharedValue(100);
+  const translateX  = useSharedValue(0);
   const opacity     = useSharedValue(0);
   const toastScale  = useSharedValue(1);
   const badgeScale  = useSharedValue(0);
@@ -44,10 +47,31 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
     translateY.value = withTiming(100, { duration: FADE_OUT_MS, easing: Easing.in(Easing.quad) });
   };
 
+  const swipeDismiss = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    opacity.value = withTiming(0, { duration: 200 },
+      (finished) => { if (finished) runOnJS(onDismiss)(); },
+    );
+  };
+
+  const swipeGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+    })
+    .onEnd((e) => {
+      if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
+        translateX.value = withTiming(e.translationX > 0 ? 400 : -400, { duration: 200 });
+        runOnJS(swipeDismiss)();
+      } else {
+        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+      }
+    });
+
   useEffect(() => {
     if (!levelUpInfo || suppressed) return;
 
     // Slam slide-in with overshoot
+    translateX.value = 0;
     translateY.value = withSpring(0, { damping: 14, stiffness: 160 });
     opacity.value    = withTiming(1, { duration: SLIDE_IN_MS });
     toastScale.value = withSequence(
@@ -70,7 +94,7 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
   }, [levelUpInfo?.newLevel, suppressed]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: toastScale.value }],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: toastScale.value }],
     opacity: opacity.value,
   }));
   const badgeStyle = useAnimatedStyle(() => ({
@@ -80,6 +104,7 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
   if (!levelUpInfo || suppressed) return null;
 
   return (
+    <GestureDetector gesture={swipeGesture}>
     <Animated.View style={[s.container, animStyle]}>
       <GradientBorder
         colors={BORDER_COLORS.violet}
@@ -101,6 +126,7 @@ export function LevelUpToast({ levelUpInfo, onDismiss, suppressed = false }: Pro
         </View>
       </GradientBorder>
     </Animated.View>
+    </GestureDetector>
   );
 }
 

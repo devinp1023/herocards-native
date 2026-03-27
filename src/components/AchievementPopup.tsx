@@ -15,6 +15,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Achievement } from '../data/achievements';
 import { GradientBorder, BORDER_COLORS } from './GradientBorder';
 import { SuccessBurst, SuccessBurstHandle } from './SuccessBurst';
@@ -31,8 +32,11 @@ interface Props {
   suppressed?: boolean; // true during active battle — delays toast until battle ends
 }
 
+const SWIPE_THRESHOLD = 80;
+
 export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = false }: Props) {
   const translateY  = useSharedValue(100);
+  const translateX  = useSharedValue(0);
   const opacity     = useSharedValue(0);
   const toastScale  = useSharedValue(1);
   const badgeScale  = useSharedValue(0);
@@ -43,10 +47,31 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   const dismiss = () => {
     isShowing.current = false;
     opacity.value = withTiming(0, { duration: FADE_OUT_MS, easing: Easing.out(Easing.quad) },
-      (finished) => { if (finished) runOnJS(onDismiss)(); },
+      (finished) => { if (finished) { runOnJS(onDismiss)(); } },
     );
     translateY.value = withTiming(100, { duration: FADE_OUT_MS, easing: Easing.in(Easing.quad) });
   };
+
+  const swipeDismiss = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    isShowing.current = false;
+    opacity.value = withTiming(0, { duration: 200 },
+      (finished) => { if (finished) runOnJS(onDismiss)(); },
+    );
+  };
+
+  const swipeGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+    })
+    .onEnd((e) => {
+      if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
+        translateX.value = withTiming(e.translationX > 0 ? 400 : -400, { duration: 200 });
+        runOnJS(swipeDismiss)();
+      } else {
+        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+      }
+    });
 
   const handleTap = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -64,6 +89,7 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
 
     // Slam slide-in with overshoot
     isShowing.current = true;
+    translateX.value = 0;
     translateY.value = withSpring(0, { damping: 14, stiffness: 160 });
     opacity.value    = withTiming(1, { duration: SLIDE_IN_MS });
     toastScale.value = withSequence(
@@ -85,7 +111,7 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   }, [achievement?.id, suppressed]);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: toastScale.value }],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: toastScale.value }],
     opacity: opacity.value,
   }));
   const badgeStyle = useAnimatedStyle(() => ({
@@ -95,6 +121,7 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
   if (!achievement || suppressed) return null;
 
   return (
+    <GestureDetector gesture={swipeGesture}>
     <Animated.View style={[s.container, animStyle]}>
       <Pressable onPress={handleTap}>
         <GradientBorder
@@ -129,6 +156,7 @@ export function AchievementPopup({ achievement, onDismiss, onTap, suppressed = f
         </GradientBorder>
       </Pressable>
     </Animated.View>
+    </GestureDetector>
   );
 }
 
