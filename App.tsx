@@ -597,11 +597,12 @@ function AchievementOverlay() {
 function LevelUpOverlay() {
   const gs = useGameStateContext();
   const inBattle = useIsBattleActive();
+  const hasAchievements = gs.pendingAchievements.length > 0;
   return (
     <LevelUpToast
       levelUpInfo={gs.levelUpInfo}
       onDismiss={gs.clearLevelUp}
-      suppressed={inBattle}
+      suppressed={inBattle || hasAchievements}
     />
   );
 }
