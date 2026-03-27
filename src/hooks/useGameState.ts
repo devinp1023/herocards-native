@@ -204,7 +204,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
 
   // ── Achievement state ─────────────────────────────────────────────────────
   // God Mode: only a few achievements pre-earned so the rest trigger naturally during testing
-  const GOD_EARNED = ['card_collector_1', 'pack_rat_1', 'uncommon_ground_1'];
+  const GOD_EARNED = ['card_collector_1', 'uncommon_ground_1'];
   const [earnedAchievements, setEarnedAchievements] = useState<string[]>(() =>
     isGod ? GOD_EARNED : (initialData?.earnedAchievements ?? []));
   const [collectedAchievements, setCollectedAchievements] = useState<string[]>(() =>
