@@ -321,7 +321,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
     glowScale.value = 0.5;
     glowOpacity.value = 0;
     glowScale.value = withTiming(1.0, { duration: 800, easing: Easing.out(Easing.cubic) });
-    glowOpacity.value = withTiming(0.6, { duration: 800, easing: Easing.out(Easing.cubic) });
+    glowOpacity.value = withTiming(0.45, { duration: 800, easing: Easing.out(Easing.cubic) });
     // Deepen dim
     dimOpacity.value = withTiming(0.7, { duration: 800, easing: Easing.out(Easing.cubic) });
     // After glow buildup: slam the face-down card in
@@ -343,7 +343,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
       withTiming(1.0, { duration: 200, easing: MOTION.slam.easing }),
     );
     // Flash glow then fade
-    glowOpacity.value = 0.8;
+    glowOpacity.value = 0.6;
     glowOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
     // Lighten dim
     dimOpacity.value = withTiming(0.4, { duration: 200, easing: Easing.out(Easing.cubic) });
@@ -499,7 +499,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
           <View style={s.revealCardArea}>
             {/* Glow halo behind card */}
             <Animated.View pointerEvents="none" style={[s.glowHalo, {
-              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '22',
+              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '18',
               shadowColor: RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color,
             }, glowAnimStyle]} />
 
@@ -657,13 +657,13 @@ const s = StyleSheet.create({
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   glowHalo: {
     position: 'absolute',
-    width: CARD_W * REVEAL_SCALE * 1.5,
-    height: CARD_H * REVEAL_SCALE * 1.5,
+    width: CARD_W * REVEAL_SCALE * 1.1,
+    height: CARD_H * REVEAL_SCALE * 1.1,
     borderRadius: 999,
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 40,
-    shadowOpacity: 1,
-    elevation: 20,
+    shadowRadius: 30,
+    shadowOpacity: 0.8,
+    elevation: 12,
   },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
