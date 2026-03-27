@@ -497,10 +497,9 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
           {/* Current card slot + glow halo + burst */}
           <View style={s.revealCardArea}>
-            {/* Glow halo behind card */}
+            {/* Glow halo — large soft circle rendered above dim overlay */}
             <Animated.View pointerEvents="none" style={[s.glowHalo, {
-              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '30',
-              shadowColor: RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color,
+              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '25',
             }, glowAnimStyle]} />
 
             {cardReady && (
@@ -657,13 +656,9 @@ const s = StyleSheet.create({
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   glowHalo: {
     position: 'absolute',
-    width: CARD_W * REVEAL_SCALE * 0.6,
-    height: CARD_W * REVEAL_SCALE * 0.6,
-    borderRadius: CARD_W * REVEAL_SCALE * 0.3,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 60,
-    shadowOpacity: 1,
-    elevation: 20,
+    width: CARD_W * REVEAL_SCALE * 1.6,
+    height: CARD_H * REVEAL_SCALE * 1.3,
+    borderRadius: CARD_W * REVEAL_SCALE * 0.8,
   },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
