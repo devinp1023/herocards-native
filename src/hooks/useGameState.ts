@@ -253,7 +253,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
   earnedRef.current = earnedAchievements;
 
   useEffect(() => {
-    if (isGod) return; // god mode already has all achievements
+    // Achievement check runs for all modes (God Mode no longer pre-earns all)
     const newlyEarned = computeNewAchievements(
       collection, packsOpened, level, totalTrades, ownedAvatars, earnedRef.current, cardRoster, battleStats,
     );
