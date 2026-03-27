@@ -497,9 +497,9 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
           {/* Current card slot + glow halo + burst */}
           <View style={s.revealCardArea}>
-            {/* Glow halo behind card */}
+            {/* Glow halo behind card — shadow-only, no visible fill */}
             <Animated.View pointerEvents="none" style={[s.glowHalo, {
-              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '18',
+              backgroundColor: RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color,
               shadowColor: RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color,
             }, glowAnimStyle]} />
 
@@ -657,13 +657,13 @@ const s = StyleSheet.create({
   revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   glowHalo: {
     position: 'absolute',
-    width: CARD_W * REVEAL_SCALE * 1.1,
-    height: CARD_H * REVEAL_SCALE * 1.1,
-    borderRadius: 999,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 30,
-    shadowOpacity: 0.8,
-    elevation: 12,
+    shadowRadius: 80,
+    shadowOpacity: 1,
+    elevation: 20,
   },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
