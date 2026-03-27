@@ -8,6 +8,7 @@
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Card, ALL_CARDS } from '../data/cards';
+import { SavedDeck } from '../data/decks';
 
 export interface PersistedGameData {
   coins:              number;
@@ -25,6 +26,7 @@ export interface PersistedGameData {
   battleWinStreak:    number;
   battleStats?:       Record<string, number>;  // cumulative battle stat counters
   savedBattle?:       any | null;              // serialized in-progress battle state
+  savedDecks?:        SavedDeck[];             // up to 5 premade decks
 }
 
 export async function loadGameData(uid: string): Promise<PersistedGameData | null> {
@@ -50,6 +52,7 @@ export async function loadGameData(uid: string): Promise<PersistedGameData | nul
       battleWinStreak:    typeof d.battleWinStreak === 'number' ? d.battleWinStreak : 0,
       battleStats:        d.battleStats        ?? {},
       savedBattle:        d.savedBattle        ?? null,
+      savedDecks:         Array.isArray(d.savedDecks) ? d.savedDecks : [],
     };
   } catch {
     return null;

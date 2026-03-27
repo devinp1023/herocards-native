@@ -29,7 +29,8 @@ import BattleScreen          from './src/screens/BattleScreen';
 import StoreScreen           from './src/screens/StoreScreen';
 import ProfileScreen         from './src/screens/ProfileScreen';
 import CareerScreen          from './src/screens/CareerScreen';
-import DecksScreen           from './src/screens/DecksScreen';
+import DeckListScreen        from './src/screens/DeckListScreen';
+import DeckEditScreen        from './src/screens/DeckEditScreen';
 
 import { FontContext }        from './src/context/FontContext';
 import { SessionContext }     from './src/context/SessionContext';
@@ -72,6 +73,11 @@ export type CollectionStackParamList = {
   CardDetail: { cardId: number; owned: boolean; ownedCount: number };
 };
 
+export type DecksStackParamList = {
+  DeckList: undefined;
+  DeckEdit: { deckId: string };
+};
+
 // BattleStackParamList kept as alias for screens that import it
 export type BattleStackParamList  = {
   BattleLobby: undefined;
@@ -85,6 +91,7 @@ const RootStack        = createNativeStackNavigator<RootStackParamList>();
 const Tab              = createBottomTabNavigator<MainTabParamList>();
 const HomeStack        = createNativeStackNavigator<HomeStackParamList>();
 const CollectionStack  = createNativeStackNavigator<CollectionStackParamList>();
+const DecksStack       = createNativeStackNavigator<DecksStackParamList>();
 
 // Font asset paths for Skia
 const orbitronBoldTtf  = require('./assets/fonts/Orbitron_700Bold.ttf');
@@ -529,6 +536,15 @@ function CollectionStackNav() {
   );
 }
 
+function DecksStackNav() {
+  return (
+    <DecksStack.Navigator screenOptions={{ headerShown: false }}>
+      <DecksStack.Screen name="DeckList" component={DeckListScreen} />
+      <DecksStack.Screen name="DeckEdit" component={DeckEditScreen} />
+    </DecksStack.Navigator>
+  );
+}
+
 // ── Main tab navigator ────────────────────────────────────────────────────────
 function MainTabs() {
   return (
@@ -539,7 +555,7 @@ function MainTabs() {
       sceneContainerStyle={{ backgroundColor: '#08081a' }}
     >
       <Tab.Screen name="CollectionTab" component={CollectionStackNav} />
-      <Tab.Screen name="DecksTab"      component={DecksScreen} />
+      <Tab.Screen name="DecksTab"      component={DecksStackNav} />
       <Tab.Screen name="HomeTab"       component={HomeStackNav} />
       <Tab.Screen name="StoreTab"      component={StoreScreen} />
       <Tab.Screen name="CareerTab"     component={CareerScreen} />

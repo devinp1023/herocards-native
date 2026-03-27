@@ -20,6 +20,7 @@ export const RO: Record<string, number> = {Legendary:0,Epic:1,Rare:2,Uncommon:3,
 
 // ── Economy ────────────────────────────────────────────────────────
 export const PACK_COST = 100;
+export const MAX_SAVED_DECKS = 5;
 
 export const DUPE_CREDITS: Record<string, number> = {
   Common:5, Uncommon:12, Rare:25, Epic:60, Legendary:150,

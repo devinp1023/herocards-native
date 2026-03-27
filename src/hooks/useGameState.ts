@@ -7,11 +7,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { ALL_CARDS, Card } from '../data/cards';
-import { XP_THRESHOLDS, STARTING_CREDITS } from '../data/constants';
+import { XP_THRESHOLDS, STARTING_CREDITS, MAX_SAVED_DECKS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { ACHIEVEMENTS, Achievement } from '../data/achievements';
 import { hasBattleCooldown } from '../data/constants';
 import { DAILY_QUESTS, getTodaysQuests, Quest } from '../data/quests';
+import { SavedDeck, sanitizeDeck } from '../data/decks';
 import { saveGameData, PersistedGameData } from './useFirebase';
 
 // ── Level helpers (mirrors web getLevel) ─────────────────────────────────────
@@ -149,6 +150,11 @@ export interface GameState {
   savedBattle: any | null;
   saveBattleState: (state: any) => void;
   clearBattleState: () => void;
+  // Deck builder
+  savedDecks: SavedDeck[];
+  createDeck: (name: string) => string;
+  updateDeck: (id: string, updates: Partial<Pick<SavedDeck, 'name' | 'cardIds'>>) => void;
+  deleteDeck: (id: string) => void;
 }
 
 export function useGameState(uid: string, initialData?: PersistedGameData | null, cardRoster: Card[] = ALL_CARDS): GameState {
@@ -194,6 +200,30 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     isGod ? null : (initialData?.savedBattle ?? null));
   const saveBattleState  = useCallback((state: any) => { if (!isGod) setSavedBattle(state); }, [isGod]);
   const clearBattleState = useCallback(() => setSavedBattle(null), []);
+
+  // ── Saved decks ─────────────────────────────────────────────────────────────
+  const [savedDecks, setSavedDecks] = useState<SavedDeck[]>(() =>
+    isGod ? [] : (initialData?.savedDecks ?? []));
+
+  const createDeck = useCallback((name: string): string => {
+    const id = `deck_${Date.now()}`;
+    const now = Date.now();
+    setSavedDecks(prev => {
+      if (prev.length >= MAX_SAVED_DECKS) return prev;
+      return [...prev, { id, name, cardIds: [], createdAt: now, updatedAt: now }];
+    });
+    return id;
+  }, []);
+
+  const updateDeck = useCallback((id: string, updates: Partial<Pick<SavedDeck, 'name' | 'cardIds'>>) => {
+    setSavedDecks(prev => prev.map(d =>
+      d.id === id ? { ...d, ...updates, updatedAt: Date.now() } : d,
+    ));
+  }, []);
+
+  const deleteDeck = useCallback((id: string) => {
+    setSavedDecks(prev => prev.filter(d => d.id !== id));
+  }, []);
 
   // ── Quest state ───────────────────────────────────────────────────────────
   const [packsOpened,  setPacksOpened]  = useState(() => initialData?.packsOpened  ?? 0);
@@ -273,6 +303,18 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     // Rewards are NOT granted here — player must collect manually via Career screen
   }, [collection, packsOpened, level, totalTrades, ownedAvatars, battleStats]);
 
+  // ── Sanitize saved decks on mount (remove cards no longer in collection) ──
+  useEffect(() => {
+    if (savedDecks.length === 0) return;
+    let changed = false;
+    const cleaned = savedDecks.map(d => {
+      const s = sanitizeDeck(d, collection);
+      if (s !== d) changed = true;
+      return s;
+    });
+    if (changed) setSavedDecks(cleaned);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Firestore save ────────────────────────────────────────────────────────
   // Always keep a ref with the latest payload so the unmount save is never stale.
   const currentSaveRef = useRef<PersistedGameData | null>(null);
@@ -287,6 +329,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     battleWinStreak,
     battleStats:     Object.fromEntries(Object.entries(battleStats)),
     savedBattle:     savedBattle,
+    savedDecks:      savedDecks,
   };
 
   // Skip saving on the very first render — the mount-time state is just
@@ -306,7 +349,7 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [coins, xp, collection, activeAvatar, ownedAvatars, packsOpened, totalTrades,
-      questDate, questProgress, earnedAchievements, collectedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle]); // eslint-disable-line react-hooks/exhaustive-deps
+      questDate, questProgress, earnedAchievements, collectedAchievements, battleCooldowns, battleWinStreak, battleStats, savedBattle, savedDecks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save on unmount — only if the user actually changed something.
   useEffect(() => {
@@ -455,5 +498,6 @@ export function useGameState(uid: string, initialData?: PersistedGameData | null
     battleWinStreak, recordBattleResult,
     battleStats, recordBattleStats,
     savedBattle, saveBattleState, clearBattleState,
+    savedDecks, createDeck, updateDeck, deleteDeck,
   };
 }
