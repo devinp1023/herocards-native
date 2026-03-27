@@ -27,6 +27,7 @@ import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T, MOTION } from '../theme/theme';
 import { useRipple } from '../hooks/useRipple';
 import { useSession } from '../context/SessionContext';
@@ -442,7 +443,10 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
       {/* Back button */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-        <Text style={s.backText}>← BACK</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <MaterialCommunityIcons name="chevron-left" size={18} color={T.accent.mint} />
+          <Text style={s.backText}>BACK</Text>
+        </View>
       </TouchableOpacity>
 
       {/* ── PHASE: SELECT ── */}
@@ -567,7 +571,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
               <Animated.View style={[{ borderRadius: T.button.primary.radius }, nextRipple.pressStyle]}>
                 <TouchableOpacity style={[s.nextBtn, { overflow: 'hidden' }]} onPress={goToNext} activeOpacity={1} onPressIn={nextRipple.onPressIn} onPressOut={nextRipple.onPressOut}>
                   <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, btnShimmerStyle]} pointerEvents="none" />
-                  <Text style={s.nextBtnText}>NEXT CARD →</Text>
+                  <Text style={s.nextBtnText}>NEXT CARD</Text>
                   {nextRipple.rippleView}
                 </TouchableOpacity>
               </Animated.View>

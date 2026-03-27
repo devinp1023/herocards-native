@@ -2,10 +2,10 @@
 // Used for hand zones, deck display, and pack opening reveal.
 // Spec: dark gradient bg, hex tile pattern, radial glow, corner ornaments,
 //       central medallion, "HERO CARDS" / "TAP TO REVEAL" text.
-// Note: The 🦸 hero emoji in the medallion is rendered as a native Text overlay.
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T } from '../theme/theme';
 import {
   Canvas,
@@ -167,9 +167,9 @@ export function FaceDownCard() {
         )}
       </Canvas>
 
-      {/* ── Hero emoji overlay (native Text — Skia cannot render emoji) ── */}
-      <View style={styles.emojiContainer} pointerEvents="none">
-        <Text style={styles.emoji}>🦸</Text>
+      {/* ── Hero icon overlay (native View — Skia cannot render icons) ── */}
+      <View style={styles.iconContainer} pointerEvents="none">
+        <MaterialCommunityIcons name="shield-crown" size={32} color="#9966ff" />
       </View>
     </View>
   );
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     height: CARD_H,
     position: 'relative',
   },
-  emojiContainer: {
+  iconContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -189,8 +189,5 @@ const styles = StyleSheet.create({
     height: 72,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emoji: {
-    fontSize: T.font.xxl,
   },
 });

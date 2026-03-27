@@ -27,6 +27,7 @@ import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { useRipple } from '../hooks/useRipple';
@@ -95,7 +96,7 @@ function FilterSidebar({ visible, rarity, typeFilter, packFilter, sortBy, types,
         <View style={sb.header}>
           <Text style={sb.title}>FILTERS</Text>
           <TouchableOpacity onPress={onClose} style={sb.closeBtn}>
-            <Text style={sb.closeText}>✕</Text>
+            <MaterialCommunityIcons name="close" size={18} color={T.text.muted} />
           </TouchableOpacity>
         </View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={sb.scroll}>
@@ -303,7 +304,7 @@ const OpponentCard = React.memo(function OpponentCard({ tier, onPress }: { tier:
         </View>
         {/* Compact battle arrow */}
         <TouchableOpacity style={[opp.arrow, { borderColor: tier.color + '66' }]} onPress={onPress}>
-          <Text style={[opp.arrowText, { color: tier.color }]}>→</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={tier.color} />
         </TouchableOpacity>
       </MaterialSurface>
     </TouchableOpacity>
@@ -459,7 +460,10 @@ export default function BattleLobbyScreen({ navigation }: Props) {
       <ScreenBackground theme="battle">
         <ScrollView contentContainerStyle={s.oppScroll} showsVerticalScrollIndicator={false}>
           <TouchableOpacity onPress={() => setPhase('deck')} style={s.backBtn} activeOpacity={0.7}>
-            <Text style={s.backText}>← CHANGE DECK</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <MaterialCommunityIcons name="chevron-left" size={18} color={T.accent.mint} />
+              <Text style={s.backText}>CHANGE DECK</Text>
+            </View>
           </TouchableOpacity>
           <Text style={s.screenTitle}>CHOOSE OPPONENT</Text>
           <Text style={s.oppSub}>Higher tiers mean tougher opponents and bigger rewards.</Text>
@@ -534,22 +538,26 @@ export default function BattleLobbyScreen({ navigation }: Props) {
           <View style={s.chipRow}>
             {rarity !== 'All' && (
               <TouchableOpacity style={[s.chip, { borderColor: RC[rarity]?.color ?? T.accent.mint }]} onPress={() => setRarity('All')}>
-                <Text style={[s.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity} ✕</Text>
+                <Text style={[s.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity}</Text>
+                <MaterialCommunityIcons name="close" size={10} color={RC[rarity]?.color ?? T.accent.mint} />
               </TouchableOpacity>
             )}
             {typeFilter !== 'All' && (
               <TouchableOpacity style={s.chip} onPress={() => setTypeFilter('All')}>
-                <Text style={s.chipText}>{typeFilter} ✕</Text>
+                <Text style={s.chipText}>{typeFilter}</Text>
+                <MaterialCommunityIcons name="close" size={10} color={T.accent.mint} />
               </TouchableOpacity>
             )}
             {packFilter !== 0 && (
               <TouchableOpacity style={s.chip} onPress={() => setPackFilter(0)}>
-                <Text style={s.chipText}>Pack {packFilter} ✕</Text>
+                <Text style={s.chipText}>Pack {packFilter}</Text>
+                <MaterialCommunityIcons name="close" size={10} color={T.accent.mint} />
               </TouchableOpacity>
             )}
             {sortBy !== 'rarity' && (
               <TouchableOpacity style={[s.chip, { borderColor: T.accent.violet }]} onPress={() => setSortBy('rarity')}>
-                <Text style={[s.chipText, { color: T.accent.violet }]}>{SORT_OPTIONS.find(o => o.key === sortBy)?.chipLabel} ✕</Text>
+                <Text style={[s.chipText, { color: T.accent.violet }]}>{SORT_OPTIONS.find(o => o.key === sortBy)?.chipLabel}</Text>
+                <MaterialCommunityIcons name="close" size={10} color={T.accent.violet} />
               </TouchableOpacity>
             )}
           </View>
@@ -560,7 +568,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
           {searchFocused ? (
             <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={10} innerBackground={T.bg.elevated} style={{ flex: 1 }} innerStyle={{ flex: 1 }}>
               <View style={[s.searchRow, { borderWidth: 0 }]}>
-                <Text style={s.searchIcon}>⌕</Text>
+                <MaterialCommunityIcons name="magnify" size={18} color={T.text.muted} style={{ marginRight: 4 }} />
                 <TextInput
                   style={s.searchInput}
                   placeholder="Search cards..."
@@ -574,14 +582,14 @@ export default function BattleLobbyScreen({ navigation }: Props) {
                 />
                 {search.length > 0 && (
                   <TouchableOpacity onPress={() => setSearch('')}>
-                    <Text style={s.searchClear}>✕</Text>
+                    <MaterialCommunityIcons name="close-circle" size={16} color={T.text.muted} />
                   </TouchableOpacity>
                 )}
               </View>
             </GradientBorder>
           ) : (
             <View style={s.searchRow}>
-              <Text style={s.searchIcon}>⌕</Text>
+              <MaterialCommunityIcons name="magnify" size={18} color={T.text.muted} style={{ marginRight: 4 }} />
               <TextInput
                 style={s.searchInput}
                 placeholder="Search cards..."
@@ -595,7 +603,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
               />
               {search.length > 0 && (
                 <TouchableOpacity onPress={() => setSearch('')}>
-                  <Text style={s.searchClear}>✕</Text>
+                  <MaterialCommunityIcons name="close-circle" size={16} color={T.text.muted} />
                 </TouchableOpacity>
               )}
             </View>
@@ -604,9 +612,10 @@ export default function BattleLobbyScreen({ navigation }: Props) {
             style={[s.filterBtn, activeFilterCount > 0 && s.filterBtnActive]}
             onPress={() => setSidebarOpen(true)}
           >
-            <Text style={[s.filterBtnText, activeFilterCount > 0 && { color: T.accent.mint }]}>
-              ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <MaterialCommunityIcons name="tune-variant" size={18} color={activeFilterCount > 0 ? T.accent.mint : T.text.muted} />
+              {activeFilterCount > 0 && <Text style={[s.filterBtnText, { color: T.accent.mint }]}>({activeFilterCount})</Text>}
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -652,7 +661,7 @@ export default function BattleLobbyScreen({ navigation }: Props) {
               {anyOnCooldown
                 ? 'CARDS ON COOLDOWN'
                 : deckFull
-                  ? 'CHOOSE OPPONENT  →'
+                  ? 'CHOOSE OPPONENT'
                   : `SELECT ${DECK_SIZE - battleDeck.length} MORE CARD${DECK_SIZE - battleDeck.length !== 1 ? 'S' : ''}`}
             </Text>
             {canStartBattle && ctaRipple.rippleView}
@@ -699,7 +708,7 @@ const s = StyleSheet.create({
   slotsScroll: { gap:8, paddingBottom:8 },
 
   chipRow:     { flexDirection:'row', flexWrap:'wrap', gap:6, marginBottom:6 },
-  chip:        { paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:T.accent.mint, backgroundColor:T.accent.mintFaint },
+  chip:        { flexDirection:'row', alignItems:'center', gap:4, paddingHorizontal:10, paddingVertical:4, borderRadius:20, borderWidth:1, borderColor:T.accent.mint, backgroundColor:T.accent.mintFaint },
   chipText:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.accent.mint, letterSpacing:0.5 },
 
   searchAndFilter: { flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 },

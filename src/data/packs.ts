@@ -2,15 +2,15 @@ export interface Pack {
   id: number;
   name: string;
   subtitle: string;
-  emoji: string;
+  icon: string;   // MaterialCommunityIcons name (was emoji)
   color: string;
   glow: string;
   grad: string;
 }
 
 export const PACKS: Record<number, Pack> = {
-  1:{id:1,name:"Infinite Waves",subtitle:"Heroes of the open ocean and sky",emoji:"🌊",color:"#4fc3f7",glow:"#4fc3f744",grad:"linear-gradient(135deg,#0a1628,#0f2a40)"},
-  2:{id:2,name:"Shrouded Mysteries",subtitle:"Shadows, secrets and arcane power",emoji:"🌑",color:"#cc6dff",glow:"#cc6dff44",grad:"linear-gradient(135deg,#180d28,#2a1040)"},
+  1:{id:1,name:"Infinite Waves",subtitle:"Heroes of the open ocean and sky",icon:"water",color:"#4fc3f7",glow:"#4fc3f744",grad:"linear-gradient(135deg,#0a1628,#0f2a40)"},
+  2:{id:2,name:"Shrouded Mysteries",subtitle:"Shadows, secrets and arcane power",icon:"moon-waning-crescent",color:"#cc6dff",glow:"#cc6dff44",grad:"linear-gradient(135deg,#180d28,#2a1040)"},
 };
 
 // ── Purchaseable avatars ──────────────────────────────────────────────────────

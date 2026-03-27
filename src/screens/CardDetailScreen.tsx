@@ -27,6 +27,7 @@ import { useGameStateContext } from '../context/GameStateContext';
 import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MissingCard } from '../components/MissingCard';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T } from '../theme/theme';
 
 type Props = NativeStackScreenProps<CollectionStackParamList, 'CardDetail'>;
@@ -42,7 +43,10 @@ const ALLIANCE_COLORS: Record<string, { color: string; border: string; bg: strin
   'Anti-Hero': { color: '#ff9800', border: '#ff980044', bg: '#ff980011' },
 };
 
-const PACK_LABEL: Record<number, string> = { 1: '🌊 Pack 1', 2: '🌑 Pack 2' };
+const PACK_ICON: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; label: string }> = {
+  1: { name: 'water', color: '#4fc3f7', label: 'Pack 1' },
+  2: { name: 'moon-waning-crescent', color: '#cc6dff', label: 'Pack 2' },
+};
 
 const STAT_ROWS = [
   { label: 'ATK', key: 'power',   color: T.stat.atk },
@@ -89,7 +93,10 @@ export default function CardDetailScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       {/* Back button — outside ScrollView so it's always visible */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Text style={styles.backText}>← BACK</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <MaterialCommunityIcons name="chevron-left" size={18} color={T.accent.mint} />
+          <Text style={styles.backText}>BACK</Text>
+        </View>
       </TouchableOpacity>
 
       <ScrollView
@@ -136,7 +143,10 @@ export default function CardDetailScreen({ route, navigation }: Props) {
             <Text style={styles.metaDot}>·</Text>
             <Text style={styles.cardId}>#{String(card.id).padStart(3, '0')}</Text>
             <Text style={styles.metaDot}>·</Text>
-            <Text style={styles.packLabel}>{PACK_LABEL[card.pack] ?? `Pack ${card.pack}`}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              {PACK_ICON[card.pack] && <MaterialCommunityIcons name={PACK_ICON[card.pack].name} size={12} color={PACK_ICON[card.pack].color} />}
+              <Text style={styles.packLabel}>{PACK_ICON[card.pack]?.label ?? `Pack ${card.pack}`}</Text>
+            </View>
           </View>
 
           {/* Alliance + Type badges */}

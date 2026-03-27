@@ -40,6 +40,7 @@ import { CardWrapper, CARD_W } from '../components/CardWrapper';
 import { MiniCard } from '../components/MiniCard';
 import { MissingCard } from '../components/MissingCard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T } from '../theme/theme';
 import { GradientBorder, BORDER_COLORS } from '../components/GradientBorder';
 import { ScreenBackground } from '../components/ScreenBackground';
@@ -50,10 +51,14 @@ type Props = NativeStackScreenProps<CollectionStackParamList, 'Collection'>;
 
 // ── Filter / sort config ──────────────────────────────────────────────────────
 const RARITIES = ['All', 'Legendary', 'Epic', 'Rare', 'Uncommon', 'Common'] as const;
+const PACK_ICON: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string }> = {
+  1: { name: 'water', color: '#4fc3f7' },
+  2: { name: 'moon-waning-crescent', color: '#cc6dff' },
+};
 const PACKS    = [
   { label: 'All Packs', value: 0 },
-  { label: 'Pack 1 🌊', value: 1 },
-  { label: 'Pack 2 🌑', value: 2 },
+  { label: 'Pack 1', value: 1 },
+  { label: 'Pack 2', value: 2 },
 ] as const;
 const SORT_OPTIONS = [
   { key: 'rarity',  label: 'Rarity',       chipLabel: 'RARITY' },
@@ -136,7 +141,7 @@ function FilterSidebar({
           <View style={styles.sidebarHeader}>
             <Text style={styles.sidebarTitle}>FILTERS</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
+              <MaterialCommunityIcons name="close" size={18} color={T.text.muted} />
             </TouchableOpacity>
           </View>
 
@@ -179,12 +184,14 @@ function FilterSidebar({
             <Text style={styles.sectionLabel}>PACK</Text>
             {PACKS.map(p => {
               const active = packFilter === p.value;
+              const pi = PACK_ICON[p.value];
               return (
                 <TouchableOpacity key={p.value} style={styles.radioRow} onPress={() => onPack(p.value)}>
                   <View style={[styles.radioOuter, { borderColor: active ? T.accent.mint : T.bg.border }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: T.accent.mint }]} />}
                   </View>
                   <Text style={[styles.radioLabel, { color: active ? T.accent.mint : T.text.muted }]}>{p.label}</Text>
+                  {pi && <MaterialCommunityIcons name={pi.name} size={14} color={active ? pi.color : T.text.muted} style={{ marginLeft: 4 }} />}
                 </TouchableOpacity>
               );
             })}
@@ -374,7 +381,7 @@ export default function CollectionScreen({ navigation }: Props) {
         {searchFocused ? (
           <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1} borderRadius={10} innerBackground={T.bg.elevated} style={{ flex: 1 }} innerStyle={{ flex: 1 }}>
             <View style={[styles.searchRow, { borderWidth: 0 }]}>
-              <Text style={styles.searchIcon}>⌕</Text>
+              <MaterialCommunityIcons name="magnify" size={20} color={T.text.muted} style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search cards…"
@@ -389,14 +396,14 @@ export default function CollectionScreen({ navigation }: Props) {
               />
               {search.length > 0 && (
                 <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-                  <Text style={styles.clearText}>✕</Text>
+                  <MaterialCommunityIcons name="close-circle" size={16} color={T.text.muted} />
                 </TouchableOpacity>
               )}
             </View>
           </GradientBorder>
         ) : (
           <View style={styles.searchRow}>
-            <Text style={styles.searchIcon}>⌕</Text>
+            <MaterialCommunityIcons name="magnify" size={20} color={T.text.muted} style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search cards…"
@@ -411,7 +418,7 @@ export default function CollectionScreen({ navigation }: Props) {
             />
             {search.length > 0 && (
               <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-                <Text style={styles.clearText}>✕</Text>
+                <MaterialCommunityIcons name="close-circle" size={16} color={T.text.muted} />
               </TouchableOpacity>
             )}
           </View>
@@ -420,9 +427,10 @@ export default function CollectionScreen({ navigation }: Props) {
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setSidebarOpen(true)}
         >
-          <Text style={[styles.filterBtnIcon, activeFilterCount > 0 && { color: T.accent.mint }]}>
-            ⚙{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialCommunityIcons name="tune-variant" size={18} color={activeFilterCount > 0 ? T.accent.mint : T.text.muted} />
+            {activeFilterCount > 0 && <Text style={[styles.filterBtnIcon, { color: T.accent.mint }]}>({activeFilterCount})</Text>}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -432,23 +440,26 @@ export default function CollectionScreen({ navigation }: Props) {
           {rarity !== 'All' && (
             <TouchableOpacity style={[styles.chip, { borderColor: RC[rarity]?.color ?? T.accent.mint }]}
               onPress={() => setRarity('All')}>
-              <Text style={[styles.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity} ✕</Text>
+              <Text style={[styles.chipText, { color: RC[rarity]?.color ?? T.accent.mint }]}>{rarity}</Text>
+              <MaterialCommunityIcons name="close" size={10} color={RC[rarity]?.color ?? T.accent.mint} />
             </TouchableOpacity>
           )}
           {typeFilter !== 'All' && (
             <TouchableOpacity style={styles.chip} onPress={() => setTypeFilter('All')}>
-              <Text style={styles.chipText}>{typeFilter} ✕</Text>
+              <Text style={styles.chipText}>{typeFilter}</Text>
+              <MaterialCommunityIcons name="close" size={10} color={T.accent.mint} />
             </TouchableOpacity>
           )}
           {packFilter !== 0 && (
             <TouchableOpacity style={styles.chip} onPress={() => setPackFilter(0)}>
-              <Text style={styles.chipText}>Pack {packFilter} ✕</Text>
+              <Text style={styles.chipText}>Pack {packFilter}</Text>
+              <MaterialCommunityIcons name="close" size={10} color={T.accent.mint} />
             </TouchableOpacity>
           )}
           {sortBy !== 'rarity' && (
             <TouchableOpacity style={[styles.chip, { borderColor: T.accent.violet }]} onPress={() => setSortBy('rarity')}>
               <Text style={[styles.chipText, { color: T.accent.violet }]}>
-                {SORT_OPTIONS.find(s => s.key === sortBy)?.chipLabel} ✕
+                {SORT_OPTIONS.find(s => s.key === sortBy)?.chipLabel} <MaterialCommunityIcons name="close" size={10} color={T.accent.violet} />
               </Text>
             </TouchableOpacity>
           )}
@@ -577,6 +588,9 @@ const styles = StyleSheet.create({
   // Active filter chips
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 6, marginBottom: 6 },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
