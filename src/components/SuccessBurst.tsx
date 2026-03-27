@@ -19,8 +19,8 @@ type Props = {
 };
 
 const PARTICLE_SIZE = 6;
-const DURATION = 500;
-const STAGGER = 20;
+const DURATION = 350;
+const STAGGER = 12;
 const MAX_PARTICLES = 20;
 
 /* ---------- single particle ---------- */
@@ -103,7 +103,7 @@ const SuccessBurst = forwardRef<SuccessBurstHandle, Props>(
 
           // Random direction and distance
           const angle = Math.random() * Math.PI * 2;
-          const distance = 40 + Math.random() * 80; // 40–120
+          const distance = 80 + Math.random() * 120; // 80–200
           const targetX = Math.cos(angle) * distance;
           const targetY = Math.sin(angle) * distance;
           const delay = i * STAGGER;
