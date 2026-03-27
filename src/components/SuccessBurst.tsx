@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, forwardRef, useMemo } from 'react';
+import React, { useImperativeHandle, forwardRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { T } from '../theme/theme';
 import Animated, {
@@ -67,45 +67,39 @@ const SuccessBurst = forwardRef<SuccessBurstHandle, Props>(
     const resolvedColor = color ?? T.accent.mint;
     const count = Math.min(Math.max(particleCount, 1), MAX_PARTICLES);
 
-    // Pre-allocate shared values for each particle
-    const particles = useMemo(() => {
-      const arr: {
-        translateX: SharedValue<number>;
-        translateY: SharedValue<number>;
-        opacity: SharedValue<number>;
-        scale: SharedValue<number>;
-      }[] = [];
-      for (let i = 0; i < count; i++) {
-        arr.push({
-          translateX: useSharedValue(0),
-          translateY: useSharedValue(0),
-          opacity: useSharedValue(0),
-          scale: useSharedValue(0),
-        });
-      }
-      return arr;
-      // count is derived from a prop that shouldn't change after mount
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Pre-allocate shared values for MAX_PARTICLES (fixed hook count).
+    // Only `count` particles are rendered, but all hooks are always called.
+    const tx: SharedValue<number>[] = [];
+    const ty: SharedValue<number>[] = [];
+    const op: SharedValue<number>[] = [];
+    const sc: SharedValue<number>[] = [];
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      tx.push(useSharedValue(0));
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      ty.push(useSharedValue(0));
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      op.push(useSharedValue(0));
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      sc.push(useSharedValue(0));
+    }
 
     useImperativeHandle(ref, () => ({
       fire() {
         const easing = Easing.out(Easing.cubic);
 
-        for (let i = 0; i < particles.length; i++) {
-          const p = particles[i];
-
+        for (let i = 0; i < count; i++) {
           // Cancel any running animations
-          cancelAnimation(p.translateX);
-          cancelAnimation(p.translateY);
-          cancelAnimation(p.opacity);
-          cancelAnimation(p.scale);
+          cancelAnimation(tx[i]);
+          cancelAnimation(ty[i]);
+          cancelAnimation(op[i]);
+          cancelAnimation(sc[i]);
 
           // Reset to center
-          p.translateX.value = 0;
-          p.translateY.value = 0;
-          p.opacity.value = 1;
-          p.scale.value = 0.3 + Math.random() * 0.7; // 0.3–1.0
+          tx[i].value = 0;
+          ty[i].value = 0;
+          op[i].value = 1;
+          sc[i].value = 0.3 + Math.random() * 0.7; // 0.3–1.0
 
           // Random direction and distance
           const angle = Math.random() * Math.PI * 2;
@@ -114,15 +108,15 @@ const SuccessBurst = forwardRef<SuccessBurstHandle, Props>(
           const targetY = Math.sin(angle) * distance;
           const delay = i * STAGGER;
 
-          p.translateX.value = withDelay(
+          tx[i].value = withDelay(
             delay,
             withTiming(targetX, { duration: DURATION, easing }),
           );
-          p.translateY.value = withDelay(
+          ty[i].value = withDelay(
             delay,
             withTiming(targetY, { duration: DURATION, easing }),
           );
-          p.opacity.value = withDelay(
+          op[i].value = withDelay(
             delay,
             withTiming(0, { duration: DURATION, easing }),
           );
@@ -132,13 +126,13 @@ const SuccessBurst = forwardRef<SuccessBurstHandle, Props>(
 
     return (
       <View style={styles.container} pointerEvents="none">
-        {particles.map((p, i) => (
+        {Array.from({ length: count }, (_, i) => (
           <Particle
             key={i}
-            translateX={p.translateX}
-            translateY={p.translateY}
-            opacity={p.opacity}
-            scale={p.scale}
+            translateX={tx[i]}
+            translateY={ty[i]}
+            opacity={op[i]}
+            scale={sc[i]}
             color={resolvedColor}
           />
         ))}
