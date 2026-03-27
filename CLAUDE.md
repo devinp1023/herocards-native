@@ -9,6 +9,7 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 - **Tech spec**: `PRDs/HeroCards_ReactNative_TechSpec.docx` — original session plan and architecture decisions
 - **Battle PRD**: `PRDs/HeroCards_BattleSystem_v2_PRD.md` — battle engine rules, abilities, AI logic (v2)
 - **Career Screen PRD**: `PRDs/CAREER_SCREEN.md` — achievement skill tree UI, collection flow, category layout
+- **Visual Polish PRD**: `PRDs/VISUAL_POLISH.md` — materials, textures, animations, rarity tiers, haptics, choreography (COMPLETE)
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -34,6 +35,13 @@ All 14 build sessions complete. The app has:
 - Sprint 6a: Win-streak ×2 threshold fixed (3+), 13 new battle daily quests (pool 15→28), CMS DEFAULT_CARDS synced and redeployed
 - Sprint 6b: 119 new battle achievements across 27 families + `battleStats` cumulative tracking
 
+**Visual Polish PRD — COMPLETE (all 5 phases, sprints 1.1–5.5)**
+- Phase 1: Theme tokens, texture assets, color migration
+- Phase 2: MaterialSurface, GradientBorder, elevation system, progress bars, cyan-to-mint migration
+- Phase 3: ScreenBackground, ambient particles, screen title shimmer, font/color tokenization, button tokens
+- Phase 4: AnimatedNumber, SuccessBurst, press ripple, button shimmer, tab energy trail, rarity tier upgrades (Uncommon→Legendary)
+- Phase 5: Haptic pairing, pack opening choreography, legendary pull choreography, victory + level-up choreography, achievement toast choreography
+
 **Current milestone: App Store submission**
 - Switch Expo Go → EAS custom build
 - App icons, splash screen, bundle ID, signing
@@ -51,6 +59,8 @@ All 14 build sessions complete. The app has:
 - **`React.memo`** should be applied to any list item component rendered inside a `FlatList` — prevents expensive re-renders when unrelated state changes.
 - **`useCallback`** should wrap all event handlers passed as props to memoized components.
 - **Never hardcode hex color values in screens or components.** Always use `T.*` tokens from `src/theme/theme.ts` (e.g. `T.bg.surface`, `T.accent.mint`, `T.text.muted`). The only exceptions are: (1) domain colors in data files (`cards.ts`, `packs.ts`, `constants.ts`) where color is part of the data model, (2) stamina-specific cyan (`#4fc3f7`), and (3) colors with dynamic alpha that don't have a token (use `T.accent.mint + '66'` pattern). If a new color is needed, add it to `theme.ts` first, then reference the token.
+- **Never animate layout props** (width, height, padding) — use Reanimated shared values or transforms only.
+- **Never nest a Skia Canvas inside another Canvas.** Skia Canvases exist on `HeroCard.tsx`, the custom tab bar, and amp arcs in BattleScreen only.
 
 ## Auth
 - Email/password only (no Google Sign-In in the native app)
@@ -74,7 +84,15 @@ All 14 build sessions complete. The app has:
 | `node scripts/push-abilities-to-firestore.js` | Pushes ability field from cards.ts to all 200 Firestore card documents |
 
 ## Haptics
-`expo-haptics` is used in `PackOpeningScreen` for card reveals and `useGameState.ts` for achievement collection. No audio — sound effects were not implemented.
+`expo-haptics` is used across the app per the haptic pairing map (Sprint 5.1):
+- **Pack crack**: Medium impact on pack open
+- **Card reveals**: Rarity-tiered (Common/Uncommon=Light, Rare=Medium, Epic=Heavy, Legendary=Success notification)
+- **Battle damage dealt/received**: Medium impact (Heavy impact for heavy attacks)
+- **Victory**: Success notification
+- **Level up**: Success notification (both battle overlay and global toast)
+- **Achievement earned**: Light impact
+- **Achievement collected**: Medium impact
+- No audio — sound effects were not implemented.
 
 ## Architecture
 
@@ -83,8 +101,8 @@ All 14 build sessions complete. The app has:
 - **React Native 0.83.2 / React 19**
 - **React Navigation v6** (pinned — v7 API differs)
 - **@shopify/react-native-skia** — card rendering
-- **react-native-reanimated** — battle animations (lunge, shake, swap, defeat)
-- **react-native-gesture-handler** — drag-to-attack gestures in battle
+- **react-native-reanimated** — all animations (battle, toast choreography, pack opening, ambient effects)
+- **react-native-gesture-handler** — drag-to-attack gestures in battle, swipe-to-dismiss on toasts
 - **Firebase Web SDK v12** — same package as web app, pure JS, works in standard Expo Go
 - **@react-native-async-storage/async-storage** — local persistence
 - **react-native-get-random-values** — Metro shim for Firebase crypto (MUST be first import in App.tsx)
@@ -106,12 +124,21 @@ herocards-native/
     │   └── battleEngine.ts          ← Pure battle logic (HP, damage, stamina, type multipliers, Amp, all 50 abilities)
     ├── components/
     │   ├── AchievementNode.tsx      ← Skill tree node (4 visual states) + hub node
-    │   ├── AchievementPopup.tsx     ← Toast notification for earned achievements
+    │   ├── AchievementPopup.tsx     ← Toast for earned achievements (slam, burst, swipe-to-dismiss)
+    │   ├── AmbientParticles.tsx     ← Viewport-aware particle drift (Home, Store screens)
+    │   ├── AnimatedNumber.tsx       ← Numeric value tick-up with glow flash
     │   ├── BranchConnector.tsx      ← Connecting lines between skill tree nodes
     │   ├── CardWrapper.tsx          ← Scale container for HeroCard/MiniCard
     │   ├── FaceDownCard.tsx         ← Skia face-down card
-    │   ├── HeroCard.tsx             ← Skia hero card (glow, shine, tilt)
-    │   └── MiniCard.tsx             ← Lightweight RN card for grids + battle hand
+    │   ├── GradientBorder.tsx       ← Animated gradient border overlays (violet/mint/gold)
+    │   ├── HeroCard.tsx             ← Skia hero card (glow, shine, tilt, rarity shimmer)
+    │   ├── LevelUpToast.tsx         ← Global level-up toast (slam, burst, swipe-to-dismiss)
+    │   ├── LightningStrike.tsx      ← Damage number + screen shake visual
+    │   ├── MaterialSurface.tsx      ← Material-finish surface panels (brushedMetal, frostedGlass, obsidian)
+    │   ├── MiniCard.tsx             ← Lightweight RN card for grids + battle hand
+    │   ├── ScreenBackground.tsx     ← Screen root wrapper with gradient + breathing vignette
+    │   ├── ShimmerTitle.tsx         ← Gradient-shimmer screen title header
+    │   └── SuccessBurst.tsx         ← Particle burst effect (up to 40 particles, imperative fire())
     ├── context/
     │   ├── FontContext.ts           ← Skia font context (loaded once in App.tsx)
     │   ├── GameStateContext.ts      ← React context wrapping useGameState
@@ -143,7 +170,9 @@ herocards-native/
     │   ├── ProfileScreen.tsx          ← Standalone profile: stats, collection, avatars, account
     │   └── StoreScreen.tsx
     └── theme/
-        └── fonts.ts                 ← FONTS.orbitronBold, FONTS.orbitronBlack, FONTS.rajdhaniSemiBold
+        ├── elevation.ts             ← ELEVATION states + useElevation() hook for press feedback
+        ├── fonts.ts                 ← FONTS.orbitronBold, FONTS.orbitronBlack, FONTS.rajdhaniSemiBold
+        └── theme.ts                 ← T tokens, TIMING, MOTION (slam/burst/float/snap/impact), SPRING, EASE, glowShadow()
 ```
 
 ### Firebase Config
@@ -261,7 +290,7 @@ Root Stack
 ## State Architecture
 | Hook | Owns |
 |------|------|
-| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak, savedBattle). Debounced Firestore save on change. |
+| `useGameState` | All in-memory game state (coins, XP, level, collection, avatars, quests, achievements, cooldowns, battleStats, battleWinStreak, savedBattle, levelUpInfo/clearLevelUp). Debounced Firestore save on change. |
 | `useFirebase` | `loadGameData` + `saveGameData` + `loadCardRoster` — all Firestore reads/writes. |
 | `useBattle` | Battle state machine, animation signals, round sequencing, checkpoint save/resume |
 | `useAchievementProgress` | Computes `familiesByCategory`, `categoryStats`, `uncollectedCount` from game state for CareerScreen |
@@ -278,10 +307,13 @@ Root Stack
 - **Navigation ref**: `createNavigationContainerRef` in `App.tsx` enables global navigation from toast to Career tab
 - **Feats page**: 5 single-tier achievements arranged in a ring layout (not vertical branches)
 - **Battlefield Control**: only multi-tier family in feats-adjacent position — lives in `amp` category with 5 tiers
-- **Entry animations**: deferred for future implementation
+- **Entry animations**: COMPLETE — slam slide-in with MOTION.slam overshoot, badge scale burst, SuccessBurst particle pop, swipe-to-dismiss
 
 ## God Mode
-Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins, max XP, all achievements earned AND collected. Skips Firestore save.
+Toggle on the login screen — unlocks all 200 cards, all avatars, 99999 coins. Skips Firestore save.
+- **XP**: Set to `XP_THRESHOLDS[10] - 50` (just below Level 11) so any battle win triggers a level-up for easy testing
+- **Achievements**: Auto-computed from initial state — only achievements already satisfied by God Mode's starting state are pre-earned. Pack/battle/level achievements trigger naturally during testing.
+- **Pack opening**: Guarantees one of each rarity (Common, Uncommon, Rare, Epic, Legendary) for testing all reveal choreographies
 - God Mode does **NOT** bypass Legendary Lock — the lock applies in all modes
 
 ## Git Workflow
