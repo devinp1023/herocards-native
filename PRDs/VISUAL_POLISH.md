@@ -477,11 +477,12 @@ Each sprint is a focused, shippable unit of work. Commit after each sprint. Run 
 - **Warnings to check:** None — haptics are fire-and-forget, no performance concerns.
 - **Notes:** Card reveals already had rarity-tiered haptics (Common=Light, Rare=Medium, Epic=Heavy, Legendary=Success notification). Achievement collected updated from Success notification to Medium impact per spec. Incoming AI hits also fire haptics so player feels both dealing and receiving damage. Requires physical device to test (no haptics on iOS Simulator).
 
-**Sprint 5.2 — Pack opening choreography**
+**Sprint 5.2 — Pack opening choreography** ✅ COMPLETE
 - Upgrade PackOpeningScreen with full sequence: dim → glow buildup (800ms) → crack + impact → staggered card reveals (200ms apart) using `MOTION.slam`
 - Integrate `<SuccessBurst>` on each card reveal
 - **Verify:** Open a pack — screen dims, pack glows with rarity color, cracks open, cards fly in with overshoot + particles. Feels like an event, not a list appearing.
 - **Warnings to check:** SuccessBurst Particle Cleanup — staggered 200ms reveals will fire bursts in quick succession. Confirm particle pool recycles correctly.
+- **Notes:** Reveal phase now has choreographed sub-phases: dim (300ms) → glow buildup (800ms, rarity-colored halo) → face-down card slams in (MOTION.slam) → user tap → flip → impact slam overshoot + SuccessBurst (16 particles, rarity color) → glow flash/fade → next card transition (200ms fade out → next glow phase). SuccessBurst ref persists across card transitions (outside keyed RevealSlot). Dim overlay persists throughout reveal at 0.4–0.7 opacity for theatrical lighting.
 
 **Sprint 5.3 — Legendary pull choreography**
 - Implement the full legendary pull sequence within pack opening: blackout → violet explosion → 360° card spin → particle shower (20+ particles) → gradient text card name → haptic sequence

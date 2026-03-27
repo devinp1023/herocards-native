@@ -3,15 +3,16 @@
 // Phase 'reveal' → tap each of 5 face-down cards to flip & reveal.
 // Phase 'summary' → see all results, then COLLECT to save + go back.
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   Platform, ScrollView, Dimensions,
 } from 'react-native';
 import Animated, {
+  SharedValue,
   useSharedValue, useAnimatedStyle,
   withTiming, withSpring, withSequence, withDelay, withRepeat,
-  Easing, runOnJS,
+  Easing, runOnJS, cancelAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -25,7 +26,8 @@ import { CardWrapper, CARD_W, CARD_H } from '../components/CardWrapper';
 import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
-import { T } from '../theme/theme';
+import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
+import { T, MOTION } from '../theme/theme';
 import { useRipple } from '../hooks/useRipple';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PackOpening'>;
@@ -122,30 +124,27 @@ const backStyles = StyleSheet.create({
 });
 
 // ── RevealSlot ────────────────────────────────────────────────────────────────
-// Single card with flip-via-scaleX animation.
+// Single card with flip-via-scaleX animation + MOTION.slam choreography.
+const REVEAL_SCALE = 0.72;
+
 interface RevealSlotProps {
   drawn: DrawnCard;
   onRevealed: () => void;
+  onImpact?: () => void;        // fired at flip midpoint (for burst + slam)
   autoReveal?: boolean;
+  entryScale: SharedValue<number>;
+  entryOpacity: SharedValue<number>;
 }
 
-function RevealSlot({ drawn, onRevealed, autoReveal }: RevealSlotProps) {
+function RevealSlot({ drawn, onRevealed, onImpact, autoReveal, entryScale, entryOpacity }: RevealSlotProps) {
   const [showFront, setShowFront] = useState(false);
   const [done, setDone]           = useState(false);
   const scaleX  = useSharedValue(1);
-  const enterY  = useSharedValue(40);
-  const opacity = useSharedValue(0);
 
   const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: scaleX.value }, { translateY: enterY.value }],
-    opacity: opacity.value,
+    transform: [{ scaleX: scaleX.value }, { scale: entryScale.value }],
+    opacity: entryOpacity.value,
   }));
-
-  // Entrance animation on mount
-  React.useEffect(() => {
-    enterY.value  = withSpring(0, { damping: 16, stiffness: 120 });
-    opacity.value = withTiming(1, { duration: 300 });
-  }, []);
 
   const triggerReveal = useCallback(() => {
     if (done) return;
@@ -154,7 +153,6 @@ function RevealSlot({ drawn, onRevealed, autoReveal }: RevealSlotProps) {
     // Phase 1: collapse
     scaleX.value = withTiming(0, { duration: 220, easing: Easing.in(Easing.cubic) }, (finished) => {
       if (!finished) return;
-      // Switch face, then expand
       runOnJS(doMidpoint)();
     });
   }, [done]);
@@ -176,18 +174,20 @@ function RevealSlot({ drawn, onRevealed, autoReveal }: RevealSlotProps) {
     } else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+
+    // Fire impact callback (SuccessBurst + slam overshoot)
+    onImpact?.();
   };
 
   const afterReveal = () => {
     onRevealed();
   };
 
-  // Auto-reveal support (used when all are shown at once)
+  // Auto-reveal support
   React.useEffect(() => {
     if (autoReveal && !done) triggerReveal();
   }, [autoReveal]);
 
-  const REVEAL_SCALE = 0.72;
   const cfg = RC[drawn.card.rarity] ?? RC.Common;
 
   return (
@@ -279,6 +279,21 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [currentCard, setCurrentCard]     = useState(0);
 
+  // ── Choreography shared values ─────────────────────────────────────────
+  const dimOpacity   = useSharedValue(0);
+  const glowScale    = useSharedValue(0.5);
+  const glowOpacity  = useSharedValue(0);
+  const entryScale   = useSharedValue(0);
+  const entryOpacity = useSharedValue(0);
+  const burstRef     = useRef<SuccessBurstHandle>(null);
+  const [cardReady, setCardReady] = useState(false); // face-down card visible
+
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
+  const glowAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
+    opacity: glowOpacity.value,
+  }));
+
   // Breathing shimmer for action buttons
   const btnShimmer = useSharedValue(0);
   React.useEffect(() => {
@@ -296,10 +311,50 @@ export default function PackOpeningScreen({ navigation }: Props) {
   const nextRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
   const collectRipple = useRipple({ rippleColor: 'rgba(0,0,0,0.25)' });
 
+  // ── Choreography helpers ───────────────────────────────────────────────
+  const startGlowPhase = useCallback(() => {
+    setCardReady(false);
+    // Reset entry
+    entryScale.value = 0;
+    entryOpacity.value = 0;
+    // Animate glow buildup (800ms)
+    glowScale.value = 0.5;
+    glowOpacity.value = 0;
+    glowScale.value = withTiming(1.0, { duration: 800, easing: Easing.out(Easing.cubic) });
+    glowOpacity.value = withTiming(0.6, { duration: 800, easing: Easing.out(Easing.cubic) });
+    // Deepen dim
+    dimOpacity.value = withTiming(0.7, { duration: 800, easing: Easing.out(Easing.cubic) });
+    // After glow buildup: slam the face-down card in
+    setTimeout(() => {
+      setCardReady(true);
+      entryOpacity.value = withTiming(1, { duration: 150 });
+      entryScale.value = withSequence(
+        withTiming(MOTION.slam.overshoot, { duration: MOTION.slam.duration * 0.7, easing: MOTION.slam.easing }),
+        withTiming(1.0, { duration: MOTION.slam.duration * 0.3, easing: MOTION.slam.easing }),
+      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 800);
+  }, []);
+
+  const handleImpact = useCallback(() => {
+    // Slam overshoot on the newly revealed card
+    entryScale.value = withSequence(
+      withTiming(MOTION.slam.overshoot, { duration: 200, easing: MOTION.slam.easing }),
+      withTiming(1.0, { duration: 200, easing: MOTION.slam.easing }),
+    );
+    // Flash glow then fade
+    glowOpacity.value = 0.8;
+    glowOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    // Lighten dim
+    dimOpacity.value = withTiming(0.4, { duration: 200, easing: Easing.out(Easing.cubic) });
+    // Fire particle burst
+    burstRef.current?.fire();
+  }, []);
+
   // ── Pack select ──────────────────────────────────────────────────────────
   const openPack = (id: number) => {
     const ok = gs.spendCoins(PACK_COST);
-    if (!ok) return; // not enough credits — button is disabled anyway
+    if (!ok) return;
     const cards = drawPack(id, gs.collection, gs.cardRoster);
     setDrawn(cards);
     setPackId(id);
@@ -308,6 +363,10 @@ export default function PackOpeningScreen({ navigation }: Props) {
     setPhase('reveal');
     // Haptic: pack crack
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Start choreography: dim in, then glow phase
+    dimOpacity.value = 0;
+    dimOpacity.value = withTiming(0.4, { duration: 300, easing: Easing.out(Easing.cubic) });
+    setTimeout(() => startGlowPhase(), 300);
   };
 
   // ── Reveal phase ─────────────────────────────────────────────────────────
@@ -315,13 +374,21 @@ export default function PackOpeningScreen({ navigation }: Props) {
     setRevealedCount(prev => prev + 1);
   };
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     if (currentCard < drawn.length - 1) {
-      setCurrentCard(prev => prev + 1);
+      // Fade out current card
+      entryScale.value = withTiming(0.9, { duration: 200, easing: Easing.in(Easing.cubic) });
+      entryOpacity.value = withTiming(0, { duration: 200, easing: Easing.in(Easing.cubic) });
+      setTimeout(() => {
+        setCurrentCard(prev => prev + 1);
+        startGlowPhase();
+      }, 200);
     } else {
-      setPhase('summary');
+      // Fade dim out and go to summary
+      dimOpacity.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+      setTimeout(() => setPhase('summary'), 300);
     }
-  };
+  }, [currentCard, drawn.length, startGlowPhase]);
 
   // ── Collect ──────────────────────────────────────────────────────────────
   const collect = () => {
@@ -414,6 +481,9 @@ export default function PackOpeningScreen({ navigation }: Props) {
       {/* ── PHASE: REVEAL ── */}
       {phase === 'reveal' && drawn.length > 0 && (
         <View style={s.revealRoot}>
+          {/* Dim overlay */}
+          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }, dimStyle]} />
+
           {/* Progress */}
           <View style={s.progressRow}>
             {drawn.map((_, i) => (
@@ -425,12 +495,30 @@ export default function PackOpeningScreen({ navigation }: Props) {
           </View>
           <Text style={s.revealCounter}>CARD {currentCard + 1} / {drawn.length}</Text>
 
-          {/* Current card slot */}
+          {/* Current card slot + glow halo + burst */}
           <View style={s.revealCardArea}>
-            <RevealSlot
-              key={currentCard}
-              drawn={drawn[currentCard]}
-              onRevealed={onCardRevealed}
+            {/* Glow halo behind card */}
+            <Animated.View pointerEvents="none" style={[s.glowHalo, {
+              backgroundColor: (RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color) + '22',
+              shadowColor: RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color,
+            }, glowAnimStyle]} />
+
+            {cardReady && (
+              <RevealSlot
+                key={currentCard}
+                drawn={drawn[currentCard]}
+                onRevealed={onCardRevealed}
+                onImpact={handleImpact}
+                entryScale={entryScale}
+                entryOpacity={entryOpacity}
+              />
+            )}
+
+            {/* SuccessBurst over card area */}
+            <SuccessBurst
+              ref={burstRef}
+              color={RC[drawn[currentCard]?.card.rarity]?.color ?? RC.Common.color}
+              particleCount={16}
             />
           </View>
 
@@ -445,7 +533,9 @@ export default function PackOpeningScreen({ navigation }: Props) {
 
           {/* Hint / Next button */}
           <View style={s.revealFooter}>
-            {revealedCount <= currentCard ? (
+            {!cardReady ? (
+              <Text style={s.tapHint}>{' '}</Text>
+            ) : revealedCount <= currentCard ? (
               <Text style={s.tapHint}>TAP CARD TO REVEAL</Text>
             ) : currentCard < drawn.length - 1 ? (
               <Animated.View style={[{ borderRadius: T.button.primary.radius }, nextRipple.pressStyle]}>
@@ -457,7 +547,7 @@ export default function PackOpeningScreen({ navigation }: Props) {
               </Animated.View>
             ) : (
               <Animated.View style={[{ borderRadius: T.button.primary.radius }, nextRipple.pressStyle]}>
-                <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen, { overflow: 'hidden' }]} onPress={() => setPhase('summary')} activeOpacity={1} onPressIn={nextRipple.onPressIn} onPressOut={nextRipple.onPressOut}>
+                <TouchableOpacity style={[s.nextBtn, s.nextBtnGreen, { overflow: 'hidden' }]} onPress={goToNext} activeOpacity={1} onPressIn={nextRipple.onPressIn} onPressOut={nextRipple.onPressOut}>
                   <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', borderRadius: T.button.primary.radius }, btnShimmerStyle]} pointerEvents="none" />
                   <Text style={[s.nextBtnText, { color: T.button.primary.text }]}>SEE RESULTS</Text>
                   {nextRipple.rippleView}
@@ -564,7 +654,17 @@ const s = StyleSheet.create({
   dotDone:        { backgroundColor: T.accent.mint },
   dotCurrent:     { backgroundColor: T.accent.mint + '66', transform: [{ scale: 1.3 }] },
   revealCounter:  { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.muted, letterSpacing: T.letterSpacing.lg, marginBottom: 20 },
-  revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  revealCardArea: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  glowHalo: {
+    position: 'absolute',
+    width: CARD_W * REVEAL_SCALE * 1.5,
+    height: CARD_H * REVEAL_SCALE * 1.5,
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 40,
+    shadowOpacity: 1,
+    elevation: 20,
+  },
   revealNameBox:  { paddingHorizontal: 24, marginBottom: 8 },
   revealName:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, color: T.text.primary, letterSpacing: T.letterSpacing.md, textAlign: 'center' },
   revealFooter:   { paddingBottom: 40, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
