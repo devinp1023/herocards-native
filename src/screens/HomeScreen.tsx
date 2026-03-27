@@ -17,7 +17,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSession } from '../context/SessionContext';
 import { totalUniqueOwned } from '../hooks/useGameState';
 import { useGameStateContext } from '../context/GameStateContext';
-import { PACK_COST } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { getTodaysQuests, DIFF_COLOR, Quest } from '../data/quests';
 import { MaterialSurface } from '../components/MaterialSurface';
@@ -268,42 +267,44 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
         </Animated.View>
 
-        {/* ── Battle button ── */}
-        <Animated.View style={[{ borderRadius: 16, marginBottom: 16 }, battleGlowStyle, battleRipple.pressStyle]}>
-          <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
-            <TouchableOpacity
-              style={[styles.battleBtn, { overflow: 'hidden' }]}
-              activeOpacity={1}
-              onPress={() => navigation.navigate('BattleLobby')}
-              onPressIn={battleRipple.onPressIn}
-              onPressOut={battleRipple.onPressOut}
-            >
-              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
-              <MaterialCommunityIcons name="sword-cross" size={28} color={T.text.primary} />
-              <Text style={styles.battleBtnText}>BATTLE</Text>
-              {battleRipple.rippleView}
-            </TouchableOpacity>
-          </GradientBorder>
-        </Animated.View>
+        {/* ── Action buttons row ── */}
+        <View style={styles.actionRow}>
+          {/* Battle */}
+          <Animated.View style={[styles.actionCell, { borderRadius: 16 }, battleGlowStyle, battleRipple.pressStyle]}>
+            <GradientBorder colors={BORDER_COLORS.mint} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.battleBtn, { overflow: 'hidden' }]}
+                activeOpacity={1}
+                onPress={() => navigation.navigate('BattleLobby')}
+                onPressIn={battleRipple.onPressIn}
+                onPressOut={battleRipple.onPressOut}
+              >
+                <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, battleShimmerStyle]} pointerEvents="none" />
+                <MaterialCommunityIcons name="sword-cross" size={36} color={T.text.primary} />
+                <Text style={styles.actionBtnText}>BATTLE</Text>
+                {battleRipple.rippleView}
+              </TouchableOpacity>
+            </GradientBorder>
+          </Animated.View>
 
-        {/* ── Open Pack button ── */}
-        <Animated.View style={[{ borderRadius: 16, marginBottom: 20 }, packGlowStyle, packRipple.pressStyle]}>
-          <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
-            <TouchableOpacity
-              style={[styles.packBtn, { overflow: 'hidden' }]}
-              activeOpacity={1}
-              onPress={() => navigation.navigate('PackOpening' as never)}
-              onPressIn={packRipple.onPressIn}
-              onPressOut={packRipple.onPressOut}
-            >
-              <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
-              <MaterialCommunityIcons name="cards" size={28} color={T.text.primary} />
-              <Text style={styles.packBtnText}>OPEN PACK</Text>
-              <Text style={styles.packBtnSub}>{PACK_COST} CR</Text>
-              {packRipple.rippleView}
-            </TouchableOpacity>
-          </GradientBorder>
-        </Animated.View>
+          {/* Open Pack */}
+          <Animated.View style={[styles.actionCell, { borderRadius: 16 }, packGlowStyle, packRipple.pressStyle]}>
+            <GradientBorder colors={BORDER_COLORS.violet} borderWidth={1.5} borderRadius={16} innerBackground="transparent">
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.packBtn, { overflow: 'hidden' }]}
+                activeOpacity={1}
+                onPress={() => navigation.navigate('PackOpening' as never)}
+                onPressIn={packRipple.onPressIn}
+                onPressOut={packRipple.onPressOut}
+              >
+                <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: T.text.primary, borderRadius: 14.5 }, packShimmerStyle]} pointerEvents="none" />
+                <MaterialCommunityIcons name="cards" size={36} color={T.text.primary} />
+                <Text style={styles.actionBtnText}>OPEN PACK</Text>
+                {packRipple.rippleView}
+              </TouchableOpacity>
+            </GradientBorder>
+          </Animated.View>
+        </View>
 
         {/* ── Daily Quests ── */}
         <View style={styles.questSection}>
@@ -362,37 +363,24 @@ const styles = StyleSheet.create({
   creditsAmount: { fontFamily:'Orbitron_900Black', fontSize:T.font.xl, color:T.accent.mint, lineHeight:24 },
   creditsLabel:  { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.text.muted, letterSpacing:T.letterSpacing.xs },
 
-  // Battle button
+  // Action buttons
+  actionRow: { flexDirection:'row', gap:14, marginBottom:20 },
+  actionCell: { flex:1 },
+  actionBtn: {
+    aspectRatio:1, alignItems:'center', justifyContent:'center',
+    gap:10, borderRadius:14.5,
+  },
   battleBtn: {
-    flexDirection:'row', alignItems:'center', justifyContent:'center',
-    gap:12, paddingVertical:18,
-    backgroundColor:T.stat.atk, borderRadius:14.5,
-    shadowColor:T.stat.atk, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
-    transform:[{ skewX:'-3deg' }],
+    backgroundColor:T.accent.violet,
+    shadowColor:T.accent.violet, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
   },
-  battleBtnText: {
-    fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
-    color:T.text.primary, letterSpacing:T.letterSpacing.xxl,
-    transform:[{ skewX:'3deg' }],
-  },
-
-  // Open pack button
   packBtn: {
-    flexDirection:'row', alignItems:'center', justifyContent:'center',
-    gap:12, paddingVertical:18,
-    backgroundColor:T.accent.mint, borderRadius:14.5,
+    backgroundColor:T.accent.mint,
     shadowColor:T.accent.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:12,
-    transform:[{ skewX:'-3deg' }],
   },
-  packBtnText: {
-    fontFamily:'Orbitron_900Black', fontSize:T.font.xl,
-    color:T.text.primary, letterSpacing:T.letterSpacing.xxl,
-    transform:[{ skewX:'3deg' }],
-  },
-  packBtnSub: {
-    fontFamily:'Orbitron_700Bold', fontSize:T.font.md,
-    color:'#ffffffaa', letterSpacing:T.letterSpacing.md,
-    transform:[{ skewX:'3deg' }],
+  actionBtnText: {
+    fontFamily:'Orbitron_900Black', fontSize:T.font.lg,
+    color:T.text.primary, letterSpacing:T.letterSpacing.xl,
   },
 
   // Daily quests
