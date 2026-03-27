@@ -19,7 +19,7 @@ type Props = {
 };
 
 const PARTICLE_SIZE = 6;
-const DURATION = 600;
+const DURATION = 900;
 const STAGGER = 12;
 const MAX_PARTICLES = 20;
 
