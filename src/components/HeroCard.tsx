@@ -221,6 +221,7 @@ export function HeroCard({
     opacity: activeGlow.value,
   }));
 
+
   const statPills = [
     { label: 'A', value: card.power,   bg: T.stat.atk, bgDark: '#b8283a' },
     { label: 'D', value: card.defense, bg: T.stat.def, bgDark: '#6d3fd4' },

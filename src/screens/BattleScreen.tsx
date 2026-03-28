@@ -11,9 +11,9 @@ import {
   StyleSheet, Platform, PanResponder, Animated, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AmpRaceBar } from '../components/AmpRaceBar';
+import { AmpEffectLabel } from '../components/AmpEffectLabel';
 import ReAnimated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withDelay, Easing, interpolate,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withSpring, withDelay, cancelAnimation, Easing, interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -132,7 +132,7 @@ function EmptySlot({ w, h }: { w: number; h: number }) {
   return <View style={[es.slot, { width: w, height: h, borderRadius: w * 0.08 }]} />;
 }
 const es = StyleSheet.create({
-  slot: { borderWidth: 1, borderColor: '#ffffff33', borderStyle: 'dashed' },
+  slot: { borderWidth: 1, borderColor: '#ffffff33', borderStyle: 'dashed', backgroundColor: T.bg.elevated },
 });
 
 const cb = StyleSheet.create({
@@ -175,10 +175,94 @@ const da = StyleSheet.create({
   absolute: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
 });
 
+// ── Amp card glow — rendered OUTSIDE CardWrapper to escape overflow:hidden ────
+const CARD_CORNER_SCALED = Math.round(14 * ACTIVE_SCALE); // ≈7px at 0.52 scale
+
+function AmpCardGlow({ ampPercent, ampColor, children }: {
+  ampPercent: number; ampColor: string; children: React.ReactNode;
+}) {
+  const ampSv    = useSharedValue(0);
+  const ampPulse = useSharedValue(1.0);
+  const pulsingRef = useRef(false);
+
+  useEffect(() => {
+    ampSv.value = withTiming(ampPercent, { duration: 300, easing: Easing.out(Easing.cubic) });
+  }, [ampPercent]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (ampPercent >= 75 && !pulsingRef.current) {
+      pulsingRef.current = true;
+      ampPulse.value = withRepeat(
+        withSequence(
+          withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
+      );
+    } else if (ampPercent < 75 && pulsingRef.current) {
+      pulsingRef.current = false;
+      cancelAnimation(ampPulse);
+      ampPulse.value = withTiming(1.0, { duration: 200 });
+    }
+    return () => { cancelAnimation(ampPulse); pulsingRef.current = false; };
+  }, [ampPercent]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ring1 = useAnimatedStyle(() => {
+    'worklet';
+    const pct = ampSv.value;
+    if (pct < 25) return { opacity: 0 };
+    return { opacity: (pct >= 100 ? 0.85 : 0.25) * ampPulse.value };
+  });
+  const ring2 = useAnimatedStyle(() => {
+    'worklet';
+    const pct = ampSv.value;
+    if (pct < 50) return { opacity: 0 };
+    return { opacity: (pct >= 100 ? 0.7 : 0.35) * ampPulse.value };
+  });
+  const ring3 = useAnimatedStyle(() => {
+    'worklet';
+    const pct = ampSv.value;
+    if (pct < 75) return { opacity: 0 };
+    return { opacity: (pct >= 100 ? 0.55 : 0.45) * ampPulse.value };
+  });
+
+  const ringBase = {
+    position: 'absolute' as const,
+    borderWidth: 1.5,
+    borderColor: ampColor,
+    shadowColor: ampColor,
+    shadowOffset: { width: 0, height: 0 } as const,
+    shadowOpacity: 1,
+  };
+
+  return (
+    <View style={amp.wrap}>
+      <ReAnimated.View style={[ringBase, ring1, {
+        top: -5, left: -5, width: ACTIVE_W + 10, height: ACTIVE_H + 10,
+        borderRadius: CARD_CORNER_SCALED + 5, shadowRadius: 8,
+      }]} pointerEvents="none" />
+      <ReAnimated.View style={[ringBase, ring2, {
+        top: -10, left: -10, width: ACTIVE_W + 20, height: ACTIVE_H + 20,
+        borderRadius: CARD_CORNER_SCALED + 10, shadowRadius: 14,
+      }]} pointerEvents="none" />
+      <ReAnimated.View style={[ringBase, ring3, {
+        top: -16, left: -16, width: ACTIVE_W + 32, height: ACTIVE_H + 32,
+        borderRadius: CARD_CORNER_SCALED + 16, shadowRadius: 22,
+      }]} pointerEvents="none" />
+      {children}
+    </View>
+  );
+}
+const amp = StyleSheet.create({
+  wrap: { position: 'relative' },
+});
+
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure, onPreview }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, aiAmp, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; attackKey: number; defeatingCard: BattleCard | null;
+  aiAmp: number;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
 }) {
@@ -260,18 +344,20 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
           >
             <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
               <ReAnimated.View style={entryStyle}>
-                <CardWrapper scale={ACTIVE_SCALE}>
-                  <HeroCard
-                    card={card}
-                    showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
-                    currentHp={card.hp}
-                    maxHp={card.maxHp}
-                    currentStamina={card.stamina}
-                    maxStamina={card.maxStamina}
-                    isActive
-                    hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
-                  />
-                </CardWrapper>
+                <AmpCardGlow ampPercent={aiAmp} ampColor="#B14EFF">
+                  <CardWrapper scale={ACTIVE_SCALE}>
+                    <HeroCard
+                      card={card}
+                      showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                      currentHp={card.hp}
+                      maxHp={card.maxHp}
+                      currentStamina={card.stamina}
+                      maxStamina={card.maxStamina}
+                      isActive
+                      hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                    />
+                  </CardWrapper>
+                </AmpCardGlow>
               </ReAnimated.View>
             </TouchableOpacity>
             <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
@@ -297,12 +383,13 @@ const aas = StyleSheet.create({
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
 function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
-  swapTargeted, hitKey, defeatingCard, onCardMeasure, onPreview }: {
+  swapTargeted, hitKey, defeatingCard, playerAmp, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   swapTargeted: boolean;
   hitKey: number;
   defeatingCard: BattleCard | null;
+  playerAmp: number;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
 }) {
@@ -397,18 +484,20 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
         <ReAnimated.View style={shakeStyle}>
           <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
             <ReAnimated.View style={entryStyle}>
-              <CardWrapper scale={ACTIVE_SCALE}>
-                <HeroCard
-                  card={card}
-                  showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
-                  currentHp={card.hp}
-                  maxHp={card.maxHp}
-                  currentStamina={card.stamina}
-                  maxStamina={card.maxStamina}
-                  isActive
-                  hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
-                />
-              </CardWrapper>
+              <AmpCardGlow ampPercent={playerAmp} ampColor="#00FFAA">
+                <CardWrapper scale={ACTIVE_SCALE}>
+                  <HeroCard
+                    card={card}
+                    showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
+                    currentHp={card.hp}
+                    maxHp={card.maxHp}
+                    currentStamina={card.stamina}
+                    maxStamina={card.maxStamina}
+                    isActive
+                    hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
+                  />
+                </CardWrapper>
+              </AmpCardGlow>
             </ReAnimated.View>
           </TouchableOpacity>
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
@@ -1045,6 +1134,24 @@ export default function BattleScreen({ navigation, route }: Props) {
     if (h !== swapTargetedRef.current) { swapTargetedRef.current = h; setSwapTargeted(h); }
   }, []);
 
+  // ── Amp trigger burst signal ───────────────────────────────────────────────
+  const [isAmpTriggered, setIsAmpTriggered] = useState(false);
+  const prevAmpRef = useRef({ player: 0, ai: 0 });
+  useEffect(() => {
+    const wasMaxed = prevAmpRef.current.player >= 100 || prevAmpRef.current.ai >= 100;
+    const nowMaxed = battle.playerAmp >= 100 || battle.aiAmp >= 100;
+    if (!wasMaxed && nowMaxed) {
+      setIsAmpTriggered(true);
+      const t = setTimeout(() => setIsAmpTriggered(false), 800);
+      prevAmpRef.current = { player: battle.playerAmp, ai: battle.aiAmp };
+      return () => clearTimeout(t);
+    }
+    prevAmpRef.current = { player: battle.playerAmp, ai: battle.aiAmp };
+  }, [battle.playerAmp, battle.aiAmp]);
+
+  const handleAmpReroll  = useCallback(() => battle.spendAmp(),   [battle]);
+  const handleAmpTrigger = useCallback(() => battle.triggerAmp(), [battle]);
+
   if (battle.phase === 'done' && battle.winner) {
     return (
       <ResultScreen
@@ -1108,6 +1215,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               hitKey={battle.aiHitKey}
               attackKey={battle.aiAttackKey}
               defeatingCard={battle.lastDefeatedAiCard}
+              aiAmp={battle.aiAmp}
               onCardMeasure={onAiCardMeasure}
               onPreview={onPreview}
             />
@@ -1124,6 +1232,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               swapTargeted={swapTargeted}
               hitKey={battle.playerHitKey}
               defeatingCard={battle.lastDefeatedPlayerCard}
+              playerAmp={battle.playerAmp}
               onCardMeasure={onPlayerCardMeasure}
               onPreview={onPreview}
             />
@@ -1131,19 +1240,14 @@ export default function BattleScreen({ navigation, route }: Props) {
         </View>
 
         <View style={s.ampOverlay}>
-          <AmpRaceBar
+          <AmpEffectLabel
+            effectName={AMP_EFFECT_LABELS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
             playerAmp={battle.playerAmp}
             aiAmp={battle.aiAmp}
-            currentEffect={AMP_EFFECT_LABELS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
-            effectColor={AMP_EFFECT_COLORS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
-            onTrigger={battle.triggerAmp}
-            onSpend={battle.spendAmp}
-            playerCanTrigger={battle.canTrigger}
-            playerCanSpend={battle.canSpend}
-            activeEffectInfo={battle.ampActiveEffect && battle.ampRoundsLeft > 0 ? {
-              roundsLeft: battle.ampRoundsLeft,
-              triggeredBy: battle.ampTriggeredBy,
-            } : null}
+            isTriggered={isAmpTriggered}
+            onReroll={handleAmpReroll}
+            onTrigger={handleAmpTrigger}
+            canInteract={battle.phase === 'ready'}
           />
         </View>
       </View>
@@ -1195,7 +1299,7 @@ const s = StyleSheet.create({
 
   combatZone: { flex: 1, flexDirection: 'row', paddingVertical: 6, position: 'relative' as const },
   cardColumn: { flex: 1 },
-  ampOverlay: { position: 'absolute' as const, right: 0, top: 6, bottom: 6 },
+  ampOverlay: { position: 'absolute' as const, right: 6, top: 6, bottom: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: T.letterSpacing.xxl, paddingHorizontal: 10 },
 
