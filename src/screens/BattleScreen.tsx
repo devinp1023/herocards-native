@@ -470,6 +470,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   onPreview: (c: BattleCard) => void;
 }) {
   const legendaryLock = card.rarity === 'Legendary' && playerKillCount < 3;
+  const [dragging, setDragging] = useState(false);
   const dragX              = useRef(new Animated.Value(0)).current;
   const dragY              = useRef(new Animated.Value(0)).current;
 
@@ -523,12 +524,13 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
     Animated.parallel([
       Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
       Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-    ]).start();
+    ]).start(() => setDragging(false));
   };
 
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
     onMoveShouldSetPanResponder:  (_, gs) => !legendaryLockRef.current && (phaseRef.current === 'ready' || phaseRef.current === 'selecting') && (Math.abs(gs.dx) > 3 || Math.abs(gs.dy) > 3),
+    onPanResponderGrant: () => { setDragging(true); },
     onPanResponderMove: (_, gs) => {
       const cx = gs.dx * 0.7;
       const cy = gs.dy * 0.7;
@@ -579,7 +581,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   const trailColor = TYPE_COLORS[card.type] ?? '#00FFAA';
 
   return (
-    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : HAND_OVERLAP, zIndex: total - index }]}>
+    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : HAND_OVERLAP, zIndex: dragging ? 100 : total - index }]}>
       {/* Glow trail ghosts — positioned relative to card origin, behind dragged card */}
       <View style={gt.container} pointerEvents="none">
         {ghostXs.map((_, g) => (
@@ -679,7 +681,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
   );
 }
 const pz = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 10 },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 10, zIndex: 5, overflow: 'visible' as const },
 });
 
 // ── Amp effect display constants (used by eventLine and AmpMeter) ─────────────
