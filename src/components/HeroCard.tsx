@@ -57,7 +57,7 @@ const NAME_X    = TYPE_CX + TYPE_R + 8; // 56
 const NAME_Y    = 5;
 
 // Subtitle info (top-right)
-const SUB_X     = CARD_W - PAD - 100;   // right-aligned area
+const SUB_X     = CARD_W - PAD - 50;    // right-aligned area (narrower — number only)
 const SUB_Y     = 10;
 
 // Stat pills (anchored to bottom)
@@ -530,13 +530,10 @@ export function HeroCard({
         <Text style={styles.cardName} numberOfLines={1}>{card.name}</Text>
       </View>
 
-      {/* Alliance / number / rarity (top-right) */}
+      {/* Card number (top-right) */}
       <View pointerEvents="none" style={styles.subtitleOverlay}>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {card.alliance.toUpperCase()} {'\u2022'} #{String(card.id).padStart(3, '0')}
-        </Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
-          {card.rarity.toUpperCase()}
+          #{String(card.id).padStart(3, '0')}
         </Text>
       </View>
 
@@ -673,7 +670,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: PAD,
     top: SUB_Y,
-    width: 140,
+    width: 60,
     height: 34,
     alignItems: 'flex-end',
     justifyContent: 'center',

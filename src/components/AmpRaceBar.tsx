@@ -49,10 +49,10 @@ interface AmpRaceBarProps {
 const BUILDING_THRESHOLD = 50;
 const NEAR_FULL_THRESHOLD = 80;
 const FULL = 100;
-const BAR_WIDTH = 6;
-const BAR_RADIUS = 3;
-const EFFECT_FONT_SIZE = T.font.md; // 14px
-const EFFECT_LANE_W = 22; // width reserved for the rotated text lane
+const BAR_WIDTH = 10;
+const BAR_RADIUS = 5;
+const EFFECT_FONT_SIZE = T.font.lg; // 18px
+const EFFECT_LANE_W = 26; // width reserved for the rotated text lane
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -395,6 +395,7 @@ export const AmpRaceBar = React.memo(AmpRaceBarInner);
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
     paddingVertical: 4,
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
 
   // Left column: numbers + bars + center button
   barsColumn: {
-    width: 28,
+    width: 46,
     flexDirection: 'column',
     alignItems: 'center',
   },
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
 
   ampNumber: {
     fontFamily: 'Orbitron_900Black',
-    fontSize: 10,
+    fontSize: T.font.lg,
     textAlign: 'center',
   },
 

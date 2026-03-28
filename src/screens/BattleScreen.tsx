@@ -20,7 +20,7 @@ import * as Haptics from 'expo-haptics';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
-import { BattleEvent, BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
+import { BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
 import { RC, TYPE_COLORS } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { useGameStateContext } from '../context/GameStateContext';
@@ -35,7 +35,7 @@ import { T, MOTION } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE   = 0.40;
+const ACTIVE_SCALE   = 0.52;
 const HAND_SCALE     = 0.30;
 const AI_HAND_SCALE  = 0.14;
 const HAND_OVERLAP   = -18;
@@ -687,46 +687,6 @@ const AMP_EFFECT_LABELS: Record<AmpEffectName, string> = {
   FieldMedic: 'FIELD MEDIC', LockOn: 'LOCK ON', Equaliser: 'EQUALISER',
 };
 
-// ── Event log (compact) ───────────────────────────────────────────────────────
-function eventLine(ev: BattleEvent, idx: number): React.ReactNode {
-  switch (ev.type) {
-    case 'ATTACK':
-      if (ev.missed) return <Text key={idx} style={evs.miss}>{ev.attacker} missed!</Text>;
-      const mult = ev.typeMultiplier;
-      const adv  = mult >= 2.0 ? ' (adv)' : mult <= 0.5 ? ' (weak)' : '';
-      return <Text key={idx} style={[evs.base, { color: ev.attackerSide === 'player' ? T.accent.mint : T.status.danger }]}>{ev.attacker} → {ev.defender}: {ev.damage}{adv}</Text>;
-    case 'ABILITY':   return <Text key={idx} style={evs.ability}>{ev.ability}: {ev.effect}</Text>;
-    case 'DEFEAT':    return <Text key={idx} style={evs.defeat}>{ev.card} defeated</Text>;
-    case 'CARD_ENTER':return <Text key={idx} style={evs.enter}>{ev.side === 'player' ? 'Your' : 'AI'} {ev.card} enters</Text>;
-    case 'AI_SWAP':   return <Text key={idx} style={evs.swap}>AI swaps to {ev.card}</Text>;
-    case 'PLAYER_SWAP':return <Text key={idx} style={evs.swap}>You swap in {ev.card}</Text>;
-    case 'PLAYER_DRAW':return <Text key={idx} style={evs.draw}>You draw {ev.card}</Text>;
-    case 'FORCED_DRAW':return <Text key={idx} style={evs.draw}>{ev.side === 'player' ? 'You draw' : 'AI draws'} {ev.card}</Text>;
-    case 'BATTLE_START':return <Text key={idx} style={evs.start}>{ev.playerActive.name} vs {ev.aiActive.name}</Text>;
-    case 'AMP_TRIGGER': {
-      const lbl = AMP_EFFECT_LABELS[ev.effect];
-      const who = ev.side === 'player' ? 'You' : 'AI';
-      const detail = ev.healAmount ? ` (+${ev.healAmount} HP)` : '';
-      return <Text key={idx} style={evs.amp}>{who} triggers {lbl}{detail}</Text>;
-    }
-    case 'AMP_SPEND':   return <Text key={idx} style={evs.amp}>{ev.side === 'player' ? 'You' : 'AI'} switches effect → {AMP_EFFECT_LABELS[ev.newEffect]}</Text>;
-    case 'AMP_EFFECT_END': return <Text key={idx} style={evs.ampEnd}>{AMP_EFFECT_LABELS[ev.effect]} fades</Text>;
-    case 'AMP_BLOCKED': return <Text key={idx} style={evs.ampEnd}>Lock On: {ev.side === 'player' ? 'Your' : 'AI'} {ev.action} blocked</Text>;
-    default: return null;
-  }
-}
-const evs = StyleSheet.create({
-  base:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, lineHeight: 16 },
-  miss:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.text.muted, lineHeight: 16 },
-  ability: { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: '#cc6dff', lineHeight: 15 },
-  defeat:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: '#ff4060', lineHeight: 16 },
-  enter:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.status.vitality, lineHeight: 16 },
-  swap:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: '#ffeb3b', lineHeight: 16 },
-  draw:    { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: T.text.muted, lineHeight: 15 },
-  start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.accent.mint, lineHeight: 16 },
-  amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.domain.winStreak, lineHeight: 16 },
-  ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: T.text.muted, lineHeight: 15 },
-});
 
 // ── Attack buttons ────────────────────────────────────────────────────────────
 // ── Skewed gradient button ─────────────────────────────────────────────────────
@@ -1032,9 +992,6 @@ export default function BattleScreen({ navigation, route }: Props) {
 
   // No footer needed — the empty active slot in PlayerActiveSection guides the user
 
-  const visibleEvents = battle.lastEvents
-    .filter(e => e.type !== 'ROUND_START' && e.type !== 'BATTLE_START')
-    .slice(-3);
 
   return (
     <ScreenBackground theme="battle">
@@ -1087,12 +1044,6 @@ export default function BattleScreen({ navigation, route }: Props) {
             />
           </View>
 
-          {visibleEvents.length > 0 && (
-            <View style={s.logBox}>
-              {visibleEvents.map((ev, i) => eventLine(ev, i))}
-            </View>
-          )}
-
           <View style={s.cardSection}>
             <PlayerActiveSection
               card={battle.playerActive}
@@ -1110,20 +1061,22 @@ export default function BattleScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <AmpRaceBar
-          playerAmp={battle.playerAmp}
-          aiAmp={battle.aiAmp}
-          currentEffect={AMP_EFFECT_LABELS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
-          effectColor={AMP_EFFECT_COLORS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
-          onTrigger={battle.triggerAmp}
-          onSpend={battle.spendAmp}
-          playerCanTrigger={battle.canTrigger}
-          playerCanSpend={battle.canSpend}
-          activeEffectInfo={battle.ampActiveEffect && battle.ampRoundsLeft > 0 ? {
-            roundsLeft: battle.ampRoundsLeft,
-            triggeredBy: battle.ampTriggeredBy,
-          } : null}
-        />
+        <View style={s.ampOverlay}>
+          <AmpRaceBar
+            playerAmp={battle.playerAmp}
+            aiAmp={battle.aiAmp}
+            currentEffect={AMP_EFFECT_LABELS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
+            effectColor={AMP_EFFECT_COLORS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
+            onTrigger={battle.triggerAmp}
+            onSpend={battle.spendAmp}
+            playerCanTrigger={battle.canTrigger}
+            playerCanSpend={battle.canSpend}
+            activeEffectInfo={battle.ampActiveEffect && battle.ampRoundsLeft > 0 ? {
+              roundsLeft: battle.ampRoundsLeft,
+              triggeredBy: battle.ampTriggeredBy,
+            } : null}
+          />
+        </View>
       </View>
 
       {/* Player zone — face-up hand (above action bar) */}
@@ -1171,10 +1124,10 @@ const s = StyleSheet.create({
   forfeitBtn:   { marginTop: 4, paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, borderColor: T.status.danger + '66', backgroundColor: T.status.danger + '18', transform: [{ skewX: '-3deg' }] },
   forfeitText:  { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.button.secondary.text, letterSpacing: T.button.secondary.letterSpacing, transform: [{ skewX: '3deg' }] },
 
-  combatZone: { flex: 1, flexDirection: 'row', paddingVertical: 6 },
+  combatZone: { flex: 1, flexDirection: 'row', paddingVertical: 6, position: 'relative' as const },
   cardColumn: { flex: 1 },
+  ampOverlay: { position: 'absolute' as const, right: 0, top: 6, bottom: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: T.letterSpacing.xxl, paddingHorizontal: 10 },
-  logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 
 });
