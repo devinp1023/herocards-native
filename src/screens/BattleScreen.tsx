@@ -11,7 +11,7 @@ import {
   StyleSheet, Platform, PanResponder, Animated, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Canvas, Path as SkPath, Skia } from '@shopify/react-native-skia';
+import { AmpRaceBar } from '../components/AmpRaceBar';
 import ReAnimated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withDelay, Easing,
 } from 'react-native-reanimated';
@@ -35,18 +35,21 @@ import { T, MOTION } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE = 0.40;
-const HAND_SCALE   = 0.20;
-const HAND_OVERLAP = 0;
+const ACTIVE_SCALE   = 0.40;
+const HAND_SCALE     = 0.30;
+const AI_HAND_SCALE  = 0.14;
+const HAND_OVERLAP   = -18;
 
 const DECK_SCALE = 0.22;
 
-const ACTIVE_W = Math.round(CARD_W * ACTIVE_SCALE);
-const ACTIVE_H = Math.round(CARD_H * ACTIVE_SCALE);
-const HAND_W   = Math.round(CARD_W * HAND_SCALE);
-const HAND_H   = Math.round(CARD_H * HAND_SCALE);
-const DECK_W   = Math.round(CARD_W * DECK_SCALE);
-const DECK_H   = Math.round(CARD_H * DECK_SCALE);
+const ACTIVE_W    = Math.round(CARD_W * ACTIVE_SCALE);
+const ACTIVE_H    = Math.round(CARD_H * ACTIVE_SCALE);
+const HAND_W      = Math.round(CARD_W * HAND_SCALE);
+const HAND_H      = Math.round(CARD_H * HAND_SCALE);
+const AI_HAND_W   = Math.round(CARD_W * AI_HAND_SCALE);
+const AI_HAND_H   = Math.round(CARD_H * AI_HAND_SCALE);
+const DECK_W      = Math.round(CARD_W * DECK_SCALE);
+const DECK_H      = Math.round(CARD_H * DECK_SCALE);
 
 const HP_GAP  = 12;
 
@@ -171,12 +174,11 @@ const da = StyleSheet.create({
 });
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure, onPreview, amp }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; attackKey: number; defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
-  amp: number;
 }) {
   const cardRef = useRef<View>(null);
 
@@ -236,7 +238,16 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
   }
   return (
     <View style={aas.row}>
-      <AmpBar amp={amp} baseColor={T.status.danger} side="ai" />
+      <View style={aas.deckCol}>
+        {deckCount > 0 ? (
+          <View style={aas.deckWrap}>
+            <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
+            <View style={aas.badge}><Text style={aas.badgeText}>{deckCount}</Text></View>
+          </View>
+        ) : (
+          <View style={{ width: DECK_W, height: DECK_H }} />
+        )}
+      </View>
       {/* lungeStyle moves the whole card+shake together toward the player */}
       <ReAnimated.View style={lungeStyle}>
         <ReAnimated.View style={shakeStyle}>
@@ -265,24 +276,13 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
           </View>
         </ReAnimated.View>
       </ReAnimated.View>
-      <View style={{ width: HP_GAP }} />
-      <View style={aas.deckCol}>
-        {deckCount > 0 ? (
-          <View style={aas.deckWrap}>
-            <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
-            <View style={aas.badge}><Text style={aas.badgeText}>{deckCount}</Text></View>
-          </View>
-        ) : (
-          <View style={{ width: DECK_W, height: DECK_H }} />
-        )}
-      </View>
     </View>
   );
 }
 const aas = StyleSheet.create({
-  row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, position: 'relative' as const },
   empty:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xl, color: T.bg.border },
-  deckCol:      { alignItems: 'center', gap: 4 },
+  deckCol:      { position: 'absolute', left: 6, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', gap: 4 },
   deckWrap:     { position: 'relative' },
   badge:        { position: 'absolute', bottom: -4, right: -4, backgroundColor: T.bg.elevated, borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
   badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#9966ff', lineHeight: 14 },
@@ -294,8 +294,7 @@ const aas = StyleSheet.create({
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
 function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
-  swapTargeted, hitKey, defeatingCard, onCardMeasure, onPreview,
-  amp, canTrigger, canSpend, onTrigger, onSpend }: {
+  swapTargeted, hitKey, defeatingCard, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   swapTargeted: boolean;
@@ -303,9 +302,6 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
   defeatingCard: BattleCard | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
-  amp: number;
-  canTrigger: boolean; canSpend: boolean;
-  onTrigger: () => void; onSpend: () => void;
 }) {
   const cardSlotRef      = useRef<View>(null);
   const onCardMeasureRef = useRef(onCardMeasure);
@@ -370,7 +366,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
   if (!card) {
     return (
       <View style={pas.row}>
-        <AmpBar amp={amp} baseColor={T.accent.mint} side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
+        {deckSection}
         {/* Empty active slot — measured as the swap drop-zone for hand card drags */}
         <View
           ref={cardSlotRef}
@@ -382,15 +378,13 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
             : <Text style={pas.emptyActiveHint}>drag card{'\n'}here</Text>
           }
         </View>
-        <View style={{ width: HP_GAP }} />
-        {deckSection}
       </View>
     );
   }
 
   return (
     <View style={pas.row}>
-      <AmpBar amp={amp} baseColor={T.accent.mint} side="player" canTrigger={canTrigger} canSpend={canSpend} onTrigger={onTrigger} onSpend={onSpend} />
+      {deckSection}
       {/* Measure only the card slot — this is the precise swap drop-zone */}
       <View
         ref={cardSlotRef}
@@ -416,14 +410,11 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
         </ReAnimated.View>
       </View>
-
-      <View style={{ width: HP_GAP }} />
-      {deckSection}
     </View>
   );
 }
 const pas = StyleSheet.create({
-  row:               { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  row:               { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, position: 'relative' as const },
   deckBadgeActive:   { borderColor: T.accent.mint + '55' },
   deckCountActive:   { color: T.accent.mint },
   cardSlot:          { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
@@ -441,8 +432,8 @@ function AIZone({ handCount }: { handCount: number }) {
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const filled = i < handCount;
         return (
-          <View key={i} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: filled ? 1 : 0 }}>
-            {filled ? <CardBack w={HAND_W} h={HAND_H} /> : <EmptySlot w={HAND_W} h={HAND_H} />}
+          <View key={i} style={{ marginLeft: i === 0 ? 0 : 3, zIndex: filled ? 1 : 0 }}>
+            {filled ? <CardBack w={AI_HAND_W} h={AI_HAND_H} /> : <EmptySlot w={AI_HAND_W} h={AI_HAND_H} />}
           </View>
         );
       })}
@@ -450,7 +441,7 @@ function AIZone({ handCount }: { handCount: number }) {
   );
 }
 const az = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 5 },
 });
 
 // ── Glow trail config ────────────────────────────────────────────────────────
@@ -584,7 +575,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
   const trailColor = TYPE_COLORS[card.type] ?? '#00FFAA';
 
   return (
-    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : 4, zIndex: total - index }]}>
+    <ReAnimated.View style={[entryStyle, { marginLeft: index === 0 ? 0 : HAND_OVERLAP, zIndex: total - index }]}>
       {/* Glow trail ghosts — positioned relative to card origin, behind dragged card */}
       <View style={gt.container} pointerEvents="none">
         {ghostXs.map((_, g) => (
@@ -674,7 +665,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
             onPreview={onPreview}
           />
         ) : (
-          <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : 4, zIndex: 0 }}>
+          <View key={`empty-${i}`} style={{ marginLeft: i === 0 ? 0 : HAND_OVERLAP, zIndex: 0 }}>
             <EmptySlot w={HAND_W} h={HAND_H} />
           </View>
         );
@@ -683,7 +674,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
   );
 }
 const pz = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
+  container: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 10 },
 });
 
 // ── Amp effect display constants (used by eventLine and AmpMeter) ─────────────
@@ -735,108 +726,6 @@ const evs = StyleSheet.create({
   start:   { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.accent.mint, lineHeight: 16 },
   amp:     { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.md, color: T.domain.winStreak, lineHeight: 16 },
   ampEnd:  { fontFamily: 'Rajdhani_600SemiBold', fontSize: T.font.sm, color: T.text.muted, lineHeight: 15 },
-});
-
-// ── Amp meter ─────────────────────────────────────────────────────────────────
-// ── Arch amp bar — ∩ shape drawn with Skia path trimming ──────────────────────
-const AMP_ARCH_W      = 58;  // canvas width
-const AMP_ARCH_H      = 48;  // canvas height
-const AMP_STROKE      = 5;
-const AMP_LEG_H       = 18;  // how far the legs extend below the curve
-// Build the ∩ path: starts bottom-left, goes up, arcs across the top, comes down right
-function makeArchPath() {
-  const p    = Skia.Path.Make();
-  const pad  = AMP_STROKE / 2 + 1;
-  const legB = AMP_ARCH_H - 1;           // bottom of legs
-  const legT = AMP_ARCH_H - AMP_LEG_H;   // where the curve starts
-  const cx   = AMP_ARCH_W / 2;
-  const rx   = cx - pad;                  // horizontal radius
-  const ry   = legT - pad;               // vertical radius (top of curve to pad)
-  // Start at bottom-left leg
-  p.moveTo(pad, legB);
-  p.lineTo(pad, legT);
-  // Arc across the top (semi-ellipse)
-  p.cubicTo(pad, pad, AMP_ARCH_W - pad, pad, AMP_ARCH_W - pad, legT);
-  // Down to bottom-right leg
-  p.lineTo(AMP_ARCH_W - pad, legB);
-  return p;
-}
-const archTrackPath = makeArchPath();
-
-function AmpBar({ amp, baseColor, side, canTrigger, canSpend, onTrigger, onSpend }: {
-  amp: number; baseColor: string; side: 'player' | 'ai';
-  canTrigger?: boolean; canSpend?: boolean;
-  onTrigger?: () => void; onSpend?: () => void;
-}) {
-  const pct   = Math.min(1, amp / 100);
-  const color = pct >= 1 ? T.status.caution : baseColor;
-  return (
-    <View style={ab.wrap}>
-      <Canvas style={{ width: AMP_ARCH_W, height: AMP_ARCH_H }}>
-        {/* Background track */}
-        <SkPath
-          path={archTrackPath}
-          color="#1a1a35"
-          style="stroke"
-          strokeWidth={AMP_STROKE}
-          strokeCap="round"
-        />
-        {/* Fill — trims along the path from start */}
-        {pct > 0 && (
-          <SkPath
-            path={archTrackPath}
-            color={color}
-            style="stroke"
-            strokeWidth={AMP_STROKE}
-            strokeCap="round"
-            start={0}
-            end={pct}
-          />
-        )}
-      </Canvas>
-      {/* Number underneath the curve */}
-      <Text style={[ab.pct, { color }]}>{amp}</Text>
-      {side === 'player' && canTrigger && onTrigger && (
-        <TouchableOpacity style={[ab.ampBtn, { borderColor: T.status.caution + '88', backgroundColor: T.status.caution + '20' }]} onPress={onTrigger} activeOpacity={0.75}>
-          <Text style={[ab.ampBtnText, { color: T.status.caution }]}>TRIGGER</Text>
-        </TouchableOpacity>
-      )}
-      {side === 'player' && canSpend && !canTrigger && onSpend && (
-        <TouchableOpacity style={[ab.ampBtn, { borderColor: T.accent.mint + '66', backgroundColor: T.accent.mint + '14' }]} onPress={onSpend} activeOpacity={0.75}>
-          <Text style={ab.ampBtnText}>SPEND</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}
-const ab = StyleSheet.create({
-  wrap:       { position: 'absolute', left: 4, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  pct:        { fontFamily: 'Orbitron_900Black', fontSize: T.font.lg, marginTop: -4 },
-  ampBtn:     { marginTop: 2, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
-  ampBtnText: { fontFamily: 'Orbitron_900Black', fontSize: T.font.xs, color: T.accent.mint, letterSpacing: 0.3 },
-});
-
-// ── Shared amp effect banner — displayed in VS row ────────────────────────────
-function AmpEffectBanner({ poolEffect, activeEffect, roundsLeft, triggeredBy }: {
-  poolEffect: AmpEffectName; activeEffect: AmpEffectName | null;
-  roundsLeft: number; triggeredBy: 'player' | 'ai' | null;
-}) {
-  const effectColor = AMP_EFFECT_COLORS[activeEffect ?? poolEffect];
-  const effectLabel = AMP_EFFECT_LABELS[activeEffect ?? poolEffect];
-  const effectActive = !!activeEffect && roundsLeft > 0;
-  return (
-    <View style={[aeb.badge, { borderColor: effectColor + '66', backgroundColor: effectColor + '18' }]}>
-      <Text style={[aeb.label, { color: effectColor }]}>{effectLabel}</Text>
-      {effectActive && (
-        <Text style={[aeb.rounds, { color: effectColor }]}>{roundsLeft}r {triggeredBy === 'player' ? '(YOU)' : '(AI)'}</Text>
-      )}
-    </View>
-  );
-}
-const aeb = StyleSheet.create({
-  badge:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  label:  { fontFamily: 'Orbitron_900Black', fontSize: T.font.xs, letterSpacing: 0.5 },
-  rounds: { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs },
 });
 
 // ── Attack buttons ────────────────────────────────────────────────────────────
@@ -1185,56 +1074,56 @@ export default function BattleScreen({ navigation, route }: Props) {
 
       {/* Combat zone */}
       <View style={s.combatZone}>
-        <View style={s.cardSection}>
-          <AIActiveSection
-            card={battle.aiActive} revealed={battle.typeRevealed}
-            deckCount={battle.aiDeckCount} targeted={false}
-            hitKey={battle.aiHitKey}
-            attackKey={battle.aiAttackKey}
-            defeatingCard={battle.lastDefeatedAiCard}
-            onCardMeasure={onAiCardMeasure}
-            onPreview={onPreview}
-            amp={battle.aiAmp}
-          />
-        </View>
-
-        <View style={s.vsRow}>
-          <View style={s.vsDivider} />
-          <AmpEffectBanner
-            poolEffect={battle.ampPoolEffect}
-            activeEffect={battle.ampActiveEffect}
-            roundsLeft={battle.ampRoundsLeft}
-            triggeredBy={battle.ampTriggeredBy}
-          />
-          <View style={s.vsDivider} />
-        </View>
-
-        {visibleEvents.length > 0 && (
-          <View style={s.logBox}>
-            {visibleEvents.map((ev, i) => eventLine(ev, i))}
+        <View style={s.cardColumn}>
+          <View style={s.cardSection}>
+            <AIActiveSection
+              card={battle.aiActive} revealed={battle.typeRevealed}
+              deckCount={battle.aiDeckCount} targeted={false}
+              hitKey={battle.aiHitKey}
+              attackKey={battle.aiAttackKey}
+              defeatingCard={battle.lastDefeatedAiCard}
+              onCardMeasure={onAiCardMeasure}
+              onPreview={onPreview}
+            />
           </View>
-        )}
 
-        <View style={s.cardSection}>
-          <PlayerActiveSection
-            card={battle.playerActive}
-            revealed={battle.typeRevealed}
-            phase={battle.phase}
-            deckCount={battle.playerDeckCount}
-            onDraw={battle.draw}
-            canDraw={battle.canDraw}
-            swapTargeted={swapTargeted}
-            hitKey={battle.playerHitKey}
-            defeatingCard={battle.lastDefeatedPlayerCard}
-            onCardMeasure={onPlayerCardMeasure}
-            onPreview={onPreview}
-            amp={battle.playerAmp}
-            canTrigger={battle.canTrigger}
-            canSpend={battle.canSpend}
-            onTrigger={battle.triggerAmp}
-            onSpend={battle.spendAmp}
-          />
+          {visibleEvents.length > 0 && (
+            <View style={s.logBox}>
+              {visibleEvents.map((ev, i) => eventLine(ev, i))}
+            </View>
+          )}
+
+          <View style={s.cardSection}>
+            <PlayerActiveSection
+              card={battle.playerActive}
+              revealed={battle.typeRevealed}
+              phase={battle.phase}
+              deckCount={battle.playerDeckCount}
+              onDraw={battle.draw}
+              canDraw={battle.canDraw}
+              swapTargeted={swapTargeted}
+              hitKey={battle.playerHitKey}
+              defeatingCard={battle.lastDefeatedPlayerCard}
+              onCardMeasure={onPlayerCardMeasure}
+              onPreview={onPreview}
+            />
+          </View>
         </View>
+
+        <AmpRaceBar
+          playerAmp={battle.playerAmp}
+          aiAmp={battle.aiAmp}
+          currentEffect={AMP_EFFECT_LABELS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
+          effectColor={AMP_EFFECT_COLORS[battle.ampActiveEffect ?? battle.ampPoolEffect]}
+          onTrigger={battle.triggerAmp}
+          onSpend={battle.spendAmp}
+          playerCanTrigger={battle.canTrigger}
+          playerCanSpend={battle.canSpend}
+          activeEffectInfo={battle.ampActiveEffect && battle.ampRoundsLeft > 0 ? {
+            roundsLeft: battle.ampRoundsLeft,
+            triggeredBy: battle.ampTriggeredBy,
+          } : null}
+        />
       </View>
 
       {/* Player zone — face-up hand (above action bar) */}
@@ -1282,10 +1171,9 @@ const s = StyleSheet.create({
   forfeitBtn:   { marginTop: 4, paddingHorizontal: T.button.secondary.paddingH, paddingVertical: T.button.secondary.paddingV, borderRadius: T.button.secondary.radius, borderWidth: 1, borderColor: T.status.danger + '66', backgroundColor: T.status.danger + '18', transform: [{ skewX: '-3deg' }] },
   forfeitText:  { fontFamily: T.button.secondary.fontFamily, fontSize: T.button.secondary.fontSize, color: T.button.secondary.text, letterSpacing: T.button.secondary.letterSpacing, transform: [{ skewX: '3deg' }] },
 
-  combatZone: { flex: 1, paddingVertical: 6 },
+  combatZone: { flex: 1, flexDirection: 'row', paddingVertical: 6 },
+  cardColumn: { flex: 1 },
   cardSection:{ flex: 1, justifyContent: 'center' },
-  vsRow:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 },
-  vsDivider:  { flex: 1, height: 1, backgroundColor: T.bg.border },
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: T.letterSpacing.xxl, paddingHorizontal: 10 },
   logBox:     { paddingHorizontal: 14, paddingBottom: 4, gap: 1 },
 

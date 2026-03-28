@@ -57,12 +57,12 @@ const PILL_R    = 20;
 
 // Image window — fixed height, do not change
 const IMG_Y     = 50;
-const IMG_H     = 170;
+const IMG_H     = 155;
 
 // Stats section sits directly below image (ability removed from MiniCard)
-const STATS_Y   = IMG_Y + IMG_H + 8;   // 228
-const STATS_BOTTOM = CARD_H - 12;       // 421
-const STATS_H   = STATS_BOTTOM - STATS_Y; // ~193px available
+const STATS_Y   = IMG_Y + IMG_H + 4;
+const STATS_BOTTOM = CARD_H - 6;
+const STATS_H   = STATS_BOTTOM - STATS_Y;
 
 interface MiniCardProps extends BattleProps {
   card: Card;
@@ -348,13 +348,13 @@ const s = StyleSheet.create({
     left: PAD,
     top: STATS_Y,
     width: INNER_W,
-    height: STATS_H,
+    bottom: 6,
     backgroundColor: 'rgba(0,0,0,0.75)',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 5,
     justifyContent: 'space-between',
   },
   statsAccentBar: {
@@ -367,7 +367,7 @@ const s = StyleSheet.create({
   },
   hpSection: {
     justifyContent: 'flex-start',
-    gap: 6,
+    gap: 3,
   },
   statRowHeader: {
     flexDirection: 'row',
@@ -376,19 +376,19 @@ const s = StyleSheet.create({
   },
   statTag: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.sm,
+    fontSize: T.font.lg,
     color: T.text.primary,
     letterSpacing: T.letterSpacing.md,
   },
   statValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.lg,
-    lineHeight: 18,
+    fontSize: T.font.xxl,
+    lineHeight: 38,
   },
   stamValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.lg,
-    lineHeight: 18,
+    fontSize: T.font.xxl,
+    lineHeight: 38,
     color: T.domain.stamina,
   },
   hpBarTrack: {
