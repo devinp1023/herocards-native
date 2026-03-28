@@ -75,6 +75,7 @@ export const MiniCard = React.memo(function MiniCard({
   currentHp,
   maxHp,
   currentStamina,
+  maxStamina: maxStaminaProp,
   isActive = false,
   hpPct,
   breathing = false,
@@ -89,7 +90,7 @@ export const MiniCard = React.memo(function MiniCard({
   const computedMaxHp = maxHp ?? Math.round(100 + card.defense * 0.5);
   const displayHp     = currentHp ?? computedMaxHp;
   const displayHpPct  = hpPct ?? (currentHp != null && maxHp ? currentHp / maxHp : 1);
-  const maxStam       = card.stamina ?? 0;
+  const maxStam       = maxStaminaProp ?? card.stamina ?? 0;
   const displayStam   = currentStamina ?? maxStam;
 
   const hp = displayHp;

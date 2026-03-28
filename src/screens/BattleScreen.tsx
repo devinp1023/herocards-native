@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { AmpRaceBar } from '../components/AmpRaceBar';
 import ReAnimated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withDelay, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withDelay, Easing, interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -31,7 +31,7 @@ import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
-import { T, MOTION } from '../theme/theme';
+import { T, MOTION, TIMING, SPRING, EASE } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
@@ -112,6 +112,7 @@ function CardPreviewModal({ card, onClose }: { card: BattleCard; onClose: () => 
               currentHp={card.hp}
               maxHp={card.maxHp}
               currentStamina={card.stamina}
+              maxStamina={card.maxStamina}
               isActive
               hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
             />
@@ -163,6 +164,7 @@ function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absol
           currentHp={0}
           maxHp={card.maxHp}
           currentStamina={card.stamina}
+          maxStamina={card.maxStamina}
           hpPct={0}
         />
       </CardWrapper>
@@ -265,6 +267,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
                     currentHp={card.hp}
                     maxHp={card.maxHp}
                     currentStamina={card.stamina}
+                    maxStamina={card.maxStamina}
                     isActive
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
@@ -401,6 +404,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
                   currentHp={card.hp}
                   maxHp={card.maxHp}
                   currentStamina={card.stamina}
+                  maxStamina={card.maxStamina}
                   isActive
                   hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                 />
@@ -612,6 +616,7 @@ function HandCard({ card, phase, onSelect, onSwap, index, total,
                   currentHp={card.hp}
                   maxHp={card.maxHp}
                   currentStamina={card.stamina}
+                  maxStamina={card.maxStamina}
                   hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                 />
               </CardWrapper>
@@ -713,50 +718,110 @@ function SkewButton({ onPress, disabled, colors, borderColor, label, sub, opacit
       >
         <View style={atb.btnContent}>
           <Text style={[atb.label, disabled && atb.labelDis]}>{label}</Text>
-          {sub ? <Text style={[atb.sub, disabled && atb.subDis]}>{sub}</Text> : null}
+          <Text style={[atb.sub, disabled && atb.subDis]}>{sub || ' '}</Text>
         </View>
       </LinearGradient>
     </TouchableOpacity>
   );
 }
 
-// ── Action bar — Rest (left) + Attack (right) with popup submenu ──────────────
+// ── Staggered attack menu button ─────────────────────────────────────────────
+function AttackMenuButton({ index, menuProgress, weight, label, cost, minSp, colors, border, stamina, ready, onAttack, setShowMenu }: {
+  index: number; menuProgress: { value: number };
+  weight: AttackWeight; label: string; cost: string; minSp: number;
+  colors: [string, string]; border: string; stamina: number; ready: boolean;
+  onAttack: (w: AttackWeight) => void; setShowMenu: (v: boolean) => void;
+}) {
+  const canUse = stamina >= minSp;
+  const dis = !ready || !canUse;
+  const stagger = index * 0.15;
+  const animStyle = useAnimatedStyle(() => {
+    const raw = menuProgress.value;
+    const p = Math.max(0, Math.min(1, (raw - stagger) / (1 - stagger)));
+    return {
+      opacity: p,
+      transform: [{ translateY: interpolate(p, [0, 1], [12, 0]) }],
+    };
+  });
+  return (
+    <ReAnimated.View style={[{ flex: 1 }, animStyle]}>
+      <SkewButton
+        onPress={() => { onAttack(weight); setShowMenu(false); }}
+        disabled={dis}
+        colors={colors}
+        borderColor={border}
+        label={label}
+        sub={cost}
+      />
+    </ReAnimated.View>
+  );
+}
+
+// ── Action bar — Rest (left) + Attack (right) with animated submenu ──────────
 function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: {
   phase: BattlePhase; stamina: number;
   onAttack: (weight: AttackWeight) => void; onRest: () => void;
   showMenu: boolean; setShowMenu: (v: boolean) => void;
 }) {
   const ready = phase === 'ready';
-  const attacks: { weight: AttackWeight; label: string; cost: string; mult: string; minSp: number; colors: [string, string]; border: string }[] = [
-    { weight: 'light',  label: 'LIGHT',  cost: '−1 SP', mult: '×0.8', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: T.accent.mint + '66' },
-    { weight: 'medium', label: 'MEDIUM', cost: '−3 SP', mult: '×1.0', minSp: 3, colors: ['#4a3000', '#2a1a00'], border: '#ffa72666' },
-    { weight: 'heavy',  label: 'HEAVY',  cost: '−5 SP', mult: '×1.5', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: T.status.danger + '66' },
+  const attacks: { weight: AttackWeight; label: string; cost: string; minSp: number; colors: [string, string]; border: string }[] = [
+    { weight: 'light',  label: 'LIGHT',  cost: '−1 STA', minSp: 1, colors: ['#1a3a5a', '#0d2540'], border: T.accent.mint + '66' },
+    { weight: 'medium', label: 'MEDIUM', cost: '−3 STA', minSp: 3, colors: ['#4a3000', '#2a1a00'], border: '#ffa72666' },
+    { weight: 'heavy',  label: 'HEAVY',  cost: '−5 STA', minSp: 5, colors: ['#5a1520', '#3a0a10'], border: T.status.danger + '66' },
   ];
+
+  // ── Animated menu progress (0 = closed, 1 = open) ─────────────────────────
+  const menuProgress = useSharedValue(0);
+  const attackScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (showMenu) {
+      menuProgress.value = withSpring(1, SPRING.snappy);
+      attackScale.value = withSequence(
+        withTiming(1.05, { duration: 100, easing: EASE.enter }),
+        withSpring(1, SPRING.snappy),
+      );
+    } else {
+      menuProgress.value = withTiming(0, { duration: TIMING.quick, easing: EASE.exit });
+    }
+  }, [showMenu]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(menuProgress.value, [0, 1], [0, 0.6]),
+  }));
+
+  const menuRowStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(menuProgress.value, [0, 1], [50, 0]) },
+      { scaleY: interpolate(menuProgress.value, [0, 1], [0.3, 1]) },
+    ],
+    opacity: menuProgress.value,
+  }));
+
+  const attackBtnStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: attackScale.value }],
+  }));
+
   return (
     <View style={atb.wrap}>
-      {/* Attack submenu — floats above the bar */}
-      {showMenu && (
-        <>
-          <TouchableOpacity style={atb.menuBackdrop} activeOpacity={1} onPress={() => setShowMenu(false)} />
-          <View style={atb.menuRow}>
-            {attacks.map(({ weight, label, cost, mult, minSp, colors, border }) => {
-              const canUse = stamina >= minSp;
-              const dis = !ready || !canUse;
-              return (
-                <SkewButton
-                  key={weight}
-                  onPress={() => { onAttack(weight); setShowMenu(false); }}
-                  disabled={dis}
-                  colors={colors}
-                  borderColor={border}
-                  label={label}
-                  sub={`${cost}  ${mult}`}
-                />
-              );
-            })}
-          </View>
-        </>
-      )}
+      {/* Dimming overlay */}
+      <ReAnimated.View style={[atb.menuBackdrop, overlayStyle]} pointerEvents={showMenu ? 'auto' : 'none'}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowMenu(false)} />
+      </ReAnimated.View>
+
+      {/* Attack submenu — animated upward from button */}
+      <ReAnimated.View style={[atb.menuRow, menuRowStyle]} pointerEvents={showMenu ? 'auto' : 'none'}>
+        {attacks.map(({ weight, label, cost, minSp, colors, border }, i) => (
+          <AttackMenuButton
+            key={weight}
+            index={i}
+            menuProgress={menuProgress}
+            weight={weight} label={label} cost={cost} minSp={minSp}
+            colors={colors} border={border} stamina={stamina} ready={ready}
+            onAttack={onAttack} setShowMenu={setShowMenu}
+          />
+        ))}
+      </ReAnimated.View>
 
       {/* Main two-button bar */}
       <View style={atb.row}>
@@ -766,16 +831,18 @@ function ActionBar({ phase, stamina, onAttack, onRest, showMenu, setShowMenu }: 
           colors={['#1a4a2a', '#0a2a14']}
           borderColor={T.status.vitality + '66'}
           label="REST"
-          sub="+5 SP"
+          sub="+5 STA"
         />
-        <SkewButton
-          onPress={() => setShowMenu(!showMenu)}
-          disabled={!ready}
-          colors={showMenu ? ['#6a1a28', '#4a0e18'] : ['#5a1520', '#3a0a10']}
-          borderColor={showMenu ? T.status.danger + 'aa' : T.status.danger + '66'}
-          label="ATTACK"
-          sub={`${stamina} SP`}
-        />
+        <ReAnimated.View style={[{ flex: 1 }, attackBtnStyle]}>
+          <SkewButton
+            onPress={() => setShowMenu(!showMenu)}
+            disabled={!ready || stamina < 1}
+            colors={showMenu ? ['#6a1a28', '#4a0e18'] : ['#5a1520', '#3a0a10']}
+            borderColor={showMenu ? T.status.danger + 'aa' : T.status.danger + '66'}
+            label="ATTACK"
+            sub={undefined}
+          />
+        </ReAnimated.View>
       </View>
     </View>
   );
@@ -791,7 +858,7 @@ const atb = StyleSheet.create({
   sub:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, marginTop: 2, color: '#ffffffaa' },
   subDis:     { color: T.bg.border },
   // Submenu
-  menuBackdrop: { position: 'absolute', top: -500, left: 0, right: 0, bottom: 0, zIndex: 1 },
+  menuBackdrop: { position: 'absolute', top: -500, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: '#000000' },
   menuRow:    { position: 'absolute', bottom: '100%', left: 10, right: 10, flexDirection: 'row', gap: 6, paddingBottom: 6, zIndex: 2 },
 });
 

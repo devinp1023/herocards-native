@@ -70,9 +70,9 @@ const PILL_R    = 20;
 // Ability bar height (3 lines)
 const ABL_H     = 76;
 
-// Image window — fixed height, do not change
+// Image window
 const IMG_Y     = 50;
-const IMG_H     = 170;
+const IMG_H     = 150;
 
 // Ability sits 8px below image
 const ABL_Y     = IMG_Y + IMG_H + 8;   // 228
@@ -141,6 +141,7 @@ export interface BattleProps {
   currentHp?: number;
   maxHp?: number;
   currentStamina?: number;
+  maxStamina?: number;
   isActive?: boolean;
   hpPct?: number;
 }
@@ -158,6 +159,7 @@ export function HeroCard({
   currentHp,
   maxHp,
   currentStamina,
+  maxStamina: maxStaminaProp,
   isActive = false,
   hpPct,
 }: HeroCardProps) {
@@ -176,7 +178,7 @@ export function HeroCard({
   const computedMaxHp = maxHp ?? Math.round(100 + card.defense * 0.5);
   const displayHp     = currentHp ?? computedMaxHp;
   const displayHpPct  = hpPct ?? (currentHp != null && maxHp ? currentHp / maxHp : 1);
-  const maxStam       = card.stamina ?? 0;
+  const maxStam       = maxStaminaProp ?? card.stamina ?? 0;
   const displayStam   = currentStamina ?? maxStam;
 
   const abilityDesc = card.ability ? ABILITY_DESC[card.ability] : null;
@@ -727,19 +729,19 @@ const styles = StyleSheet.create({
   },
   statTag: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.sm,
+    fontSize: T.font.md,
     color: T.text.primary,
     letterSpacing: T.letterSpacing.md,
   },
   statValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.lg,
-    lineHeight: 18,
+    fontSize: T.font.xl,
+    lineHeight: 22,
   },
   stamValue: {
     fontFamily: 'Rajdhani_600SemiBold',
-    fontSize: T.font.lg,
-    lineHeight: 18,
+    fontSize: T.font.xl,
+    lineHeight: 22,
     color: T.domain.stamina,
   },
   hpBarTrack: {
