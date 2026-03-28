@@ -213,14 +213,14 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 ## Card Rendering — Skia
 - Each card is a fixed **300×433px canvas**, scaled externally via container transform
 - Never reflows — contents always at same coordinates relative to canvas
-- Scale targets: collection 45%, detail 90%, battle active 40%, battle hand 20%, battle preview 85%, pack reveal 100%
+- Scale targets: collection 45%, detail 90%, battle active 52%, battle hand 30%, battle preview 85%, pack reveal 100%
 - `useFont()` hook required for all text inside canvas — CSS font-family does not apply
 - Emoji do not render in Skia canvas — use a separate RN `Text` overlay for emoji
 - **RN overlay pattern**: Skia handles backgrounds, borders, image windows, shimmer, noise. RN `View`/`Text` overlays (with `pointerEvents="none"`) handle type wash, icons, text, stat sections
 - **Skia LinearGradient with hex alpha colors does not render visibly** — use RN View overlays for type color wash instead
 - `HeroCard` uses `MaterialCommunityIcons` RN overlays for type icon and stat pill icons
 - `MiniCard` (pure RN, no Skia) used in collection grid + battle hand for performance
-- **Image height (`IMG_H = 170`) is fixed** — never change unless explicitly asked
+- **Image height (`IMG_H = 150`)**
 
 ### Card Color Scheme
 - **Type** → card color: full-card RN tint overlay (`typeColor + '30'`), type icon solid fill
@@ -228,8 +228,8 @@ appId:             1:270324583342:web:f72095eaf4a08f5dc2563f
 - Both cards use identical color logic
 
 ### Card Layout (4 sections)
-1. **Header** — type icon (solid `typeColor` fill, white icon), card name, alliance/number/rarity
-2. **Image** — fixed 170px height, bordered with rarity color
+1. **Header** — type icon (solid `typeColor` fill, white icon), card name, card number
+2. **Image** — fixed 150px height, bordered with rarity color
 3. **Ability box** — dark `rgba(0,0,0,0.75)` background, rarity-colored left accent bar
 4. **Stats box** — dark background (Skia-rendered on HeroCard for shimmer pass-through), rarity-colored left accent bar, contains HP row + STA row + stat pills
 
