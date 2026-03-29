@@ -1266,7 +1266,7 @@ export default function BattleScreen({ navigation, route }: Props) {
   const tc = battle.tierColor;
 
   // ── Slam derived transforms ─────────────────────────────────────────────
-  const { slamProgress, playerSlamType, shockwaveActive, shockwave2Active, flashOpacity: slamFlashOpacity } = battle;
+  const { slamProgress, playerSlamType, shockwaveActive, shockwave2Active, flashOpacity: slamFlashOpacity } = battle.choreo;
 
   const slamTranslateY = useDerivedValue(() => {
     const p = slamProgress.value;
@@ -1367,7 +1367,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               attackKey={battle.aiAttackKey}
               defeatingCard={battle.lastDefeatedAiCard}
               aiAmp={battle.aiAmp}
-              aiShockwave={battle.aiShockwaveActive}
+              aiShockwave={battle.choreo.aiShockwaveActive}
               onCardMeasure={onAiCardMeasure}
               onPreview={onPreview}
             />
@@ -1410,7 +1410,7 @@ export default function BattleScreen({ navigation, route }: Props) {
             </ReAnimated.View>
             {/* Shockwave ring — AI slam impact on player card */}
             <Shockwave
-              triggerKey={battle.aiShockwaveActive}
+              triggerKey={battle.choreo.aiShockwaveActive}
               color={aiTypeColor}
               maxScale={SLAM_CONFIG.MEDIUM.shockwaveScale}
               duration={SLAM_CONFIG.MEDIUM.shockwaveDuration}

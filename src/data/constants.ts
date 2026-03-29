@@ -148,6 +148,7 @@ export const SLAM_CONFIG = {
     flashOpacity: 0,
     hapticLift: 'Light' as const,
     hapticImpact: 'Medium' as const,
+    returnBuffer: 120,
   },
   MEDIUM: {
     liftHeight: 16,
@@ -165,6 +166,7 @@ export const SLAM_CONFIG = {
     flashOpacity: 0.18,
     hapticLift: 'Light' as const,
     hapticImpact: 'Heavy' as const,
+    returnBuffer: 200,
   },
   HEAVY: {
     liftHeight: 24,
@@ -182,6 +184,7 @@ export const SLAM_CONFIG = {
     flashOpacity: 0.32,
     hapticLift: 'Medium' as const,
     hapticImpact: 'Heavy' as const,
+    returnBuffer: 300,
   },
 } as const;
 

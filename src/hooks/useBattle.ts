@@ -11,12 +11,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
-import {
-  useSharedValue, withTiming, withSpring, withDelay, withSequence,
-  Easing, runOnJS,
-} from 'react-native-reanimated';
-import type { SharedValue } from 'react-native-reanimated';
-import { TIER_INFO, SLAM_CONFIG } from '../data/constants';
+import { TIER_INFO } from '../data/constants';
+import { CHOREO, slamDuration, runSteps } from '../battle/choreography';
+import { useBattleChoreography, BattleChoreography } from './useBattleChoreography';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
   BattleCard, SideState, BattleEvent, AttackWeight, AmpField, AmpEffectName,
@@ -70,15 +67,8 @@ export interface UseBattleResult {
   lastDefeatedPlayerCard:  BattleCard | null;  // player's last killed card (for defeat animation)
   lastDefeatedAiCard:      BattleCard | null;  // AI's last killed card (for defeat animation)
   swapOutCardId:           number | null;      // id of the card that just moved from active→hand
-  // ── Slam animation signals ─────────────────────────────────────────────
-  playerSlamKey:           SharedValue<number>;
-  playerSlamType:          SharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>;
-  slamProgress:            SharedValue<number>;
-  shockwaveActive:         SharedValue<number>;
-  shockwave2Active:        SharedValue<number>;
-  flashOpacity:            SharedValue<number>;
-  aiShockwaveActive:       SharedValue<number>;
-  triggerPlayerSlam:       (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
+  // ── Choreography hook (animation shared values + triggers) ──────────────
+  choreo:                  BattleChoreography;
   attack:          (weight: AttackWeight) => void;
   rest:            () => void;
   draw:            () => void;
@@ -163,80 +153,16 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   const [lastDefeatedAiCard,     setLastDefeatedAiCard]     = useState<BattleCard | null>(null);
   const [swapOutCardId,          setSwapOutCardId]          = useState<number | null>(null);
 
-  // ── Slam animation signals (Reanimated shared values) ───────────────────
-  const playerSlamKey    = useSharedValue(0);
-  const playerSlamType   = useSharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>('MEDIUM');
-  const slamProgress     = useSharedValue(0);
-  const shockwaveActive  = useSharedValue(0);
-  const shockwave2Active = useSharedValue(0);
-  const flashOpacity     = useSharedValue(0);
-  const aiShockwaveActive = useSharedValue(0);
+  // ── Choreography hook (animation shared values + triggers) ──────────────
+  const choreo = useBattleChoreography();
 
-  const fireImpactHaptic = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  // ── Phase ref for sync reads inside async runSteps ──────────────────────
+  const phaseRef = useRef<BattlePhase>('init');
+  const updatePhase = useCallback((p: BattlePhase) => {
+    phaseRef.current = p;
+    setPhase(p);
   }, []);
-  const fireHeavySecondHaptic = useCallback(() => {
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 120);
-  }, []);
-  const fireHeavySecondShockwave = useCallback(() => {
-    shockwave2Active.value += 1;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const triggerPlayerSlam = useCallback((attackLabel: 'LIGHT' | 'MEDIUM' | 'HEAVY') => {
-    const cfg = SLAM_CONFIG[attackLabel];
-
-    playerSlamType.value = attackLabel;
-
-    // Haptic at lift
-    Haptics.impactAsync(
-      cfg.hapticLift === 'Light'
-        ? Haptics.ImpactFeedbackStyle.Light
-        : Haptics.ImpactFeedbackStyle.Medium
-    );
-
-    // Lift phase
-    slamProgress.value = withTiming(1, {
-      duration: cfg.liftDuration,
-      easing: Easing.out(Easing.quad),
-    }, () => {
-      // Slam phase
-      slamProgress.value = withTiming(2, {
-        duration: cfg.slamDuration,
-        easing: Easing.in(Easing.cubic),
-      }, () => {
-        // Impact frame
-        slamProgress.value = 2.05;
-
-        // Shockwave + flash at impact
-        shockwaveActive.value += 1;
-        flashOpacity.value = withSequence(
-          withTiming(cfg.flashOpacity, { duration: 35, easing: Easing.out(Easing.quad) }),
-          withTiming(0, { duration: 110, easing: Easing.in(Easing.quad) })
-        );
-
-        // Haptic at impact (UI thread → runOnJS)
-        runOnJS(fireImpactHaptic)();
-
-        // Heavy: second shockwave ring + second haptic pulse
-        if (attackLabel === 'HEAVY') {
-          runOnJS(fireHeavySecondShockwave)();
-          runOnJS(fireHeavySecondHaptic)();
-        }
-
-        // Hold at impact, then spring return
-        slamProgress.value = withDelay(
-          cfg.holdDuration,
-          withSpring(0, {
-            damping: cfg.returnDamping,
-            stiffness: cfg.returnStiffness,
-            mass: attackLabel === 'HEAVY' ? 1.4 : 1.0,
-          })
-        );
-      });
-    });
-
-    playerSlamKey.value += 1;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const cancelled = useCallback(() => phaseRef.current === 'done', []);
 
   // refresh() snapshots the current ref state into React state.
   // Using useCallback with no deps ensures a stable identity while always
@@ -258,9 +184,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       playerKillCount: pRef.current?.killCount ?? 0,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /** ms between sequential animation steps within a round */
-  const STEP_MS = 1000;
 
   const tierInfo = TIER_INFO.find(t => t.tier === tier) ?? TIER_INFO[0];
 
@@ -292,7 +215,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         ampRef.current    = savedState.ampField ?? initAmpField();
         perBattleStatsRef.current = savedState.perBattleStats ?? {};
         setRound(savedState.round ?? 1);
-        setPhase('ready');
+        updatePhase('ready');
         refresh();
         return;
       } catch (err) {
@@ -340,7 +263,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     pRef.current      = p;
     aRef.current      = a;
     eventsRef.current = initEvents;
-    setPhase('ready');
+    updatePhase('ready');
     refresh();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -522,7 +445,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     const r = calcBattleRewards(tier, w, gs.battleWinStreak);
     setRewards(r);
     setWinner(w);
-    setPhase('done');
+    updatePhase('done');
     // Haptic: victory or defeat
     if (w === 'player') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     gs.addCoins(r.credits);
@@ -542,7 +465,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     if (!allLegendary) return false;
     // All remaining cards are Legendary and lock is active → immediate loss
     const winner = sideLabel === 'player' ? 'ai' : 'player';
-    setPhase('result');
+    updatePhase('result');
     refresh();
     setTimeout(() => endBattle(winner), 0);
     return true;
@@ -563,15 +486,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         setLastDefeatedAiCard(a.active);
         (a as any).active = null;
         (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
-        if (a.hand.length === 0 && a.deck.length === 0) { (p as any).active = null; setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
+        if (a.hand.length === 0 && a.deck.length === 0) { (p as any).active = null; updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
         (p as any).active = null;
         doAiReplace(events);
         if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        setPhase('result'); refresh(); return;
+        updatePhase('result'); refresh(); return;
       }
       (p as any).active = null;
-      if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+      if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
       // Sprint 5: player stuck with only locked Legendaries
       if (checkLegendaryStuck(p, 'player', events)) return;
@@ -581,29 +504,31 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       resolveDefeat(a.active, a, events, p);
       setLastDefeatedAiCard(a.active);
       (a as any).active = null;
-      if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+      if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
       // Sprint 5: AI stuck with only locked Legendaries
       if (checkLegendaryStuck(a, 'ai', events)) return;
       doAiReplace(events);
     }
-    setPhase('result');
+    updatePhase('result');
     refresh();
   }, [endBattle, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-advance: result → ready (or selecting if player card was killed) ──
   useEffect(() => {
     if (phase !== 'result') return;
+    choreo.showRoundBanner();
+    const total = CHOREO.roundEndPause + CHOREO.roundTransition + CHOREO.roundStartDelay;
     const id = setTimeout(() => {
       const p = pRef.current;
       if (!p) return;
       if (!p.active) {
-        setPhase('selecting');
+        updatePhase('selecting');
       } else {
         setRound(r => r + 1);
-        setPhase('ready');
+        updatePhase('ready');
       }
       refresh();
-    }, 800);
+    }, total);
     return () => clearTimeout(id);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -630,23 +555,23 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
       (a as any).active = null; (p as any).active = null;
-      if (a.hand.length === 0 && a.deck.length === 0 && p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
-      if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-      if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'),     0); return; }
+      if (a.hand.length === 0 && a.deck.length === 0 && p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
+      if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+      if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'),     0); return; }
       if (a.hand.length === 0 && a.deck.length > 0) drawCard(a);
       const next = aiSelectCard(a.hand, 'Brawler');
       if (next) { a.hand = a.hand.filter(c => c.id !== next.id); a.active = next; applyEntryEffects(next, a, p, events, true); }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-      setPhase('result'); refresh(); return;
+      updatePhase('result'); refresh(); return;
     }
     if (aKilled) {
       resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       (a as any).active = null;
-      if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+      if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
       // Sprint 5: AI stuck with only locked Legendaries
       if (checkLegendaryStuck(a, 'ai', events)) return;
       doAiReplace(events);
-      setPhase('result'); refresh(); return;
+      updatePhase('result'); refresh(); return;
     }
     if (pKilled) {
       resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
@@ -655,20 +580,20 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         resolveDefeat(a.active, a, events);
         setLastDefeatedAiCard(a.active);
         (a as any).active = null; (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
-        if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
+        if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
         // Sprint 5: AI stuck with only locked Legendaries
         if (checkLegendaryStuck(a, 'ai', events)) return;
         doAiReplace(events);
         if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        setPhase('result'); refresh(); return;
+        updatePhase('result'); refresh(); return;
       }
       (p as any).active = null;
-      if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+      if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
       if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
       // Sprint 5: player stuck with only locked Legendaries
       if (checkLegendaryStuck(p, 'player', events)) return;
-      setPhase('result'); refresh(); return;
+      updatePhase('result'); refresh(); return;
     }
     finishRound(events);
   }, [endBattle, doAiReplace, finishRound, checkLegendaryStuck]);
@@ -720,7 +645,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const attack = useCallback((weight: AttackWeight) => {
+  const attack = useCallback(async (weight: AttackWeight) => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     const a = aRef.current!;
@@ -730,49 +655,54 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     eventsRef.current = events;
     events.push({ type: 'ROUND_START', round, playerHp: p.active.hp, playerMaxHp: p.active.maxHp, aiHp: a.active.hp, aiMaxHp: a.active.maxHp });
     setTypeRevealed(false);
-    setPhase('animating');
+    updatePhase('animating');
 
     // AI Amp decision happens at round start, before actions resolve
     processAiAmp(events);
 
     const aiAction = aiDecide(a, p, ampRef.current, events);
+    const slamWeight = weight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
 
     if (aiAction !== 'attack') {
       // ── Player attacks, AI did non-combat action ────────────────────────
-      // Step 1 (t=0): show AI's action first
       executeAiAction(aiAction, events);
       refresh();
-      // Step 2 (t=STEP_MS): player's free hit
-      setTimeout(() => {
-        triggerPlayerSlam(weight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
-        const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
-        gainAmp(p, WEIGHT_AMP[weight]);
-        checkPostPlayerAttack();
-        setTypeRevealed(true);
-        setAiHitKey(k => k + 1);
-        const aKilled = r.killed || a.active.hp <= 0;
-        refresh();
-        setTimeout(() => {
-          if (aKilled) {
-            setLastDefeatedAiCard(a.active);
-            gainAmp(p, 15); // +15 for kill
-            resolveKill(p.active, p, a, events);
-            resolveDefeat(a.active, a, events, p);
-            (a as any).active = null;
-            if (a.hand.length === 0 && a.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-            // Sprint 5: AI stuck with only locked Legendaries
-            if (checkLegendaryStuck(a, 'ai', events)) return;
-            doAiReplace(events);
-            setPhase('result'); refresh();
-          } else {
-            finishRound(events);
-          }
-        }, STEP_MS);
-      }, STEP_MS);
+
+      await runSteps([
+        [() => {}, CHOREO.actionShow],
+        [() => {
+          choreo.triggerPlayerSlam(slamWeight);
+          const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
+          gainAmp(p, WEIGHT_AMP[weight]);
+          checkPostPlayerAttack();
+          setTypeRevealed(true);
+          setAiHitKey(k => k + 1);
+          (p as any)._lastAttackKilled = r.killed || a.active.hp <= 0;
+          refresh();
+        }, slamDuration(slamWeight)],
+        [() => {}, CHOREO.damageSettle],
+        [() => {}, CHOREO.postAttackPause],
+      ], cancelled);
+      if (cancelled()) return;
+
+      const aKilled = (p as any)._lastAttackKilled;
+      delete (p as any)._lastAttackKilled;
+      if (aKilled) {
+        setLastDefeatedAiCard(a.active);
+        gainAmp(p, 15);
+        resolveKill(p.active, p, a, events);
+        resolveDefeat(a.active, a, events, p);
+        (a as any).active = null;
+        if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
+        if (checkLegendaryStuck(a, 'ai', events)) return;
+        doAiReplace(events);
+        updatePhase('result'); refresh();
+      } else {
+        finishRound(events);
+      }
 
     } else {
       // ── Both attack: determine turn order ───────────────────────────────
-      // Heavy attacker always goes second. Exception: both Heavy → speed check.
       const aiWeight    = aiChooseAttackWeight(a, p, ampRef.current);
       const pSpd        = effSpeed(p.active);
       const aSpd        = effSpeed(a.active);
@@ -780,11 +710,10 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       const playerHeavy = weight === 'heavy' && !bothHeavy;
       const aiHeavy     = aiWeight === 'heavy' && !bothHeavy;
 
-      // playerFirst: true if player attacks before AI this round
       let playerFirst: boolean;
-      if (playerHeavy)     playerFirst = false;  // player chose Heavy → goes second
-      else if (aiHeavy)    playerFirst = true;   // AI chose Heavy → player goes first
-      else                 playerFirst = pSpd >= aSpd; // normal speed check
+      if (playerHeavy)     playerFirst = false;
+      else if (aiHeavy)    playerFirst = true;
+      else                 playerFirst = pSpd >= aSpd;
 
       const [fSide, fOpp, fWeight] = playerFirst
         ? [p, a, weight]    as const
@@ -793,9 +722,10 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         ? [a, p, aiWeight]  as const
         : [p, a, weight]    as const;
 
-      // Step 1 (t=0): first hit
-      const staminaBeforeR1 = sSide.active.stamina; // for Stamina Leech check
-      if (fSide === p) triggerPlayerSlam(fWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
+      // First hit
+      const staminaBeforeR1 = sSide.active.stamina;
+      const fSlamWeight = fWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
+      if (fSide === p) choreo.triggerPlayerSlam(fSlamWeight);
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
       if (fSide !== p) hapticForIncomingHit(fWeight);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
@@ -804,41 +734,57 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       if (fSide === p) { setAiHitKey(k => k + 1); }
       else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
       const firstKilled = r1.killed || fOpp.active.hp <= 0;
-      // Stamina Leech: if first attacker has Stamina Leech and drained second attacker to 0, cancel their attack
       const staminaLeechCancelled = !firstKilled
         && fSide.active.ability === 'Stamina Leech'
         && fOpp.active.stamina === 0 && staminaBeforeR1 > 0;
       refresh();
+
+      // Wait for first slam to settle
+      await runSteps([
+        [() => {}, slamDuration(fSlamWeight)],
+        [() => {}, CHOREO.damageSettle],
+        [() => {}, CHOREO.postAttackPause],
+      ], cancelled);
+      if (cancelled()) return;
 
       if (firstKilled) {
         const aKilled = fOpp === a;
         const pKilled = fOpp === p;
         if (aKilled) { setLastDefeatedAiCard(a.active); gainAmp(fSide, 15); }
         if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(fSide, 15); }
-        setTimeout(() => handleCombatDeaths(pKilled, aKilled, events), STEP_MS);
+        handleCombatDeaths(pKilled, aKilled, events);
       } else if (staminaLeechCancelled) {
-        // Second attacker's stamina drained to 0 by Stamina Leech — skip their attack
-        setTimeout(() => finishRound(events), STEP_MS);
+        finishRound(events);
       } else {
-        // Step 2 (t=STEP_MS): second hit
-        setTimeout(() => {
-          if (sSide === p) triggerPlayerSlam(sWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
-          const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
-          if (sSide !== p) hapticForIncomingHit(sWeight);
-          gainAmp(sSide, WEIGHT_AMP[sWeight]);
-          if (sSide === p) checkPostPlayerAttack();
-          if (sSide === p) { setAiHitKey(k => k + 1); }
-          else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
-          const pKilled = p.active.hp <= 0;
-          const aKilled = a.active.hp <= 0;
-          if (aKilled) { setLastDefeatedAiCard(a.active); gainAmp(sSide, 15); }
-          if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(sSide, 15); }
-          refresh();
-          setTimeout(() => {
-            if (pKilled || aKilled) handleCombatDeaths(pKilled, aKilled, events);
-            else finishRound(events);
-          }, STEP_MS);
-        }, STEP_MS);
+        // Second hit
+        const sSlamWeight = sWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
+        await runSteps([
+          [() => {}, CHOREO.betweenAttacks],
+          [() => {
+            if (sSide === p) choreo.triggerPlayerSlam(sSlamWeight);
+            const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
+            if (sSide !== p) hapticForIncomingHit(sWeight);
+            gainAmp(sSide, WEIGHT_AMP[sWeight]);
+            if (sSide === p) checkPostPlayerAttack();
+            if (sSide === p) { setAiHitKey(k => k + 1); }
+            else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
+            const pK = p.active.hp <= 0;
+            const aK = a.active.hp <= 0;
+            if (aK) { setLastDefeatedAiCard(a.active); gainAmp(sSide, 15); }
+            if (pK) { setLastDefeatedPlayerCard(p.active); gainAmp(sSide, 15); }
+            (p as any)._pKilled = pK;
+            (a as any)._aKilled = aK;
+            refresh();
+          }, slamDuration(sSlamWeight)],
+          [() => {}, CHOREO.damageSettle],
+          [() => {}, CHOREO.postAttackPause],
+        ], cancelled);
+        if (cancelled()) return;
+
+        const pKilled = (p as any)._pKilled; delete (p as any)._pKilled;
+        const aKilled = (a as any)._aKilled; delete (a as any)._aKilled;
+        if (pKilled || aKilled) handleCombatDeaths(pKilled, aKilled, events);
+        else finishRound(events);
       }
     }
   }, [phase, round, executeAiAction, processAiAmp, endBattle, doAiReplace, finishRound, handleCombatDeaths]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -847,12 +793,11 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   //  step 1 (t=0):       player draws → card bounces into hand
   //  step 2 (t=STEP_MS): AI non-combat action shown (if applicable)
   //  step 3 (t=2*STEP_MS or STEP_MS): combat or finish
-  const draw = useCallback(() => {
+  const draw = useCallback(async () => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     const a = aRef.current!;
     if (p.hand.length >= 5 || p.deck.length === 0) return;
-    // Lock On: player cannot draw
     if (isLockOnActive(ampRef.current, 'player')) return;
     setLastDefeatedPlayerCard(null);
     setLastDefeatedAiCard(null);
@@ -860,9 +805,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     eventsRef.current = events;
     events.push({ type: 'ROUND_START', round, playerHp: p.active.hp, playerMaxHp: p.active.maxHp, aiHp: a.active.hp, aiMaxHp: a.active.maxHp });
     setTypeRevealed(false);
-    setPhase('animating');
+    updatePhase('animating');
 
-    // Step 1 (t=0): player draws
     drawCard(p);
     gainAmp(p, 2);
     events.push({ type: 'PLAYER_DRAW', card: p.hand[p.hand.length - 1].name });
@@ -872,40 +816,45 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
-      // Step 2 (t=STEP_MS): AI non-combat action
-      setTimeout(() => {
-        executeAiAction(aiAction, events);
-        refresh();
-        // Step 3 (t=2*STEP_MS): no combat — finish
-        setTimeout(() => finishRound(events), STEP_MS);
-      }, STEP_MS);
+      await runSteps([
+        [() => {}, CHOREO.drawSettle],
+        [() => { executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+      ], cancelled);
+      if (cancelled()) return;
+      finishRound(events);
     } else {
-      // Step 2 (t=STEP_MS): AI free hit on player
-      setTimeout(() => {
-        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
-        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
-        hapticForIncomingHit(aiWeight);
-        gainAmp(a, WEIGHT_AMP[aiWeight]);
-        setPlayerHitKey(k => k + 1);
-        setAiAttackKey(k => k + 1);
-        const pKilled = r.killed || p.active.hp <= 0;
-        if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
-        refresh();
-        setTimeout(() => {
-          if (pKilled) {
-            resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events, a);
-            (p as any).active = null;
-            if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-            if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-            // Sprint 5: player stuck with only locked Legendaries
-            if (checkLegendaryStuck(p, 'player', events)) return;
-            setPhase('result'); refresh();
-          } else {
-            finishRound(events);
-          }
-        }, STEP_MS);
-      }, STEP_MS);
+      const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+      const aiSlamW = aiWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
+      let pKilled = false;
+
+      await runSteps([
+        [() => {}, CHOREO.drawSettle],
+        [() => {
+          const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+          hapticForIncomingHit(aiWeight);
+          gainAmp(a, WEIGHT_AMP[aiWeight]);
+          setPlayerHitKey(k => k + 1);
+          setAiAttackKey(k => k + 1);
+          pKilled = r.killed || p.active.hp <= 0;
+          if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
+          refresh();
+        }, slamDuration(aiSlamW)],
+        [() => {}, CHOREO.damageSettle],
+        [() => {}, CHOREO.postAttackPause],
+      ], cancelled);
+      if (cancelled()) return;
+
+      if (pKilled) {
+        resolveKill(a.active, a, p, events);
+        resolveDefeat(p.active, p, events, a);
+        (p as any).active = null;
+        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+        if (checkLegendaryStuck(p, 'player', events)) return;
+        updatePhase('result'); refresh();
+      } else {
+        finishRound(events);
+      }
     }
   }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -913,7 +862,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   //  step 1 (t=0):       player rests (+5 stamina) — no attack
   //  step 2 (t=STEP_MS): AI non-combat action shown, or AI free hit fires
   //  step 3 (t=2*STEP_MS or STEP_MS): finish or handle death
-  const rest = useCallback(() => {
+  const rest = useCallback(async () => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     const a = aRef.current!;
@@ -923,9 +872,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     eventsRef.current = events;
     events.push({ type: 'ROUND_START', round, playerHp: p.active.hp, playerMaxHp: p.active.maxHp, aiHp: a.active.hp, aiMaxHp: a.active.maxHp });
     setTypeRevealed(false);
-    setPhase('animating');
+    updatePhase('animating');
 
-    // Step 1 (t=0): apply rest to player
     applyRestAction(p.active, p, events);
     gainAmp(p, 2);
     refresh();
@@ -934,68 +882,71 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
-      // Step 2 (t=STEP_MS): AI non-combat action
-      setTimeout(() => {
-        executeAiAction(aiAction, events);
-        refresh();
-        // Step 3 (t=2*STEP_MS): no combat — finish
-        setTimeout(() => finishRound(events), STEP_MS);
-      }, STEP_MS);
+      await runSteps([
+        [() => {}, CHOREO.actionShow],
+        [() => { executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+      ], cancelled);
+      if (cancelled()) return;
+      finishRound(events);
     } else {
-      // Step 2 (t=STEP_MS): AI free hit on resting player
-      setTimeout(() => {
-        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
-        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
-        hapticForIncomingHit(aiWeight);
-        gainAmp(a, WEIGHT_AMP[aiWeight]);
-        setPlayerHitKey(k => k + 1);
-        setAiAttackKey(k => k + 1);
-        const pKilled = r.killed || p.active.hp <= 0;
-        if (pKilled) setLastDefeatedPlayerCard(p.active);
-        refresh();
-        setTimeout(() => {
-          if (pKilled) {
-            gainAmp(a, 15); // +15 for kill
-            resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events, a);
-            (p as any).active = null;
-            if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-            if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-            // Sprint 5: player stuck with only locked Legendaries
-            if (checkLegendaryStuck(p, 'player', events)) return;
-            setPhase('result'); refresh();
-          } else {
-            finishRound(events);
-          }
-        }, STEP_MS);
-      }, STEP_MS);
+      const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+      const aiSlamW = aiWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
+      let pKilled = false;
+
+      await runSteps([
+        [() => {}, CHOREO.actionShow],
+        [() => {
+          const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+          hapticForIncomingHit(aiWeight);
+          gainAmp(a, WEIGHT_AMP[aiWeight]);
+          setPlayerHitKey(k => k + 1);
+          setAiAttackKey(k => k + 1);
+          pKilled = r.killed || p.active.hp <= 0;
+          if (pKilled) setLastDefeatedPlayerCard(p.active);
+          refresh();
+        }, slamDuration(aiSlamW)],
+        [() => {}, CHOREO.damageSettle],
+        [() => {}, CHOREO.postAttackPause],
+      ], cancelled);
+      if (cancelled()) return;
+
+      if (pKilled) {
+        gainAmp(a, 15);
+        resolveKill(a.active, a, p, events);
+        resolveDefeat(p.active, p, events, a);
+        (p as any).active = null;
+        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+        if (checkLegendaryStuck(p, 'player', events)) return;
+        updatePhase('result'); refresh();
+      } else {
+        finishRound(events);
+      }
     }
   }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SWAP MODE (kept for UI compatibility) ──────────────────────────────────
   const enterSwapMode = useCallback(() => {
     if (phase !== 'ready') return;
-    setPhase('swapping');
+    updatePhase('swapping');
   }, [phase]);
 
   const cancelSwapMode = useCallback(() => {
     if (phase !== 'swapping') return;
-    setPhase('ready');
+    updatePhase('ready');
   }, [phase]);
 
   // ── VOLUNTARY SWAP — sequential steps ─────────────────────────────────────
   //  step 1 (t=0):       new card enters active, old card slides to hand
   //  step 2 (t=STEP_MS): AI action shown (non-combat) or AI free hit fires
   //  step 3 (t=2*STEP_MS or STEP_MS): finish or handle deaths
-  const swapCard = useCallback((id: number) => {
+  const swapCard = useCallback(async (id: number) => {
     if (phase !== 'ready' && phase !== 'swapping') return;
     const p = pRef.current!;
     const a = aRef.current!;
     const chosen = p.hand.find(c => c.id === id);
     if (!chosen || !p.active) return;
-    // Lock On: player cannot swap
     if (isLockOnActive(ampRef.current, 'player')) return;
-    // Sprint 5: Legendary Lock — block if chosen card is Legendary and lock is active
     if (chosen.rarity === 'Legendary' && legendaryLocked(p)) return;
     setLastDefeatedPlayerCard(null);
     setLastDefeatedAiCard(null);
@@ -1004,16 +955,13 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     events.push({ type: 'ROUND_START', round, playerHp: p.active.hp, playerMaxHp: p.active.maxHp, aiHp: a.active.hp, aiMaxHp: a.active.maxHp });
     setTypeRevealed(false);
 
-    // Step 1 (t=0): apply swap, show animations
     const prev = p.active;
 
-    // Reset Pressure/Siege effects when swapping that card out
     if (prev.ability === 'Pressure') a.pressureStacks = 0;
     if (prev.ability === 'Siege') {
       a.siegeStacks = 0;
       if (a.active) a.active.stamina = Math.min(a.active.stamina, a.active.maxStamina);
     }
-    // Reset Juggernaut stacks when swapping out
     if (prev.ability === 'Juggernaut') {
       prev._juggerStacks = 0;
       prev._juggerAttackedThisRound = false;
@@ -1025,55 +973,58 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     applyEntryEffects(chosen, p, a, events, true);
     events.push({ type: 'PLAYER_SWAP', card: chosen.name, prev: prev.name });
     gainAmp(p, 3);
-    // Track Legendary Unleashed: player swapped in a Legendary after lock was lifted
     if (chosen.rarity === 'Legendary' && !legendaryLocked(p)) {
       incStat('legendaryUnleashed');
       perBattleStatsRef.current.legendaryUsed = 1;
     }
     setSwapOutCardId(prev.id);
-    setPhase('animating');
+    updatePhase('animating');
     refresh();
 
     processAiAmp(events);
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
-      // Step 2 (t=STEP_MS): AI non-combat action
-      setTimeout(() => {
-        setSwapOutCardId(null);
-        executeAiAction(aiAction, events);
-        refresh();
-        // Step 3 (t=2*STEP_MS): no combat — finish
-        setTimeout(() => finishRound(events), STEP_MS);
-      }, STEP_MS);
+      await runSteps([
+        [() => {}, CHOREO.actionShow],
+        [() => { setSwapOutCardId(null); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+      ], cancelled);
+      if (cancelled()) return;
+      finishRound(events);
     } else {
-      // Step 2 (t=STEP_MS): AI free hit on player's new active card
-      setTimeout(() => {
-        setSwapOutCardId(null);
-        const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
-        const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
-        hapticForIncomingHit(aiWeight);
-        gainAmp(a, WEIGHT_AMP[aiWeight]);
-        setPlayerHitKey(k => k + 1);
-        setAiAttackKey(k => k + 1);
-        const pKilled = r.killed || p.active.hp <= 0;
-        if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
-        refresh();
-        setTimeout(() => {
-          if (pKilled) {
-            resolveKill(a.active, a, p, events);
-            resolveDefeat(p.active, p, events, a);
-            (p as any).active = null;
-            if (p.hand.length === 0 && p.deck.length === 0) { setPhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-            if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-            // Sprint 5: player stuck with only locked Legendaries
-            if (checkLegendaryStuck(p, 'player', events)) return;
-            setPhase('result'); refresh();
-          } else {
-            finishRound(events);
-          }
-        }, STEP_MS);
-      }, STEP_MS);
+      const aiWeight = aiChooseAttackWeight(a, p, ampRef.current);
+      const aiSlamW = aiWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
+      let pKilled = false;
+
+      await runSteps([
+        [() => {}, CHOREO.actionShow],
+        [() => {
+          setSwapOutCardId(null);
+          const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
+          hapticForIncomingHit(aiWeight);
+          gainAmp(a, WEIGHT_AMP[aiWeight]);
+          setPlayerHitKey(k => k + 1);
+          setAiAttackKey(k => k + 1);
+          pKilled = r.killed || p.active.hp <= 0;
+          if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
+          refresh();
+        }, slamDuration(aiSlamW)],
+        [() => {}, CHOREO.damageSettle],
+        [() => {}, CHOREO.postAttackPause],
+      ], cancelled);
+      if (cancelled()) return;
+
+      if (pKilled) {
+        resolveKill(a.active, a, p, events);
+        resolveDefeat(p.active, p, events, a);
+        (p as any).active = null;
+        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
+        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+        if (checkLegendaryStuck(p, 'player', events)) return;
+        updatePhase('result'); refresh();
+      } else {
+        finishRound(events);
+      }
     }
   }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1096,7 +1047,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       perBattleStatsRef.current.legendaryUsed = 1;
     }
     setRound(r => r + 1);
-    setPhase('ready');
+    updatePhase('ready');
     refresh();
   }, [phase]);
 
@@ -1197,14 +1148,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     lastDefeatedPlayerCard,
     lastDefeatedAiCard,
     swapOutCardId,
-    playerSlamKey,
-    playerSlamType,
-    slamProgress,
-    shockwaveActive,
-    shockwave2Active,
-    flashOpacity,
-    aiShockwaveActive,
-    triggerPlayerSlam,
+    choreo,
     attack,
     rest,
     draw,

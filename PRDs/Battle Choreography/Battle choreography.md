@@ -33,6 +33,36 @@ Replace the single `STEP_MS = 1000` constant with a `CHOREO` config object. Atta
 // src/battle/choreography.ts
 import { SLAM_CONFIG } from '../data/constants';
 
+// ── Async step sequencer ────────────────────────────────────
+// Replaces nested setTimeout chains with a flat async sequence.
+// Each step is a [action, waitMs] tuple — execute the action,
+// then wait before proceeding to the next step.
+const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+type Step = [action: () => void, waitMs: number];
+
+// cancelled: checked between steps — if true, sequence aborts silently.
+// Use for forfeit, unmount, or battle end during choreography.
+export async function runSteps(steps: Step[], cancelled: () => boolean) {
+  for (const [action, ms] of steps) {
+    if (cancelled()) return;
+    action();
+    if (ms > 0) await delay(ms);
+  }
+}
+
+// Usage: branching goes BETWEEN runSteps calls, not inside callbacks.
+// cancelled() typically reads a ref: () => phaseRef.current === 'finished'
+//
+//   await runSteps([
+//     [() => { triggerPlayerSlam(weight); refresh(); }, slamDuration(weight)],
+//     [() => { /* damage settle */ refresh(); },        CHOREO.damageSettle],
+//     [() => {},                                         CHOREO.postAttackPause],
+//   ], cancelled);
+//   if (cancelled()) return;
+//   if (aKilled) { /* handle death sequence */ }
+//   else finishRound(events);
+
 export const CHOREO = {
   // ── Announcements / Labels ──────────────────────────────
   roundBanner:       800,   // "ROUND 3" banner hold time
@@ -78,17 +108,84 @@ export const CHOREO = {
 } as const;
 
 // ── Helper: total slam duration for a given weight ────────
-// Used by setTimeout chains to know how long to wait for the
-// slam animation to complete before proceeding to the next beat.
+// Used by runSteps to know how long to wait for the slam
+// animation to complete before proceeding to the next beat.
 export function slamDuration(weight: 'LIGHT' | 'MEDIUM' | 'HEAVY'): number {
   const cfg = SLAM_CONFIG[weight];
-  return cfg.liftDuration + cfg.slamDuration + cfg.holdDuration + 200;
-  // +200 accounts for the spring return starting — we don't need to
-  // wait for the full spring settle, just enough that it's clearly returning.
+  return cfg.liftDuration + cfg.slamDuration + cfg.holdDuration + cfg.returnBuffer;
+  // returnBuffer is per-weight because withSpring settle time varies
+  // with mass/damping. Tuned so the spring is visibly returning but
+  // not fully settled — avoids dead gaps (too long) or overlapping
+  // beats (too short).
 }
+
+// returnBuffer values in SLAM_CONFIG (tune during playtesting):
+//   LIGHT:  120  — snappy spring, settles fast
+//   MEDIUM: 200  — balanced
+//   HEAVY:  300  — high mass (1.4), slower bounce
 ```
 
 > **Key principle:** `SLAM_CONFIG` defines HOW an attack looks. `CHOREO` defines the SPACE between events. They don't overlap.
+
+---
+
+## Hook Architecture: useBattle vs useBattleChoreography
+
+Split animation orchestration out of `useBattle` into a dedicated `useBattleChoreography` hook.
+
+### `useBattleChoreography` (NEW — `src/hooks/useBattleChoreography.ts`)
+**Owns:** All animation shared values (player + AI slam progress, shockwave keys, flash opacity, round banner key, action label, damage event, draw keys, defeat side, amp trigger event).
+**Exposes named trigger functions:**
+
+```ts
+interface BattleChoreography {
+  // ── Slam ──
+  triggerPlayerSlam: (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
+  triggerAiSlam:     (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
+
+  // ── Announcements ──
+  showRoundBanner:   () => void;
+  showActionLabel:   (text: string, side: 'player' | 'ai') => void;
+
+  // ── Damage ──
+  fireDamagePopup:   (side: 'player' | 'ai', amount: number, weight: 'LIGHT' | 'MEDIUM' | 'HEAVY', typeMultiplier: number) => void;
+
+  // ── Card events ──
+  fireDrawAnimation: (side: 'player' | 'ai') => void;
+  showDefeat:        (side: 'player' | 'ai') => void;
+  clearDefeat:       () => void;
+
+  // ── Amp ──
+  fireAmpTrigger:    (side: 'player' | 'ai', effect: AmpEffectName) => void;
+
+  // ── Raw shared values (read-only, for BattleScreen derived transforms) ──
+  slamProgress:       SharedValue<number>;
+  aiSlamProgress:     SharedValue<number>;
+  playerSlamType:     SharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>;
+  aiSlamType:         SharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>;
+  shockwaveActive:    SharedValue<number>;
+  aiShockwaveActive:  SharedValue<number>;
+  shockwave2Active:   SharedValue<number>;
+  aiShockwave2Active: SharedValue<number>;
+  flashOpacity:       SharedValue<number>;
+  roundBannerKey:     number;
+  actionLabel:        { text: string; side: 'player' | 'ai'; key: number } | null;
+  damageEvent:        { side: 'player' | 'ai'; amount: number; weight: string; typeMultiplier: number; key: number } | null;
+  playerDrawKey:      number;
+  aiDrawKey:          number;
+  defeatSide:         'player' | 'ai' | null;
+  ampTriggerEvent:    { side: 'player' | 'ai'; effect: AmpEffectName; key: number } | null;
+}
+```
+
+### `useBattle`
+**Owns:** Battle state machine, round sequencing, AI logic, checkpoint save/resume.
+**Calls:** `useBattleChoreography()` and invokes trigger functions at the right moments in `runSteps` sequences. Does not create or manage animation shared values directly.
+
+### `BattleScreen`
+**Reads:** Shared values from `useBattleChoreography` return value for `useDerivedValue` / `useAnimatedStyle` transforms. React state signals (`roundBannerKey`, `damageEvent`, etc.) for component rendering.
+
+> **Separation:** `useBattle` decides WHAT happens and WHEN. `useBattleChoreography` decides HOW it looks. `BattleScreen` renders it.
 
 ---
 
@@ -195,20 +292,22 @@ const triggerAiSlam = useCallback((weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => {
 Replace all instances of `setAiAttackKey(k => k + 1)` with `triggerAiSlam(aiWeight)`.
 Wire `triggerPlayerSlam(weight)` at every player attack point (per SLAM_ANIMATION.md).
 
-### setTimeout Delays
+### Sequencing with runSteps
 
-After triggering a slam, wait `slamDuration(weight)` before the next beat:
+After triggering a slam, use `runSteps` to wait through each beat:
 
 ```ts
-triggerPlayerSlam(weight);
-refresh();
-setTimeout(() => {
-  // Damage has settled — HP bar drained, damage number fading
-  setTimeout(() => {
-    // Post-attack pause complete, proceed to death check or next beat
-  }, CHOREO.damageSettle + CHOREO.postAttackPause);
-}, slamDuration(weight));
+await runSteps([
+  [() => { triggerPlayerSlam(weight); refresh(); }, slamDuration(weight)],
+  [() => { /* HP bar draining, damage number visible */ }, CHOREO.damageSettle],
+  [() => {},                                                CHOREO.postAttackPause],
+]);
+// Branching happens here — flat, not nested
+if (aKilled) handleDefeat(events);
+else finishRound(events);
 ```
+
+Each round type (`playerAttacksOnly`, `aiAttacksOnly`, `bothAttack`, `noCombat`) becomes a top-to-bottom async function with `runSteps` calls and `if/else` branching between them.
 
 ### Removing the Old AI Lunge
 
@@ -344,14 +443,40 @@ Identical structure to B, mirrored:
 
 1. Card pulses green/vitality glow. "+5 STA" floats up from stamina bar. Duration `CHOREO.actionLabel`.
 2. Stamina bar animates up.
-3. Opposing side's action resolves.
+
+**Sequencing rule:** Non-attack actions always resolve visually FIRST, before the opponent's slam. This matches the game logic (rest/draw/swap happen before attacks land) and ensures the player understands what happened before damage appears.
+
+**Rest + opponent attacks:**
+1. Phase → `animating`
+2. Rest animation plays (green glow + "+5 STA" float). Duration `CHOREO.actionShow`.
+3. Wait `CHOREO.preSlamPause`
+4. Opponent's full slam sequence (same as B.4–B.7 or C.4–C.7)
+5. Death check → Defeat Sequence or Round End
+
+**Both sides rest / both non-attack:**
+1. Phase → `animating`
+2. Both action labels show simultaneously. Duration `CHOREO.actionShow`.
+3. Wait `CHOREO.actionFade`
+4. Round End (H)
 
 ### J. Swap Action (both sides)
 
 1. **Swap out** — active card shrinks + slides toward hand. ~300ms.
 2. **Swap in** — new card animates from hand to active with `withSpring` scale. Duration `CHOREO.replaceEntry`.
 3. Wait `CHOREO.replaceSettle`.
-4. Opposing side's action resolves.
+
+**Swap + opponent attacks:**
+1. Phase → `animating`
+2. Swap animation plays (swap out → swap in → settle). The opponent's slam targets the NEW card — this matches game logic where swaps resolve before attacks.
+3. Wait `CHOREO.preSlamPause`
+4. Opponent's full slam sequence hits the newly swapped-in card
+5. Death check → Defeat Sequence or Round End
+
+**Swap + opponent rests/draws:**
+1. Phase → `animating`
+2. Swap animation plays
+3. Opponent action label shows. Duration `CHOREO.actionShow`.
+4. Round End (H)
 
 ---
 
@@ -377,7 +502,8 @@ Identical structure to B, mirrored:
 **Used for BOTH sides.**
 
 ### 4. `DrawCardAnimation`
-**Props:** `triggerKey: number`, `fromBounds: Bounds`, `toBounds: Bounds`, `side: 'player'|'ai'`
+**Props:** `triggerKey: number`, `fromBounds: LayoutRectangle`, `toBounds: LayoutRectangle`, `side: 'player'|'ai'`
+**Bounds source:** Use `onLayout` callbacks on deck and hand containers, cached in refs — NOT `measureInWindow` (unreliable during animations and before layout settles). Deck and hand containers share a common parent in BattleScreen, so `onLayout` coordinates (relative to parent) are consistent. If cross-parent measurement is needed, sum offsets from nested `onLayout` calls.
 **Animation:** Card-back lifts from deck → curved bezier to hand → spring landing. Player draws flip face-up midway.
 **Used for BOTH sides.**
 
@@ -387,62 +513,84 @@ Expanding ring at impact point. Uses `useAnimatedReaction` on trigger key.
 
 ---
 
+## Existing Implementation (Pre-Sprint Audit)
+
+The following already exist and do NOT need to be built from scratch:
+
+| Item | Location | Status |
+|------|----------|--------|
+| `SLAM_CONFIG` (3 weights, 14 fields each) | `constants.ts:133–186` | Complete (no `returnBuffer` yet) |
+| Player slam shared values (6 values) | `useBattle.ts:166–173` | Complete, exported |
+| `triggerPlayerSlam()` | `useBattle.ts:185–239` | Complete, wired at all attack points |
+| AI slam animation | `BattleScreen.tsx:268–312` | Works but local to `AIActiveSection`, always MEDIUM |
+| `aiShockwaveActive` | `useBattle.ts:173` | Exported, wired |
+| `Shockwave` component | `BattleScreen.tsx:185–241` | Inline, 3 instances (player×2, AI×1) |
+| Screen flash overlay | `BattleScreen.tsx:1473–1481` | Complete, driven by `flashOpacity` |
+| `STEP_MS = 1000` | `useBattle.ts:263` | Active, 17 references |
+
+**What does NOT exist yet:** `returnBuffer` per weight, AI slam weight variation, `runSteps`/`CHOREO`, `useBattleChoreography` hook, `RoundBanner`, `DamagePopup`, `ActionLabel`, `DrawCardAnimation`, KO polish, amp trigger moment.
+
+---
+
 ## Implementation Plan
 
-### Sprint 1: Timing Foundation + CHOREO Config
-**Goal:** Replace `STEP_MS` with `CHOREO` named delays. No new animations — just pacing.
+### Sprint 1: Timing Foundation + Hook Extraction
+**Goal:** Create `choreography.ts`, extract `useBattleChoreography`, replace `STEP_MS` with `CHOREO` + `runSteps`.
 
-1. Create `src/battle/choreography.ts` with `CHOREO` config and `slamDuration()` helper
-2. Verify `SLAM_CONFIG` exists in `constants.ts` (per SLAM_ANIMATION.md) — add if missing
-3. Replace all `STEP_MS` in `useBattle.ts` with `CHOREO.*` values
-4. Update `result` → `ready` auto-advance to `CHOREO.roundEndPause + CHOREO.roundTransition + CHOREO.roundStartDelay`
-5. Add `roundBannerKey` signal
-6. Playtest and tune values
+1. Create `src/battle/choreography.ts` with `CHOREO` config, `slamDuration()` helper, `runSteps()` sequencer
+2. Add `returnBuffer` field to each weight in `SLAM_CONFIG` (LIGHT: 120, MEDIUM: 200, HEAVY: 300)
+3. Create `src/hooks/useBattleChoreography.ts` — move all existing slam shared values (`slamProgress`, `playerSlamKey`, `playerSlamType`, `shockwaveActive`, `shockwave2Active`, `flashOpacity`, `aiShockwaveActive`) out of `useBattle` into this hook. Expose named trigger functions.
+4. Update `useBattle` to call `useBattleChoreography()` and use trigger functions instead of direct shared value manipulation
+5. Replace all 17 `STEP_MS` references in `useBattle.ts` with `CHOREO.*` values
+6. Convert nested `setTimeout` chains to `runSteps()` with `cancelled` check
+7. Update `result` → `ready` auto-advance to `CHOREO.roundEndPause + CHOREO.roundTransition + CHOREO.roundStartDelay`
+8. Add `roundBannerKey` signal to `useBattleChoreography`
+9. Playtest and tune values
 
-**Validation:** Battle feels noticeably slower. Each step is distinguishable.
+**Validation:** Battle pacing is noticeably different. Each step is distinguishable. No `STEP_MS` references remain. All slam animations still work.
 
-### Sprint 2: Slam Animation — Both Sides
-**Goal:** Full slam system for player AND AI per SLAM_ANIMATION.md.
+### Sprint 2: AI Slam Refactor + Weight Variation
+**Goal:** AI gets full weight-varied slam via `useBattleChoreography`, replacing local `lungeY` approach.
 
-1. Implement player slam (SLAM_ANIMATION.md Steps 1–7)
-2. Add mirrored AI slam signals (`aiSlamKey`, `aiSlamType`, `aiSlamProgress`, `aiShockwaveActive`, `aiShockwave2Active`)
-3. Extract shared `triggerSlam()` helper, implement `triggerPlayerSlam()` and `triggerAiSlam()`
-4. AI slam derived transforms — same `useDerivedValue` pattern, positive translateY
-5. Remove old `lungeY`/`lungeStyle` from `AIActiveSection`
-6. Build `Shockwave` component — render on BOTH player and AI cards
-7. Shared screen flash overlay
-8. Replace `setAiAttackKey(k => k + 1)` with `triggerAiSlam(aiWeight)` everywhere
-9. Wire `triggerPlayerSlam(weight)` at all player attack points
-10. Verify both-attack rounds: sequential slams with `CHOREO.betweenAttacks` gap
+1. Add AI slam signals to `useBattleChoreography`: `aiSlamKey`, `aiSlamType`, `aiSlamProgress`, `aiShockwave2Active`
+2. Implement `triggerAiSlam(weight)` in `useBattleChoreography` — mirrors `triggerPlayerSlam` with inverted Y direction
+3. Extract shared `triggerSlam()` helper used by both `triggerPlayerSlam` and `triggerAiSlam`
+4. AI slam derived transforms in `BattleScreen` — same `useDerivedValue` pattern as player, positive translateY
+5. Remove old `lungeY`/`lungeScale`/`lungeSquash`/`lungeStyle` from `AIActiveSection`
+6. Wire `triggerAiSlam(aiWeight)` at all AI attack points (replace `setAiAttackKey` / `attackKey` increment)
+7. AI screen flash uses shared `flashOpacity` (currently AI has local `flashOp`)
+8. Add second shockwave instance for AI Heavy attacks
+9. Verify both-attack rounds: sequential slams with `CHOREO.betweenAttacks` gap
 
-**Validation:** Light/Medium/Heavy feel distinct for BOTH sides. AI Heavy has slow windup. Shockwaves appear on correct card. Flash fires for both.
+**Validation:** AI Light/Medium/Heavy look distinct. AI Heavy has slow windup + dual shockwaves. Flash fires from shared overlay for both sides.
 
 ### Sprint 3: Round Banner + Action Labels
 **Goal:** Visual markers for transitions and action announcements.
 
-1. Build `RoundBanner` with `MOTION.slam`
-2. Wire to `roundBannerKey` in `BattleScreen`
-3. Add `actionLabel` signal
+1. Build `RoundBanner` component with `MOTION.slam` easing
+2. Wire to `roundBannerKey` from `useBattleChoreography` in `BattleScreen`
+3. Add `actionLabel` signal to `useBattleChoreography` + `showActionLabel()` trigger
 4. Build `ActionLabel` component
-5. Wire all non-attack actions for BOTH sides
+5. Wire all non-attack actions for BOTH sides (rest, draw, swap labels)
 6. Add rest visual (green glow + "+5 STA" float) for BOTH sides
+7. Verify non-attack-then-attack sequencing: label resolves before opponent's slam
 
 ### Sprint 4: Damage Popup
 **Goal:** Damage numbers at slam impact with weight + type styling.
 
-1. Add `damageEvent` signal
+1. Add `damageEvent` signal to `useBattleChoreography` + `fireDamagePopup()` trigger
 2. Build `DamagePopup` with weight and typeMultiplier styling
 3. Render on BOTH active card sections
-4. Set `damageEvent` at each damage point in `useBattle.ts`
+4. Call `fireDamagePopup()` at each damage point in `useBattle.ts`
 5. Delay appearance by `liftDuration + slamDuration` for impact sync
 6. Hold during `CHOREO.damageSettle`, then fade
 
 ### Sprint 5: Card Draw Animation
 **Goal:** Drawing is visible for BOTH sides.
 
-1. Add `playerDrawKey` and `aiDrawKey` signals
+1. Add `playerDrawKey` and `aiDrawKey` signals to `useBattleChoreography` + `fireDrawAnimation()` trigger
 2. Build `DrawCardAnimation` component
-3. Measure deck/hand positions via `measureInWindow`
+3. Add `onLayout` callbacks to deck and hand containers in `BattleScreen`, cache bounds in refs
 4. Delay state update to sync with animation
 5. Player: card-back → travel → flip → land
 6. AI: card-back → travel → land as face-down
@@ -450,7 +598,7 @@ Expanding ring at impact point. Uses `useAnimatedReaction` on trigger key.
 ### Sprint 6: KO + Replacement Polish
 **Goal:** Dramatic defeats and readable replacements for BOTH sides.
 
-1. Add `defeatSide` signal
+1. Add `defeatSide` signal to `useBattleChoreography` + `showDefeat()`/`clearDefeat()` triggers
 2. KO overlay (pulsing red vignette) during `CHOREO.defeatHold` — BOTH sides
 3. `CHOREO.defeatGap` pause after fall
 4. AI replacement: card slides from AI hand to active (not instant)
@@ -460,7 +608,7 @@ Expanding ring at impact point. Uses `useAnimatedReaction` on trigger key.
 ### Sprint 7: Amp Activation Moment
 **Goal:** Amp triggers feel cinematic for BOTH sides.
 
-1. Add `ampTriggerEvent` signal
+1. Add `ampTriggerEvent` signal to `useBattleChoreography` + `fireAmpTrigger()` trigger
 2. Trigger sequence: particle burst, dim overlay, label pulse
 3. Spend/reroll text scramble animation
 4. Same visual for player and AI triggers
@@ -492,12 +640,30 @@ Single attacker: ~3,200ms. Non-combat (both rest/draw): ~2,500ms.
 
 ---
 
+## Battle Save/Resume During Choreography
+
+The current system saves a checkpoint to Firestore at each `'ready'` phase. The `'animating'` phase introduced by this PRD can last up to ~5 seconds. If the app closes mid-choreography, the battle must resume cleanly.
+
+### Rules
+- **Never save during `'animating'` phase.** Checkpoints only fire at `'ready'` (unchanged from current behavior).
+- **Never call `refresh()` between two slams in a both-attack round.** All state mutations (HP changes, kills, amp gains) accumulate in refs during the choreography sequence. A single `refresh()` commits everything to React state at round end when phase returns to `'ready'`.
+- **Resume = replay the round.** If the app dies mid-animation, the last checkpoint was `'ready'` at the start of the round. On resume, both sides re-select actions and the round replays from scratch. No partial state was persisted, so no duplicate damage.
+- **Visual-only calls are safe mid-animation.** Trigger functions from `useBattleChoreography` (slams, banners, popups) only touch animation shared values — they don't mutate battle state and don't trigger saves.
+
+### What NOT to do
+- Don't add a `refresh()` after the first attacker's damage in a both-attack round — this would snapshot partial state.
+- Don't add a Firestore save at any point during `'animating'` — partial round state is not resumable.
+- Don't add a new phase like `'animating_checkpoint'` — it adds complexity for no benefit since the round replays cleanly from `'ready'`.
+
+---
+
 ## Constraints
 - All animations: `react-native-reanimated` shared values, transforms + opacity only
 - Shockwave uses `useAnimatedReaction` (NOT `useEffect`) per SLAM_ANIMATION.md
 - Haptics use `runOnJS` — `Haptics.impactAsync` is not a worklet
 - `DisplaySnapshot` pattern unchanged — signals drive animations
-- `setTimeout` chains remain — `CHOREO` replaces `STEP_MS` delays
+- `runSteps()` async sequencer replaces nested `setTimeout` chains — flat, readable choreography scripts with branching between steps, not inside callbacks. No new dependencies (Promise wrapper around `setTimeout`).
+- `runSteps()` takes a `cancelled` callback — check between steps and after each `await runSteps()` call. Forfeit sets phase to `'finished'`, so `cancelled = () => phaseRef.current === 'finished'`. This prevents state updates on unmounted components.
 - `SLAM_CONFIG` in `constants.ts`, `CHOREO` in `src/battle/choreography.ts`
 - `npx tsc --noEmit` zero errors after each sprint
 
@@ -507,9 +673,10 @@ Single attacker: ~3,200ms. Non-combat (both rest/draw): ~2,500ms.
 
 | File | Changes |
 |------|---------|
-| `src/data/constants.ts` | `SLAM_CONFIG` + `AttackLabel` type (per SLAM_ANIMATION.md) |
-| `src/battle/choreography.ts` | **NEW** — `CHOREO` config + `slamDuration()` helper |
-| `src/hooks/useBattle.ts` | Replace `STEP_MS`, add player + AI slam signals, `triggerSlam`/`triggerPlayerSlam`/`triggerAiSlam`, add `roundBannerKey`, `actionLabel`, `damageEvent`, draw keys, `defeatSide`, `ampTriggerEvent` |
+| `src/data/constants.ts` | `SLAM_CONFIG` + `AttackLabel` type (per SLAM_ANIMATION.md) + `returnBuffer` field per weight |
+| `src/battle/choreography.ts` | **NEW** — `CHOREO` config, `slamDuration()` helper, `runSteps()` sequencer |
+| `src/hooks/useBattleChoreography.ts` | **NEW** — owns all animation shared values + exposes named trigger functions (see below) |
+| `src/hooks/useBattle.ts` | Replace `STEP_MS`, call `useBattleChoreography()` trigger functions at sequencing points, remove direct shared value management for animations |
 | `src/screens/BattleScreen.tsx` | Player + AI slam derived transforms, `Shockwave` on both sides, flash overlay, `RoundBanner`, `DamagePopup`, `ActionLabel`, `DrawCardAnimation`, KO overlay, replacement animations, remove old `lungeY`/`lungeStyle` |
 | `src/components/Shockwave.tsx` | **NEW** (optional — can stay in BattleScreen) |
 
@@ -520,5 +687,7 @@ Single attacker: ~3,200ms. Non-combat (both rest/draw): ~2,500ms.
 - Both-attack rounds: first slam must fully complete (`slamDuration(firstWeight)`) before second begins. Never fire both simultaneously.
 - `slamProgress` and `aiSlamProgress` are independent — spring return overlap between sequential slams is fine and looks natural.
 - Damage numbers: use `useAnimatedReaction` on shared value for sub-frame precision, NOT `useEffect` with React state.
-- `slamDuration()` adds 200ms buffer beyond `holdDuration` — spring return is visibly underway, but we don't wait for full settle.
+- `slamDuration()` uses per-weight `returnBuffer` — spring return is visibly underway, but we don't wait for full settle.
 - If `SLAM_CONFIG` doesn't exist yet, add it per SLAM_ANIMATION.md Step 1 before Sprint 2.
+- `useBattle` should NEVER create animation shared values directly — all shared values live in `useBattleChoreography`. `useBattle` calls named trigger functions only.
+- `BattleScreen` destructures both hooks — battle state from `useBattle`, animation values from `useBattleChoreography`.
