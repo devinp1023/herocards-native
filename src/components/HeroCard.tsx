@@ -144,6 +144,8 @@ export interface BattleProps {
   maxStamina?: number;
   isActive?: boolean;
   hpPct?: number;
+  hideHpBar?: boolean;
+  hideStaBar?: boolean;
 }
 
 interface HeroCardProps extends BattleProps {
@@ -162,6 +164,8 @@ export function HeroCard({
   maxStamina: maxStaminaProp,
   isActive = false,
   hpPct,
+  hideHpBar = false,
+  hideStaBar = false,
 }: HeroCardProps) {
   const fonts = useFontContext();
   const noiseImage = useImage(noiseSource);
@@ -549,8 +553,8 @@ export function HeroCard({
       <View pointerEvents="none" style={styles.statsWrapper}>
         <View style={[styles.statsAccentBar, { backgroundColor: rm.color }]} />
 
-        {/* HP row */}
-        <Animated.View style={[styles.hpSection, isLowHp && lowHpStyle]}>
+        {/* HP row — invisible when external battle HP bar is active (keep space) */}
+        <Animated.View style={[styles.hpSection, isLowHp && lowHpStyle, hideHpBar && { opacity: 0 }]}>
           <View style={styles.statRowHeader}>
             <Text style={styles.statTag}>HP</Text>
             <Text style={[styles.statValue, { color: hpBarColor }]}>{displayHp}</Text>
@@ -562,8 +566,8 @@ export function HeroCard({
           </View>
         </Animated.View>
 
-        {/* STA row */}
-        <View style={styles.stamSection}>
+        {/* STA row — invisible when external battle STA bar is active (keep space) */}
+        <View style={[styles.stamSection, hideStaBar && { opacity: 0 }]}>
           <View style={styles.statRowHeader}>
             <Text style={styles.statTag}>STA</Text>
             <Text style={styles.stamValue}>{displayStam}</Text>

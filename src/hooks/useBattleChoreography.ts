@@ -16,6 +16,20 @@ export interface ActionLabelEvent {
   key: number;
 }
 
+export interface StaminaPopupEvent {
+  amount: number;
+  side: 'player' | 'ai';
+  key: number;
+}
+
+export interface DamagePopupEvent {
+  damage: number;
+  side: 'player' | 'ai';          // which card RECEIVED the hit
+  weight: 'LIGHT' | 'MEDIUM' | 'HEAVY';
+  typeMultiplier: number;          // 2.0 = super-effective, 0.5 = resisted, 1.0 = neutral
+  key: number;
+}
+
 export interface BattleChoreography {
   // ── Slam ──
   triggerPlayerSlam: (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
@@ -23,6 +37,12 @@ export interface BattleChoreography {
 
   // ── Round transition ──
   showRoundBanner: (round: number) => void;
+
+  // ── Damage popup ──
+  fireDamagePopup: (damage: number, side: 'player' | 'ai', weight: 'LIGHT' | 'MEDIUM' | 'HEAVY', typeMultiplier: number) => void;
+
+  // ── Stamina popup ──
+  fireStaminaPopup: (amount: number, side: 'player' | 'ai') => void;
 
   // ── Announcements ──
   showActionLabel: (text: string, side: 'player' | 'ai') => void;
@@ -47,6 +67,8 @@ export interface BattleChoreography {
   roundBannerKey:     number;
   bannerRound:        number;
   actionLabel:        ActionLabelEvent | null;
+  damagePopup:        DamagePopupEvent | null;
+  staminaPopup:       StaminaPopupEvent | null;
 }
 
 export function useBattleChoreography(): BattleChoreography {
@@ -68,6 +90,14 @@ export function useBattleChoreography(): BattleChoreography {
   // ── Round banner ────────────────────────────────────────────────────────
   const [roundBannerKey, setRoundBannerKey] = useState(0);
   const [bannerRound, setBannerRound] = useState(0);
+
+  // ── Damage popup ────────────────────────────────────────────────────────
+  const [damagePopup, setDamagePopup] = useState<DamagePopupEvent | null>(null);
+  const damagePopupKeyRef = useRef(0);
+
+  // ── Stamina popup ─────────────────────────────────────────────────────
+  const [staminaPopup, setStaminaPopup] = useState<StaminaPopupEvent | null>(null);
+  const staminaPopupKeyRef = useRef(0);
 
   // ── Action label ("REST", "DREW A CARD", "AI SWAPPED", etc.) ──────────
   const [actionLabel, setActionLabel] = useState<ActionLabelEvent | null>(null);
@@ -163,6 +193,23 @@ export function useBattleChoreography(): BattleChoreography {
     setRoundBannerKey(k => k + 1);
   }, []);
 
+  // ── Damage popup trigger ─────────────────────────────────────────────
+  const fireDamagePopup = useCallback((
+    damage: number,
+    side: 'player' | 'ai',
+    weight: 'LIGHT' | 'MEDIUM' | 'HEAVY',
+    typeMultiplier: number,
+  ) => {
+    damagePopupKeyRef.current += 1;
+    setDamagePopup({ damage, side, weight, typeMultiplier, key: damagePopupKeyRef.current });
+  }, []);
+
+  // ── Stamina popup trigger ────────────────────────────────────────────
+  const fireStaminaPopup = useCallback((amount: number, side: 'player' | 'ai') => {
+    staminaPopupKeyRef.current += 1;
+    setStaminaPopup({ amount, side, key: staminaPopupKeyRef.current });
+  }, []);
+
   // ── Action label triggers ─────────────────────────────────────────────
   const showActionLabel = useCallback((text: string, side: 'player' | 'ai') => {
     actionLabelKeyRef.current += 1;
@@ -177,6 +224,8 @@ export function useBattleChoreography(): BattleChoreography {
     triggerPlayerSlam,
     triggerAiSlam,
     showRoundBanner,
+    fireDamagePopup,
+    fireStaminaPopup,
     showActionLabel,
     clearActionLabel,
     playerSlamKey,
@@ -193,5 +242,7 @@ export function useBattleChoreography(): BattleChoreography {
     roundBannerKey,
     bannerRound,
     actionLabel,
+    damagePopup,
+    staminaPopup,
   };
 }

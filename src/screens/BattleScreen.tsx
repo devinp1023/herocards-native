@@ -242,7 +242,7 @@ function Shockwave({ triggerKey, color, maxScale, duration, borderWidth, size = 
 }
 
 // ── Round Banner — "ROUND N" centered between active cards ─────────────────
-import type { ActionLabelEvent } from '../hooks/useBattleChoreography';
+import type { ActionLabelEvent, DamagePopupEvent, StaminaPopupEvent } from '../hooks/useBattleChoreography';
 
 const BANNER_DURATION = 600; // entrance + exit total
 
@@ -437,10 +437,404 @@ const al = StyleSheet.create({
   },
 });
 
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, aiAmp, onCardMeasure, onPreview }: {
+// ── Damage Popup — floating damage number at slam impact ─────────────────────
+const DAMAGE_HOLD = 700;    // hold visible at full opacity
+const DAMAGE_FADE = 400;    // fade out
+const DAMAGE_RISE = 24;     // total px the number floats upward
+
+const DamagePopup = React.memo(function DamagePopup({ event }: { event: DamagePopupEvent | null }) {
+  const scale    = useSharedValue(0);
+  const opacity  = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const prevKey  = useRef(0);
+  const [display, setDisplay] = useState<DamagePopupEvent | null>(null);
+
+  useEffect(() => {
+    if (!event || event.key === prevKey.current) return;
+    prevKey.current = event.key;
+    setDisplay(event);
+
+    // Burst in: 0 → overshoot → 1.0
+    scale.value = 0;
+    opacity.value = 0;
+    translateY.value = 0;
+    scale.value = withSequence(
+      withTiming(MOTION.burst.overshoot, { duration: 120, easing: EASE.enter }),
+      withTiming(1, { duration: 100, easing: EASE.inOut }),
+    );
+    opacity.value = withSequence(
+      withTiming(1, { duration: 80 }),
+      withDelay(DAMAGE_HOLD, withTiming(0, { duration: DAMAGE_FADE, easing: EASE.exit })),
+    );
+    // Slow upward drift
+    translateY.value = withTiming(-DAMAGE_RISE, { duration: DAMAGE_HOLD + DAMAGE_FADE, easing: Easing.out(Easing.quad) });
+  }, [event]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  if (!display) return null;
+
+  const { damage, weight, typeMultiplier } = display;
+  // Color: super-effective = gold, resisted = muted blue, neutral = white
+  const isSuper   = typeMultiplier >= 2.0;
+  const isResist  = typeMultiplier <= 0.5;
+  const textColor = isSuper ? T.status.caution : isResist ? T.text.muted : '#ffffff';
+  const glowColor = isSuper ? T.status.caution : isResist ? '#6688aa' : T.accent.mint;
+  // Size scales with weight
+  const fontSize  = weight === 'HEAVY' ? 38 : weight === 'MEDIUM' ? 30 : 24;
+
+  return (
+    <ReAnimated.View pointerEvents="none" style={[dp.container, animStyle]}>
+      <Text style={[dp.number, { fontSize, color: textColor, ...TEXT_FX.glow(glowColor) }]}>
+        {damage}
+      </Text>
+      {isSuper && <Text style={dp.effectLabel}>SUPER EFFECTIVE</Text>}
+      {isResist && <Text style={[dp.effectLabel, dp.resistLabel]}>RESISTED</Text>}
+    </ReAnimated.View>
+  );
+});
+
+const dp = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  number: {
+    fontFamily: 'Orbitron_900Black',
+    letterSpacing: 2,
+  },
+  effectLabel: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: 9,
+    color: T.status.caution,
+    letterSpacing: T.letterSpacing.md,
+    marginTop: 2,
+  },
+  resistLabel: {
+    color: T.text.muted,
+  },
+});
+
+// ── External HP Bar — extends beyond card edges during battle ─────────────────
+const EXT_HP_OVERHANG = 40;   // px beyond each card edge
+const EXT_HP_W = ACTIVE_W + EXT_HP_OVERHANG * 2;   // 236px
+const EXT_HP_BAR_H = 8;
+
+const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent }: {
+  hp: number; maxHp: number; damageEvent: DamagePopupEvent | null;
+}) {
+  const pct = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 1;
+  const isLow = pct <= 0.25 && pct > 0;
+  const fillColor = pct > 0.5 ? T.status.vitality : pct > 0.25 ? T.status.caution : T.status.danger;
+
+  // Low HP pulse
+  const pulseOp = useSharedValue(1);
+  useEffect(() => {
+    if (isLow) {
+      pulseOp.value = withRepeat(
+        withSequence(
+          withTiming(0.35, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        true,
+      );
+    } else {
+      cancelAnimation(pulseOp);
+      pulseOp.value = 1;
+    }
+    return () => cancelAnimation(pulseOp);
+  }, [isLow]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulseOp.value }));
+
+  // Inline damage number
+  const dmgScale   = useSharedValue(0);
+  const dmgOpacity = useSharedValue(0);
+  const dmgTransX  = useSharedValue(0);
+  const prevDmgKey = useRef(0);
+  const [dmgDisplay, setDmgDisplay] = useState<DamagePopupEvent | null>(null);
+
+  useEffect(() => {
+    if (!damageEvent || damageEvent.key === prevDmgKey.current) return;
+    prevDmgKey.current = damageEvent.key;
+    setDmgDisplay(damageEvent);
+
+    // Pop in from right, hold, fade out
+    dmgScale.value = 0;
+    dmgOpacity.value = 0;
+    dmgTransX.value = 8;
+    dmgScale.value = withSequence(
+      withTiming(MOTION.burst.overshoot, { duration: 120, easing: EASE.enter }),
+      withTiming(1, { duration: 100, easing: EASE.inOut }),
+    );
+    dmgOpacity.value = withSequence(
+      withTiming(1, { duration: 80 }),
+      withDelay(DAMAGE_HOLD, withTiming(0, { duration: DAMAGE_FADE, easing: EASE.exit })),
+    );
+    dmgTransX.value = withTiming(0, { duration: 180, easing: EASE.enter });
+    // Clear from DOM after animation completes
+    const clearId = setTimeout(() => setDmgDisplay(null), 80 + DAMAGE_HOLD + DAMAGE_FADE + 50);
+    return () => clearTimeout(clearId);
+  }, [damageEvent]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dmgAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: dmgScale.value }, { translateX: dmgTransX.value }],
+    opacity: dmgOpacity.value,
+  }));
+
+  // Damage color based on type effectiveness
+  const dmgColor = dmgDisplay
+    ? dmgDisplay.typeMultiplier >= 2.0 ? T.status.caution
+    : dmgDisplay.typeMultiplier <= 0.5 ? T.text.muted
+    : T.status.danger
+    : T.status.danger;
+
+  return (
+    <View style={ehp.container} pointerEvents="none">
+      <Text style={ehp.tag}>HP</Text>
+      {/* Bar track — full width */}
+      <ReAnimated.View style={[ehp.track, pulseStyle, { shadowColor: fillColor }]}>
+        <View style={[ehp.fill, { width: `${pct * 100}%`, backgroundColor: fillColor }]}>
+          <View style={ehp.gloss} />
+        </View>
+      </ReAnimated.View>
+      {/* HP number + damage popup — absolutely positioned to the right */}
+      <View style={ehp.numberRow}>
+        <ReAnimated.View style={pulseStyle}>
+          <Text style={[ehp.value, { color: fillColor, ...TEXT_FX.glow(fillColor) }]}>
+            {hp}
+          </Text>
+        </ReAnimated.View>
+        {dmgDisplay && (
+          <ReAnimated.View style={dmgAnimStyle}>
+            <Text style={[ehp.dmgNumber, { color: dmgColor, ...TEXT_FX.glow(dmgColor) }]}>
+              -{dmgDisplay.damage}
+            </Text>
+          </ReAnimated.View>
+        )}
+      </View>
+    </View>
+  );
+});
+
+const ehp = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: Math.round(285 * ACTIVE_SCALE),
+    left: -EXT_HP_OVERHANG,
+    width: EXT_HP_W,
+    justifyContent: 'center',
+  },
+  tag: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.xs,
+    color: T.text.muted,
+    letterSpacing: T.letterSpacing.md,
+    marginBottom: 1,
+  },
+  numberRow: {
+    position: 'absolute',
+    right: -24,
+    top: Math.round(T.font.xs + 1),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  track: {
+    width: '100%',
+    height: EXT_HP_BAR_H,
+    borderRadius: EXT_HP_BAR_H / 2,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderWidth: 1,
+    borderColor: T.bg.border,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+  },
+  value: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.sm,
+    letterSpacing: 1,
+  },
+  dmgNumber: {
+    fontFamily: 'Orbitron_900Black',
+    fontSize: T.font.sm,
+    letterSpacing: 1,
+  },
+  fill: {
+    height: '100%',
+    borderRadius: EXT_HP_BAR_H / 2,
+    overflow: 'hidden',
+  },
+  gloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderRadius: 99,
+  },
+});
+
+// ── External Stamina Bar — extends beyond card edges during battle ────────────
+const EXT_STA_BAR_H = 6;
+const EXT_STA_PIP_GAP = 2;
+
+const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina, staminaEvent }: {
+  stamina: number; maxStamina: number; staminaEvent: StaminaPopupEvent | null;
+}) {
+  // Pips use flex: 1 to fill the track evenly
+
+  // Inline stamina gain popup
+  const staScale   = useSharedValue(0);
+  const staOpacity = useSharedValue(0);
+  const staTransX  = useSharedValue(0);
+  const prevStaKey = useRef(0);
+  const [staDisplay, setStaDisplay] = useState<StaminaPopupEvent | null>(null);
+
+  useEffect(() => {
+    if (!staminaEvent || staminaEvent.key === prevStaKey.current) return;
+    prevStaKey.current = staminaEvent.key;
+    setStaDisplay(staminaEvent);
+
+    staScale.value = 0;
+    staOpacity.value = 0;
+    staTransX.value = 8;
+    staScale.value = withSequence(
+      withTiming(MOTION.burst.overshoot, { duration: 120, easing: EASE.enter }),
+      withTiming(1, { duration: 100, easing: EASE.inOut }),
+    );
+    staOpacity.value = withSequence(
+      withTiming(1, { duration: 80 }),
+      withDelay(DAMAGE_HOLD, withTiming(0, { duration: DAMAGE_FADE, easing: EASE.exit })),
+    );
+    staTransX.value = withTiming(0, { duration: 180, easing: EASE.enter });
+    // Clear from DOM after animation completes
+    const clearId = setTimeout(() => setStaDisplay(null), 80 + DAMAGE_HOLD + DAMAGE_FADE + 50);
+    return () => clearTimeout(clearId);
+  }, [staminaEvent]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const staAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: staScale.value }, { translateX: staTransX.value }],
+    opacity: staOpacity.value,
+  }));
+
+  return (
+    <View style={esta.container} pointerEvents="none">
+      <Text style={esta.tag}>STA</Text>
+      {/* Pip track — full width */}
+      <View style={esta.track}>
+        {Array.from({ length: maxStamina }, (_, i) => (
+          <View key={i} style={[
+            esta.pip,
+            i < stamina ? esta.pipFilled : esta.pipEmpty,
+          ]}>
+            {i < stamina && <View style={esta.pipGloss} />}
+          </View>
+        ))}
+      </View>
+      {/* Number + popup — absolutely positioned to the right */}
+      <View style={esta.numberRow}>
+        <Text style={[esta.value, { color: T.domain.stamina, ...TEXT_FX.glow(T.domain.stamina) }]}>
+          {stamina}
+        </Text>
+        {staDisplay && (
+          <ReAnimated.View style={staAnimStyle}>
+            <Text style={[esta.popupNumber, { color: T.domain.stamina, ...TEXT_FX.glow(T.domain.stamina) }]}>
+              +{staDisplay.amount}
+            </Text>
+          </ReAnimated.View>
+        )}
+      </View>
+    </View>
+  );
+});
+
+const esta = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: Math.round(334 * ACTIVE_SCALE),
+    left: -EXT_HP_OVERHANG,
+    width: EXT_HP_W,
+    justifyContent: 'center',
+  },
+  tag: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.xs,
+    color: T.text.muted,
+    letterSpacing: T.letterSpacing.md,
+    marginBottom: 1,
+  },
+  numberRow: {
+    position: 'absolute',
+    right: -24,
+    top: Math.round(T.font.xs + 1),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  track: {
+    width: '100%',
+    height: EXT_STA_BAR_H,
+    flexDirection: 'row',
+    gap: EXT_STA_PIP_GAP,
+  },
+  value: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.sm,
+    letterSpacing: 1,
+  },
+  pip: {
+    flex: 1,
+    height: '100%',
+    borderRadius: EXT_STA_BAR_H / 2,
+    overflow: 'hidden',
+  },
+  pipFilled: {
+    backgroundColor: T.domain.stamina,
+    shadowColor: T.domain.stamina,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  pipEmpty: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderWidth: 1,
+    borderColor: T.bg.border,
+  },
+  pipGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderRadius: 99,
+  },
+  popupNumber: {
+    fontFamily: 'Orbitron_900Black',
+    fontSize: T.font.sm,
+    letterSpacing: 1,
+  },
+});
+
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, aiAmp, damageEvent, staminaEvent, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; defeatingCard: BattleCard | null;
   aiAmp: number;
+  damageEvent: DamagePopupEvent | null;
+  staminaEvent: StaminaPopupEvent | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
 }) {
@@ -501,14 +895,14 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
         )}
       </View>
       {/* Slam transform is applied externally by BattleScreen via aiCardAnimatedStyle */}
-      <ReAnimated.View style={shakeStyle}>
+      <ReAnimated.View style={[shakeStyle, { overflow: 'visible' }]}>
         <View
           ref={cardRef}
-          style={{ position: 'relative' }}
+          style={{ position: 'relative', overflow: 'visible' }}
           onLayout={() => cardRef.current?.measureInWindow((x, y, w, h) => onCardMeasure({ x, y, w, h }))}
         >
-          <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
-            <ReAnimated.View style={entryStyle}>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)} style={{ overflow: 'visible' }}>
+            <ReAnimated.View style={[entryStyle, { overflow: 'visible' }]}>
               <AmpParticleWrap ampPercent={aiAmp} ampColor="#B14EFF">
                 <CardWrapper scale={ACTIVE_SCALE}>
                   <HeroCard
@@ -519,12 +913,16 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
                     currentStamina={card.stamina}
                     maxStamina={card.maxStamina}
                     isActive
+                    hideHpBar
+                    hideStaBar
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
                 </CardWrapper>
               </AmpParticleWrap>
             </ReAnimated.View>
           </TouchableOpacity>
+          <ExternalHpBar hp={card.hp} maxHp={card.maxHp} damageEvent={damageEvent} />
+          <ExternalStaBar stamina={card.stamina} maxStamina={card.maxStamina} staminaEvent={staminaEvent} />
           <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
           {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
         </View>
@@ -547,13 +945,15 @@ const aas = StyleSheet.create({
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
 function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
-  swapTargeted, hitKey, defeatingCard, playerAmp, onCardMeasure, onPreview }: {
+  swapTargeted, hitKey, defeatingCard, playerAmp, damageEvent, staminaEvent, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   swapTargeted: boolean;
   hitKey: number;
   defeatingCard: BattleCard | null;
   playerAmp: number;
+  damageEvent: DamagePopupEvent | null;
+  staminaEvent: StaminaPopupEvent | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
 }) {
@@ -642,12 +1042,12 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
       {/* Measure only the card slot — this is the precise swap drop-zone */}
       <View
         ref={cardSlotRef}
-        style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted]}
+        style={[pas.cardSlot, swapTargeted && pas.cardSlotTargeted, { overflow: 'visible' }]}
         onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
       >
-        <ReAnimated.View style={shakeStyle}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
-            <ReAnimated.View style={entryStyle}>
+        <ReAnimated.View style={[shakeStyle, { overflow: 'visible' }]}>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)} style={{ overflow: 'visible' }}>
+            <ReAnimated.View style={[entryStyle, { overflow: 'visible' }]}>
               <AmpParticleWrap ampPercent={playerAmp} ampColor="#00FFAA">
                 <CardWrapper scale={ACTIVE_SCALE}>
                   <HeroCard
@@ -658,12 +1058,16 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
                     currentStamina={card.stamina}
                     maxStamina={card.maxStamina}
                     isActive
+                    hideHpBar
+                    hideStaBar
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
                 </CardWrapper>
               </AmpParticleWrap>
             </ReAnimated.View>
           </TouchableOpacity>
+          <ExternalHpBar hp={card.hp} maxHp={card.maxHp} damageEvent={damageEvent} />
+          <ExternalStaBar stamina={card.stamina} maxStamina={card.maxStamina} staminaEvent={staminaEvent} />
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
         </ReAnimated.View>
       </View>
@@ -674,7 +1078,7 @@ const pas = StyleSheet.create({
   row:               { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, position: 'relative' as const },
   deckBadgeActive:   { borderColor: T.accent.mint + '55' },
   deckCountActive:   { color: T.accent.mint },
-  cardSlot:          { borderRadius: 8, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  cardSlot:          { borderWidth: 2, borderColor: 'transparent', padding: 2 },
   cardSlotTargeted:  { borderColor: T.accent.mint + 'cc', backgroundColor: T.accent.mint + '12' },
   emptyActive:       { borderRadius: 8, borderWidth: 1.5, borderColor: T.accent.mintMuted, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   emptyActiveTargeted:{ borderColor: T.accent.mint + 'cc', backgroundColor: T.accent.mint + '18' },
@@ -1563,6 +1967,8 @@ export default function BattleScreen({ navigation, route }: Props) {
               hitKey={battle.aiHitKey}
               defeatingCard={battle.lastDefeatedAiCard}
               aiAmp={battle.aiAmp}
+              damageEvent={battle.choreo.damagePopup?.side === 'ai' ? battle.choreo.damagePopup : null}
+              staminaEvent={battle.choreo.staminaPopup?.side === 'ai' ? battle.choreo.staminaPopup : null}
               onCardMeasure={onAiCardMeasure}
               onPreview={onPreview}
             />
@@ -1600,6 +2006,8 @@ export default function BattleScreen({ navigation, route }: Props) {
               hitKey={battle.playerHitKey}
               defeatingCard={battle.lastDefeatedPlayerCard}
               playerAmp={battle.playerAmp}
+              damageEvent={battle.choreo.damagePopup?.side === 'player' ? battle.choreo.damagePopup : null}
+              staminaEvent={battle.choreo.staminaPopup?.side === 'player' ? battle.choreo.staminaPopup : null}
               onCardMeasure={onPlayerCardMeasure}
               onPreview={onPreview}
             />
