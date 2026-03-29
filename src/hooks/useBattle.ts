@@ -212,7 +212,9 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         eventsRef.current = savedState.events ?? [];
         ampRef.current    = savedState.ampField ?? initAmpField();
         perBattleStatsRef.current = savedState.perBattleStats ?? {};
-        setRound(savedState.round ?? 1);
+        const resumeRound = savedState.round ?? 1;
+        setRound(resumeRound);
+        choreo.showRoundBanner(resumeRound);
         updatePhase('ready');
         refresh();
         return;
@@ -261,6 +263,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     pRef.current      = p;
     aRef.current      = a;
     eventsRef.current = initEvents;
+    choreo.showRoundBanner(1);
     updatePhase('ready');
     refresh();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -514,7 +517,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   // ── Auto-advance: result → ready (or selecting if player card was killed) ──
   useEffect(() => {
     if (phase !== 'result') return;
-    choreo.showRoundBanner();
+    choreo.showRoundBanner(round + 1);
     const total = CHOREO.roundEndPause + CHOREO.roundTransition + CHOREO.roundStartDelay;
     const id = setTimeout(() => {
       const p = pRef.current;
@@ -664,11 +667,14 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     if (aiAction !== 'attack') {
       // ── Player attacks, AI did non-combat action ────────────────────────
       executeAiAction(aiAction, events);
+      const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
+      choreo.showActionLabel(aiLabel, 'ai');
       refresh();
 
       await runSteps([
         [() => {}, CHOREO.actionShow],
         [() => {
+          choreo.clearActionLabel();
           choreo.triggerPlayerSlam(slamWeight);
           const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
           gainAmp(p, WEIGHT_AMP[weight]);
@@ -810,15 +816,18 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     drawCard(p);
     gainAmp(p, 2);
     events.push({ type: 'PLAYER_DRAW', card: p.hand[p.hand.length - 1].name });
+    choreo.showActionLabel('DREW A CARD', 'player');
     refresh();
 
     processAiAmp(events);
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
+      const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
         [() => {}, CHOREO.drawSettle],
-        [() => { executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;
       finishRound(events);
@@ -830,6 +839,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       await runSteps([
         [() => {}, CHOREO.drawSettle],
         [() => {
+          choreo.clearActionLabel();
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);
@@ -876,15 +886,18 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
 
     applyRestAction(p.active, p, events);
     gainAmp(p, 2);
+    choreo.showActionLabel('RESTED +5 STA', 'player');
     refresh();
 
     processAiAmp(events);
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
+      const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
         [() => {}, CHOREO.actionShow],
-        [() => { executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;
       finishRound(events);
@@ -896,6 +909,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       await runSteps([
         [() => {}, CHOREO.actionShow],
         [() => {
+          choreo.clearActionLabel();
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);
@@ -978,6 +992,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       perBattleStatsRef.current.legendaryUsed = 1;
     }
     setSwapOutCardId(prev.id);
+    choreo.showActionLabel('SWAPPED IN ' + chosen.name.toUpperCase(), 'player');
     updatePhase('animating');
     refresh();
 
@@ -985,9 +1000,11 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
+      const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
         [() => {}, CHOREO.actionShow],
-        [() => { setSwapOutCardId(null); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { setSwapOutCardId(null); choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;
       finishRound(events);
@@ -1000,6 +1017,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         [() => {}, CHOREO.actionShow],
         [() => {
           setSwapOutCardId(null);
+          choreo.clearActionLabel();
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);

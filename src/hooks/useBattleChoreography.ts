@@ -1,7 +1,7 @@
 // useBattleChoreography — owns all battle animation shared values and trigger functions.
 // useBattle decides WHAT happens and WHEN. This hook decides HOW it looks.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   useSharedValue, withTiming, withSpring, withDelay, withSequence,
@@ -10,13 +10,23 @@ import {
 import type { SharedValue } from 'react-native-reanimated';
 import { SLAM_CONFIG } from '../data/constants';
 
+export interface ActionLabelEvent {
+  text: string;
+  side: 'player' | 'ai';
+  key: number;
+}
+
 export interface BattleChoreography {
   // ── Slam ──
   triggerPlayerSlam: (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
   triggerAiSlam:     (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
 
   // ── Round transition ──
-  showRoundBanner: () => void;
+  showRoundBanner: (round: number) => void;
+
+  // ── Announcements ──
+  showActionLabel: (text: string, side: 'player' | 'ai') => void;
+  clearActionLabel: () => void;
 
   // ── Player slam shared values ──
   playerSlamKey:      SharedValue<number>;
@@ -35,6 +45,8 @@ export interface BattleChoreography {
 
   // ── React state signals ──
   roundBannerKey:     number;
+  bannerRound:        number;
+  actionLabel:        ActionLabelEvent | null;
 }
 
 export function useBattleChoreography(): BattleChoreography {
@@ -55,6 +67,11 @@ export function useBattleChoreography(): BattleChoreography {
 
   // ── Round banner ────────────────────────────────────────────────────────
   const [roundBannerKey, setRoundBannerKey] = useState(0);
+  const [bannerRound, setBannerRound] = useState(0);
+
+  // ── Action label ("REST", "DREW A CARD", "AI SWAPPED", etc.) ──────────
+  const [actionLabel, setActionLabel] = useState<ActionLabelEvent | null>(null);
+  const actionLabelKeyRef = useRef(0);
 
   // ── Haptic helpers (called from UI thread via runOnJS) ──────────────────
   const fireImpactHaptic = useCallback(() => {
@@ -141,14 +158,27 @@ export function useBattleChoreography(): BattleChoreography {
   }, [triggerSlam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Round banner trigger ────────────────────────────────────────────────
-  const showRoundBanner = useCallback(() => {
+  const showRoundBanner = useCallback((round: number) => {
+    setBannerRound(round);
     setRoundBannerKey(k => k + 1);
+  }, []);
+
+  // ── Action label triggers ─────────────────────────────────────────────
+  const showActionLabel = useCallback((text: string, side: 'player' | 'ai') => {
+    actionLabelKeyRef.current += 1;
+    setActionLabel({ text, side, key: actionLabelKeyRef.current });
+  }, []);
+
+  const clearActionLabel = useCallback(() => {
+    setActionLabel(null);
   }, []);
 
   return {
     triggerPlayerSlam,
     triggerAiSlam,
     showRoundBanner,
+    showActionLabel,
+    clearActionLabel,
     playerSlamKey,
     playerSlamType,
     slamProgress,
@@ -161,5 +191,7 @@ export function useBattleChoreography(): BattleChoreography {
     aiShockwaveActive,
     aiShockwave2Active,
     roundBannerKey,
+    bannerRound,
+    actionLabel,
   };
 }

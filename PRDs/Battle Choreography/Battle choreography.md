@@ -528,13 +528,13 @@ The following already exist and do NOT need to be built from scratch:
 | Screen flash overlay | `BattleScreen.tsx:1473–1481` | Complete, driven by `flashOpacity` |
 | `STEP_MS = 1000` | `useBattle.ts:263` | Active, 17 references |
 
-**What does NOT exist yet:** `returnBuffer` per weight, AI slam weight variation, `runSteps`/`CHOREO`, `useBattleChoreography` hook, `RoundBanner`, `DamagePopup`, `ActionLabel`, `DrawCardAnimation`, KO polish, amp trigger moment.
+**What does NOT exist yet:** `RoundBanner`, `DamagePopup`, `ActionLabel`, `DrawCardAnimation`, KO polish, amp trigger moment.
 
 ---
 
 ## Implementation Plan
 
-### Sprint 1: Timing Foundation + Hook Extraction
+### Sprint 1: Timing Foundation + Hook Extraction — COMPLETE
 **Goal:** Create `choreography.ts`, extract `useBattleChoreography`, replace `STEP_MS` with `CHOREO` + `runSteps`.
 
 1. Create `src/battle/choreography.ts` with `CHOREO` config, `slamDuration()` helper, `runSteps()` sequencer
@@ -549,7 +549,7 @@ The following already exist and do NOT need to be built from scratch:
 
 **Validation:** Battle pacing is noticeably different. Each step is distinguishable. No `STEP_MS` references remain. All slam animations still work.
 
-### Sprint 2: AI Slam Refactor + Weight Variation
+### Sprint 2: AI Slam Refactor + Weight Variation — COMPLETE
 **Goal:** AI gets full weight-varied slam via `useBattleChoreography`, replacing local `lungeY` approach.
 
 1. Add AI slam signals to `useBattleChoreography`: `aiSlamKey`, `aiSlamType`, `aiSlamProgress`, `aiShockwave2Active`
@@ -564,7 +564,7 @@ The following already exist and do NOT need to be built from scratch:
 
 **Validation:** AI Light/Medium/Heavy look distinct. AI Heavy has slow windup + dual shockwaves. Flash fires from shared overlay for both sides.
 
-### Sprint 3: Round Banner + Action Labels
+### Sprint 3: Round Banner + Action Labels — COMPLETE
 **Goal:** Visual markers for transitions and action announcements.
 
 1. Build `RoundBanner` component with `MOTION.slam` easing

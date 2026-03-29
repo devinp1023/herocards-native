@@ -23,7 +23,7 @@ export async function runSteps(steps: Step[], cancelled: () => boolean) {
 
 export const CHOREO = {
   // ── Announcements / Labels ──────────────────────────────
-  roundBanner:       800,   // "ROUND 3" banner hold time
+  roundBanner:      1400,   // "ROUND 3" banner hold time
   actionLabel:       600,   // "REST" / "DRAW" / "SWAP" label hold time
 
   // ── Attack pacing (gaps around the slam animation) ──────

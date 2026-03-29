@@ -35,7 +35,8 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
 import { AmpParticleWrap } from '../components/AmpParticleWrap';
-import { T, MOTION, TIMING, SPRING, EASE } from '../theme/theme';
+import { T, MOTION, TIMING, SPRING, EASE, TEXT_FX } from '../theme/theme';
+import { CHOREO } from '../battle/choreography';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
@@ -239,6 +240,202 @@ function Shockwave({ triggerKey, color, maxScale, duration, borderWidth, size = 
     />
   );
 }
+
+// ── Round Banner — "ROUND N" centered between active cards ─────────────────
+import type { ActionLabelEvent } from '../hooks/useBattleChoreography';
+
+const BANNER_DURATION = 600; // entrance + exit total
+
+const RoundBanner = React.memo(function RoundBanner({ round, bannerKey }: { round: number; bannerKey: number }) {
+  const textScale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const prevKey = useRef(0);
+
+  useEffect(() => {
+    if (bannerKey === 0 || bannerKey === prevKey.current) return;
+    prevKey.current = bannerKey;
+
+    // Opacity: fade in → hold → fade out (single sequence so assignments don't cancel)
+    opacity.value = 0;
+    opacity.value = withSequence(
+      withTiming(1, { duration: 120, easing: EASE.enter }),
+      withDelay(CHOREO.roundBanner, withTiming(0, { duration: 300, easing: EASE.exit })),
+    );
+
+    // Text slams in: 0 → 1.15 → 1.0
+    textScale.value = 0;
+    textScale.value = withSequence(
+      withTiming(MOTION.slam.overshoot, { duration: 200, easing: EASE.enter }),
+      withTiming(1, { duration: 150, easing: EASE.inOut }),
+    );
+  }, [bannerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const textAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: textScale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <>
+      {/* Full-screen backdrop */}
+      <ReAnimated.View pointerEvents="none" style={[rb.backdrop, backdropStyle]} />
+      {/* Centered banner strip */}
+      <ReAnimated.View pointerEvents="none" style={[rb.container, backdropStyle]}>
+        <View style={rb.strip}>
+          {/* Top border line */}
+          <View style={[rb.borderLine, { top: 0 }]} />
+          <ReAnimated.View style={[rb.textWrap, textAnimStyle]}>
+            <Text style={rb.label}>ROUND</Text>
+            <Text style={rb.number}>{round}</Text>
+          </ReAnimated.View>
+          {/* Bottom border line */}
+          <View style={[rb.borderLine, { bottom: 0 }]} />
+        </View>
+      </ReAnimated.View>
+    </>
+  );
+});
+
+const rb = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: T.bg.root + 'aa',
+    zIndex: 90,
+  },
+  container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 91,
+  },
+  strip: {
+    width: '100%',
+    backgroundColor: T.bg.elevated,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  borderLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: T.accent.mint + '44',
+  },
+  textWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
+  },
+  label: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.lg,
+    color: T.text.muted,
+    letterSpacing: T.letterSpacing.lg,
+  },
+  number: {
+    fontFamily: 'Orbitron_900Black',
+    fontSize: 36,
+    color: T.accent.mint,
+    letterSpacing: 4,
+    ...TEXT_FX.glow(T.accent.mint),
+  },
+});
+
+// ── Action Label — "REST +5 STA", "AI DREW A CARD", etc. ──────────────────
+const ActionLabel = React.memo(function ActionLabel({ event }: { event: ActionLabelEvent | null }) {
+  const translateY = useSharedValue(10);
+  const opacity = useSharedValue(0);
+  const prevKey = useRef(0);
+  const [display, setDisplay] = useState<ActionLabelEvent | null>(null);
+
+  useEffect(() => {
+    if (!event || event.key === prevKey.current) return;
+    prevKey.current = event.key;
+    setDisplay(event);
+    // Slide up + fade in
+    translateY.value = 10;
+    opacity.value = 0;
+    translateY.value = withTiming(0, { duration: 180, easing: EASE.enter });
+    opacity.value = withTiming(1, { duration: 150, easing: EASE.enter });
+  }, [event]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!event) {
+      // Clear — fade out
+      opacity.value = withTiming(0, { duration: CHOREO.actionFade, easing: EASE.exit });
+    }
+  }, [event]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  if (!display) return null;
+
+  const isAi = display.side === 'ai';
+  const isRest = display.text.includes('RESTED');
+  return (
+    <ReAnimated.View
+      pointerEvents="none"
+      style={[
+        al.container,
+        isAi ? al.posTop : al.posBottom,
+        animStyle,
+      ]}
+    >
+      <View style={[al.pill, isRest && al.restPill]}>
+        <Text style={[al.text, isRest && al.restText]}>{display.text}</Text>
+      </View>
+    </ReAnimated.View>
+  );
+});
+
+const al = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 8,
+  },
+  posTop: {
+    top: '22%',
+  },
+  posBottom: {
+    bottom: '22%',
+  },
+  pill: {
+    backgroundColor: T.bg.elevated + 'cc',
+    borderWidth: 1,
+    borderColor: T.accent.mintMuted,
+    borderRadius: T.radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  text: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.md,
+    color: T.text.primary,
+    letterSpacing: T.letterSpacing.md,
+  },
+  restPill: {
+    borderColor: T.status.vitality + '66',
+    backgroundColor: T.status.vitality + '18',
+  },
+  restText: {
+    color: T.status.vitality,
+    ...TEXT_FX.glow(T.status.vitality),
+  },
+});
 
 function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, aiAmp, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
@@ -1354,6 +1551,9 @@ export default function BattleScreen({ navigation, route }: Props) {
 
       {/* Combat zone */}
       <View style={s.combatZone}>
+        {/* Action label — "REST", "DREW A CARD", etc. */}
+        <ActionLabel event={battle.choreo.actionLabel} />
+
         <View style={s.cardColumn}>
           <ReAnimated.View style={[s.cardSection, aiSectionZStyle, { position: 'relative' as const }]}>
             <ReAnimated.View style={aiCardAnimatedStyle}>
@@ -1474,6 +1674,9 @@ export default function BattleScreen({ navigation, route }: Props) {
           onClose={() => setShowEffectInfo(false)}
         />
       )}
+
+      {/* Round banner — full-width, centered on screen */}
+      <RoundBanner round={battle.choreo.bannerRound} bannerKey={battle.choreo.roundBannerKey} />
 
       {/* Screen flash overlay — slam impact */}
       <ReAnimated.View
