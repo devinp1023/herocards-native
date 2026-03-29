@@ -11,6 +11,8 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 - **Career Screen PRD**: `PRDs/CAREER_SCREEN.md` — achievement skill tree UI, collection flow, category layout
 - **Visual Polish PRD**: `PRDs/VISUAL_POLISH.md` — materials, textures, animations, rarity tiers, haptics, choreography (COMPLETE)
 - **Amp Particle PRD**: `PRDs/Particles/AMP_PARTICLE_SHAKE_PRD.md` — particle drift + card shake amp visualization
+- **Slam Animation PRD**: `PRDs/Battle Choreography/SLAM_ANIMATION.md` — per-weight attack slam animation (COMPLETE)
+- **Battle Choreography PRD**: `PRDs/Battle Choreography/Battle choreography.md` — full round lifecycle choreography (7 sprints)
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -88,7 +90,9 @@ All 14 build sessions complete. The app has:
 `expo-haptics` is used across the app per the haptic pairing map (Sprint 5.1):
 - **Pack crack**: Medium impact on pack open
 - **Card reveals**: Rarity-tiered (Common/Uncommon=Light, Rare=Medium, Epic=Heavy, Legendary=Success notification)
-- **Battle damage dealt/received**: Medium impact (Heavy impact for heavy attacks)
+- **Battle slam lift**: Light impact (Medium for Heavy attacks) — fires when card lifts
+- **Battle slam impact**: Heavy impact — fires at slam impact point; Heavy attacks add a second Medium pulse 120ms later
+- **Battle damage received**: Medium impact (Heavy impact for heavy attacks) — incoming AI hits
 - **Victory**: Success notification
 - **Level up**: Success notification (both battle overlay and global toast)
 - **Achievement earned**: Light impact
@@ -258,7 +262,8 @@ Key rules:
 
 ### Battle UI Architecture
 - `useBattle` uses **DisplaySnapshot** pattern — ref state snapshotted into React state atomically on each `refresh()` call
-- `aiAttackKey` signal increments when AI attacks — triggers lunge animation in `AIActiveSection`
+- `aiAttackKey` signal increments when AI attacks — triggers slam animation in `AIActiveSection`
+- **Slam animation** — both player and AI get choreographed attack slams (lift → slam → impact hold → spring return). `SLAM_CONFIG` in `constants.ts` defines per-weight params (Light/Medium/Heavy) for lift height, slam distance, squash, shockwave, screen flash, haptics. Player slam driven by Reanimated shared values (`slamProgress`, `playerSlamType`, `shockwaveActive`, `shockwave2Active`, `flashOpacity`). AI slam uses `SLAM_CONFIG.MEDIUM` for all weights. `Shockwave` ring component renders on the hit card at impact. Z-index on `cardSection` wrappers ensures the attacking card renders on top during slam.
 - Round sequencing uses `setTimeout` chains at `STEP_MS = 1000ms` per step
 - **Tab bar hidden** during battle — only way to exit is Forfeit button in header
 - **Battle state persistence** — battle saved to Firestore at each `'ready'` phase checkpoint; resumes on app reopen (expires after 24h). Serialization helpers in `battleEngine.ts` (`serializeBattleCard`, `rehydrateBattleCard`, `serializeSideState`, `rehydrateSideState`). Cleared on battle end or forfeit. God Mode skips saves.

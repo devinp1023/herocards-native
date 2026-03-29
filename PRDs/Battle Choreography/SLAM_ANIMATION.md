@@ -446,7 +446,7 @@ damageOpacity.value = withDelay(revealDelay, withTiming(1, { duration: 80 }))
 
 ---
 
-## Step 8 — AI lunge update (optional but recommended)
+## Step 8 — AI lunge update
 
 The existing AI lunge uses a simpler animation. Now that the player slam is choreographed, the AI lunge looks comparatively plain. Consider giving the AI lunge the same treatment using `SLAM_CONFIG.MEDIUM` as a baseline — the AI doesn't telegraph its attack type the same way, so medium weight is appropriate regardless of what the AI actually chose.
 

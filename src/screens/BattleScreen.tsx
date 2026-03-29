@@ -13,15 +13,18 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { AmpEffectLabel } from '../components/AmpEffectLabel';
 import ReAnimated, {
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withSpring, withDelay, cancelAnimation, Easing, interpolate,
+  useSharedValue, useAnimatedStyle, useDerivedValue, useAnimatedReaction,
+  withTiming, withRepeat, withSequence, withSpring, withDelay, cancelAnimation,
+  Easing, interpolate,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BattleStackParamList } from '../../App';
 import { useBattle, BattlePhase } from '../hooks/useBattle';
 import { BattleCard, AttackWeight, AmpEffectName } from '../battle/battleEngine';
-import { RC, TYPE_COLORS } from '../data/constants';
+import { RC, TYPE_COLORS, SLAM_CONFIG } from '../data/constants';
 import { AVATARS, LEVEL_AVATARS } from '../data/packs';
 import { useGameStateContext } from '../context/GameStateContext';
 import { useSession } from '../context/SessionContext';
@@ -178,10 +181,70 @@ const da = StyleSheet.create({
 
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, aiAmp, onCardMeasure, onPreview }: {
+// ── Shockwave ring — expands from impact point ─────────────────────────────
+function Shockwave({ triggerKey, color, maxScale, duration, borderWidth, size = 60 }: {
+  triggerKey: SharedValue<number>;
+  color: string;
+  maxScale: number;
+  duration: number;
+  borderWidth: number;
+  size?: number;
+}) {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  useAnimatedReaction(
+    () => triggerKey.value,
+    (current, previous) => {
+      if (current !== previous && current > 0) {
+        scale.value = 0.3;
+        opacity.value = 0.9;
+        scale.value = withTiming(maxScale, {
+          duration,
+          easing: Easing.out(Easing.quad),
+        });
+        opacity.value = withTiming(0, {
+          duration: duration * 0.9,
+          easing: Easing.in(Easing.quad),
+        });
+      }
+    }
+  );
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <ReAnimated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth,
+          borderColor: color,
+          backgroundColor: 'transparent',
+          alignSelf: 'center',
+          top: '50%',
+          marginTop: -size / 2,
+          left: '50%',
+          marginLeft: -size / 2,
+        },
+        animStyle,
+      ]}
+    />
+  );
+}
+
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, aiAmp, aiShockwave, onCardMeasure, onPreview }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; attackKey: number; defeatingCard: BattleCard | null;
   aiAmp: number;
+  aiShockwave: SharedValue<number>;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
 }) {
@@ -202,17 +265,51 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
   const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }));
 
-  // ── Lunge toward player when AI attacks ──────────────────────────────────────
+  // ── Lunge toward player when AI attacks (uses SLAM_CONFIG.MEDIUM) ────────────
   const lungeY = useSharedValue(0);
+  const lungeScale = useSharedValue(1);
+  const lungeSquash = useSharedValue(1);
   useEffect(() => {
     if (attackKey === 0) return;
+    const cfg = SLAM_CONFIG.MEDIUM;
     // AI is at the top — positive Y moves toward player (downward)
-    lungeY.value = withSequence(
-      withTiming(28, { duration: 110, easing: Easing.out(Easing.quad) }),
-      withSpring(0,  { damping: 8, stiffness: 220 }),
-    );
+    // Lift phase (away from player = upward = negative)
+    lungeScale.value = withTiming(cfg.liftScale, {
+      duration: cfg.liftDuration,
+      easing: Easing.out(Easing.quad),
+    });
+    lungeY.value = withTiming(-cfg.liftHeight, {
+      duration: cfg.liftDuration,
+      easing: Easing.out(Easing.quad),
+    }, () => {
+      // Slam phase (toward player = downward = positive)
+      lungeScale.value = withTiming(1, { duration: cfg.slamDuration });
+      lungeSquash.value = withSequence(
+        withTiming(cfg.squashY, { duration: cfg.slamDuration * 0.5 }),
+        withTiming(0.97, { duration: cfg.slamDuration * 0.5 }),
+      );
+      lungeY.value = withTiming(cfg.slamDistance, {
+        duration: cfg.slamDuration,
+        easing: Easing.in(Easing.cubic),
+      }, () => {
+        // Impact — trigger shockwave on player card
+        aiShockwave.value += 1;
+        // Hold at impact, then spring return
+        lungeSquash.value = withTiming(1, { duration: 60 });
+        lungeY.value = withDelay(cfg.holdDuration, withSpring(0, {
+          damping: cfg.returnDamping,
+          stiffness: cfg.returnStiffness,
+        }));
+      });
+    });
   }, [attackKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const lungeStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lungeY.value }] }));
+  const lungeStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: lungeY.value },
+      { scale: lungeScale.value },
+      { scaleY: lungeSquash.value },
+    ],
+  }));
 
   // ── Card entrance on new card ────────────────────────────────────────────────
   const entryScale = useSharedValue(1);
@@ -1168,6 +1265,58 @@ export default function BattleScreen({ navigation, route }: Props) {
 
   const tc = battle.tierColor;
 
+  // ── Slam derived transforms ─────────────────────────────────────────────
+  const { slamProgress, playerSlamType, shockwaveActive, shockwave2Active, flashOpacity: slamFlashOpacity } = battle;
+
+  const slamTranslateY = useDerivedValue(() => {
+    const p = slamProgress.value;
+    const type = playerSlamType.value;
+    const cfg = SLAM_CONFIG[type];
+    if (p <= 0) return 0;
+    if (p <= 1) return interpolate(p, [0, 1], [0, -cfg.liftHeight]);
+    if (p <= 2) return interpolate(p, [1, 2], [-cfg.liftHeight, -cfg.slamDistance]);
+    return -cfg.slamDistance;
+  });
+
+  const slamScaleY = useDerivedValue(() => {
+    const p = slamProgress.value;
+    const type = playerSlamType.value;
+    const cfg = SLAM_CONFIG[type];
+    if (p <= 1) return 1;
+    if (p <= 2) return interpolate(p, [1, 1.5, 2], [1.0, cfg.squashY, 0.97]);
+    return 1;
+  });
+
+  const slamScale = useDerivedValue(() => {
+    const p = slamProgress.value;
+    const type = playerSlamType.value;
+    const cfg = SLAM_CONFIG[type];
+    if (p <= 1) return interpolate(p, [0, 1], [1, cfg.liftScale]);
+    if (p <= 2) return interpolate(p, [1, 2], [cfg.liftScale, 1.0]);
+    return 1;
+  });
+
+  const playerCardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: slamTranslateY.value },
+      { scaleY: slamScaleY.value },
+      { scale: slamScale.value },
+    ],
+  }));
+
+  // Elevate player section above AI section (zIndex: 2) during player slam
+  const playerSectionZStyle = useAnimatedStyle(() => ({
+    zIndex: slamProgress.value > 0 ? 3 : 0,
+  }));
+
+  const flashAnimStyle = useAnimatedStyle(() => ({
+    opacity: slamFlashOpacity.value,
+  }));
+
+  // Active card type colors — used for shockwave tint
+  const playerTypeColor = battle.playerActive ? TYPE_COLORS[battle.playerActive.type] ?? T.accent.mint : T.accent.mint;
+  const aiTypeColor = battle.aiActive ? TYPE_COLORS[battle.aiActive.type] ?? T.accent.violet : T.accent.violet;
+
   // No footer needed — the empty active slot in PlayerActiveSection guides the user
 
 
@@ -1210,7 +1359,7 @@ export default function BattleScreen({ navigation, route }: Props) {
       {/* Combat zone */}
       <View style={s.combatZone}>
         <View style={s.cardColumn}>
-          <View style={s.cardSection}>
+          <View style={[s.cardSection, { position: 'relative', zIndex: 2 }]}>
             <AIActiveSection
               card={battle.aiActive} revealed={battle.typeRevealed}
               deckCount={battle.aiDeckCount} targeted={false}
@@ -1218,12 +1367,32 @@ export default function BattleScreen({ navigation, route }: Props) {
               attackKey={battle.aiAttackKey}
               defeatingCard={battle.lastDefeatedAiCard}
               aiAmp={battle.aiAmp}
+              aiShockwave={battle.aiShockwaveActive}
               onCardMeasure={onAiCardMeasure}
               onPreview={onPreview}
             />
+            {/* Shockwave rings — centered on AI card at slam impact */}
+            <Shockwave
+              triggerKey={shockwaveActive}
+              color={playerTypeColor}
+              maxScale={SLAM_CONFIG.MEDIUM.shockwaveScale}
+              duration={SLAM_CONFIG.MEDIUM.shockwaveDuration}
+              borderWidth={SLAM_CONFIG.MEDIUM.shockwaveBorderWidth}
+              size={70}
+            />
+            {/* Heavy-only second outer ring */}
+            <Shockwave
+              triggerKey={shockwave2Active}
+              color={playerTypeColor}
+              maxScale={SLAM_CONFIG.HEAVY.shockwaveScale * 0.65}
+              duration={Math.round(SLAM_CONFIG.HEAVY.shockwaveDuration * 1.2)}
+              borderWidth={1}
+              size={70}
+            />
           </View>
 
-          <View style={s.cardSection}>
+          <ReAnimated.View style={[s.cardSection, playerSectionZStyle, { position: 'relative' as const }]}>
+            <ReAnimated.View style={playerCardAnimatedStyle}>
             <PlayerActiveSection
               card={battle.playerActive}
               revealed={battle.typeRevealed}
@@ -1238,7 +1407,17 @@ export default function BattleScreen({ navigation, route }: Props) {
               onCardMeasure={onPlayerCardMeasure}
               onPreview={onPreview}
             />
-          </View>
+            </ReAnimated.View>
+            {/* Shockwave ring — AI slam impact on player card */}
+            <Shockwave
+              triggerKey={battle.aiShockwaveActive}
+              color={aiTypeColor}
+              maxScale={SLAM_CONFIG.MEDIUM.shockwaveScale}
+              duration={SLAM_CONFIG.MEDIUM.shockwaveDuration}
+              borderWidth={SLAM_CONFIG.MEDIUM.shockwaveBorderWidth}
+              size={70}
+            />
+          </ReAnimated.View>
         </View>
 
         <View style={s.ampOverlay}>
@@ -1290,6 +1469,16 @@ export default function BattleScreen({ navigation, route }: Props) {
           onClose={() => setShowEffectInfo(false)}
         />
       )}
+
+      {/* Screen flash overlay — slam impact */}
+      <ReAnimated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: '#ffffff', zIndex: 999 },
+          flashAnimStyle,
+        ]}
+      />
 
     </ScreenBackground>
   );

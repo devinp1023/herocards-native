@@ -129,3 +129,60 @@ export const ACHIEVEMENT_CATEGORIES = [
 ] as const;
 
 export type AchievementCategoryId = typeof ACHIEVEMENT_CATEGORIES[number]['id'];
+
+// ── Slam animation config (per attack weight) ───────────────────────
+export const SLAM_CONFIG = {
+  LIGHT: {
+    liftHeight: 10,
+    liftDuration: 80,
+    liftScale: 1.03,
+    slamDuration: 140,
+    slamDistance: 90,
+    squashY: 0.96,
+    holdDuration: 40,
+    returnDamping: 18,
+    returnStiffness: 280,
+    shockwaveScale: 1.8,
+    shockwaveDuration: 260,
+    shockwaveBorderWidth: 1.5,
+    flashOpacity: 0,
+    hapticLift: 'Light' as const,
+    hapticImpact: 'Medium' as const,
+  },
+  MEDIUM: {
+    liftHeight: 16,
+    liftDuration: 110,
+    liftScale: 1.05,
+    slamDuration: 190,
+    slamDistance: 140,
+    squashY: 0.91,
+    holdDuration: 55,
+    returnDamping: 14,
+    returnStiffness: 220,
+    shockwaveScale: 2.4,
+    shockwaveDuration: 350,
+    shockwaveBorderWidth: 2,
+    flashOpacity: 0.18,
+    hapticLift: 'Light' as const,
+    hapticImpact: 'Heavy' as const,
+  },
+  HEAVY: {
+    liftHeight: 24,
+    liftDuration: 200,
+    liftScale: 1.08,
+    slamDuration: 160,
+    slamDistance: 200,
+    squashY: 0.82,
+    holdDuration: 80,
+    returnDamping: 10,
+    returnStiffness: 160,
+    shockwaveScale: 3.4,
+    shockwaveDuration: 500,
+    shockwaveBorderWidth: 3,
+    flashOpacity: 0.32,
+    hapticLift: 'Medium' as const,
+    hapticImpact: 'Heavy' as const,
+  },
+} as const;
+
+export type AttackLabel = 'LIGHT' | 'MEDIUM' | 'HEAVY' | 'REST';

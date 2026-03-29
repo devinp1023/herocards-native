@@ -11,7 +11,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
-import { TIER_INFO } from '../data/constants';
+import {
+  useSharedValue, withTiming, withSpring, withDelay, withSequence,
+  Easing, runOnJS,
+} from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import { TIER_INFO, SLAM_CONFIG } from '../data/constants';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
   BattleCard, SideState, BattleEvent, AttackWeight, AmpField, AmpEffectName,
@@ -65,6 +70,15 @@ export interface UseBattleResult {
   lastDefeatedPlayerCard:  BattleCard | null;  // player's last killed card (for defeat animation)
   lastDefeatedAiCard:      BattleCard | null;  // AI's last killed card (for defeat animation)
   swapOutCardId:           number | null;      // id of the card that just moved from active→hand
+  // ── Slam animation signals ─────────────────────────────────────────────
+  playerSlamKey:           SharedValue<number>;
+  playerSlamType:          SharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>;
+  slamProgress:            SharedValue<number>;
+  shockwaveActive:         SharedValue<number>;
+  shockwave2Active:        SharedValue<number>;
+  flashOpacity:            SharedValue<number>;
+  aiShockwaveActive:       SharedValue<number>;
+  triggerPlayerSlam:       (weight: 'LIGHT' | 'MEDIUM' | 'HEAVY') => void;
   attack:          (weight: AttackWeight) => void;
   rest:            () => void;
   draw:            () => void;
@@ -148,6 +162,81 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   const [lastDefeatedPlayerCard, setLastDefeatedPlayerCard] = useState<BattleCard | null>(null);
   const [lastDefeatedAiCard,     setLastDefeatedAiCard]     = useState<BattleCard | null>(null);
   const [swapOutCardId,          setSwapOutCardId]          = useState<number | null>(null);
+
+  // ── Slam animation signals (Reanimated shared values) ───────────────────
+  const playerSlamKey    = useSharedValue(0);
+  const playerSlamType   = useSharedValue<'LIGHT' | 'MEDIUM' | 'HEAVY'>('MEDIUM');
+  const slamProgress     = useSharedValue(0);
+  const shockwaveActive  = useSharedValue(0);
+  const shockwave2Active = useSharedValue(0);
+  const flashOpacity     = useSharedValue(0);
+  const aiShockwaveActive = useSharedValue(0);
+
+  const fireImpactHaptic = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  }, []);
+  const fireHeavySecondHaptic = useCallback(() => {
+    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 120);
+  }, []);
+  const fireHeavySecondShockwave = useCallback(() => {
+    shockwave2Active.value += 1;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const triggerPlayerSlam = useCallback((attackLabel: 'LIGHT' | 'MEDIUM' | 'HEAVY') => {
+    const cfg = SLAM_CONFIG[attackLabel];
+
+    playerSlamType.value = attackLabel;
+
+    // Haptic at lift
+    Haptics.impactAsync(
+      cfg.hapticLift === 'Light'
+        ? Haptics.ImpactFeedbackStyle.Light
+        : Haptics.ImpactFeedbackStyle.Medium
+    );
+
+    // Lift phase
+    slamProgress.value = withTiming(1, {
+      duration: cfg.liftDuration,
+      easing: Easing.out(Easing.quad),
+    }, () => {
+      // Slam phase
+      slamProgress.value = withTiming(2, {
+        duration: cfg.slamDuration,
+        easing: Easing.in(Easing.cubic),
+      }, () => {
+        // Impact frame
+        slamProgress.value = 2.05;
+
+        // Shockwave + flash at impact
+        shockwaveActive.value += 1;
+        flashOpacity.value = withSequence(
+          withTiming(cfg.flashOpacity, { duration: 35, easing: Easing.out(Easing.quad) }),
+          withTiming(0, { duration: 110, easing: Easing.in(Easing.quad) })
+        );
+
+        // Haptic at impact (UI thread → runOnJS)
+        runOnJS(fireImpactHaptic)();
+
+        // Heavy: second shockwave ring + second haptic pulse
+        if (attackLabel === 'HEAVY') {
+          runOnJS(fireHeavySecondShockwave)();
+          runOnJS(fireHeavySecondHaptic)();
+        }
+
+        // Hold at impact, then spring return
+        slamProgress.value = withDelay(
+          cfg.holdDuration,
+          withSpring(0, {
+            damping: cfg.returnDamping,
+            stiffness: cfg.returnStiffness,
+            mass: attackLabel === 'HEAVY' ? 1.4 : 1.0,
+          })
+        );
+      });
+    });
+
+    playerSlamKey.value += 1;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // refresh() snapshots the current ref state into React state.
   // Using useCallback with no deps ensures a stable identity while always
@@ -655,8 +744,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       refresh();
       // Step 2 (t=STEP_MS): player's free hit
       setTimeout(() => {
+        triggerPlayerSlam(weight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
         const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
-        hapticForAttack(weight, true);
         gainAmp(p, WEIGHT_AMP[weight]);
         checkPostPlayerAttack();
         setTypeRevealed(true);
@@ -706,9 +795,9 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
 
       // Step 1 (t=0): first hit
       const staminaBeforeR1 = sSide.active.stamina; // for Stamina Leech check
+      if (fSide === p) triggerPlayerSlam(fWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
-      if (fSide === p) hapticForAttack(fWeight, true);
-      else hapticForIncomingHit(fWeight);
+      if (fSide !== p) hapticForIncomingHit(fWeight);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
       if (fSide === p) checkPostPlayerAttack();
       setTypeRevealed(true);
@@ -733,9 +822,9 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       } else {
         // Step 2 (t=STEP_MS): second hit
         setTimeout(() => {
+          if (sSide === p) triggerPlayerSlam(sWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY');
           const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
-          if (sSide === p) hapticForAttack(sWeight, true);
-          else hapticForIncomingHit(sWeight);
+          if (sSide !== p) hapticForIncomingHit(sWeight);
           gainAmp(sSide, WEIGHT_AMP[sWeight]);
           if (sSide === p) checkPostPlayerAttack();
           if (sSide === p) { setAiHitKey(k => k + 1); }
@@ -1108,6 +1197,14 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     lastDefeatedPlayerCard,
     lastDefeatedAiCard,
     swapOutCardId,
+    playerSlamKey,
+    playerSlamType,
+    slamProgress,
+    shockwaveActive,
+    shockwave2Active,
+    flashOpacity,
+    aiShockwaveActive,
+    triggerPlayerSlam,
     attack,
     rest,
     draw,
