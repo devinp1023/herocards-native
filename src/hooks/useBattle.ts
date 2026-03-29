@@ -63,7 +63,6 @@ export interface UseBattleResult {
   // ── Session 12 animation signals ─────────────────────────────────────────
   playerHitKey:            number;              // increments each time player's card is hit
   aiHitKey:                number;              // increments each time AI's card is hit
-  aiAttackKey:             number;              // increments when AI card lunges to attack
   lastDefeatedPlayerCard:  BattleCard | null;  // player's last killed card (for defeat animation)
   lastDefeatedAiCard:      BattleCard | null;  // AI's last killed card (for defeat animation)
   swapOutCardId:           number | null;      // id of the card that just moved from active→hand
@@ -148,7 +147,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   // ── Session 12 animation state ────────────────────────────────────────────
   const [playerHitKey,           setPlayerHitKey]           = useState(0);
   const [aiHitKey,               setAiHitKey]               = useState(0);
-  const [aiAttackKey,            setAiAttackKey]            = useState(0);
   const [lastDefeatedPlayerCard, setLastDefeatedPlayerCard] = useState<BattleCard | null>(null);
   const [lastDefeatedAiCard,     setLastDefeatedAiCard]     = useState<BattleCard | null>(null);
   const [swapOutCardId,          setSwapOutCardId]          = useState<number | null>(null);
@@ -726,13 +724,14 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       const staminaBeforeR1 = sSide.active.stamina;
       const fSlamWeight = fWeight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
       if (fSide === p) choreo.triggerPlayerSlam(fSlamWeight);
+      else choreo.triggerAiSlam(fSlamWeight);
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
       if (fSide !== p) hapticForIncomingHit(fWeight);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
       if (fSide === p) checkPostPlayerAttack();
       setTypeRevealed(true);
       if (fSide === p) { setAiHitKey(k => k + 1); }
-      else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
+      else { setPlayerHitKey(k => k + 1); }
       const firstKilled = r1.killed || fOpp.active.hp <= 0;
       const staminaLeechCancelled = !firstKilled
         && fSide.active.ability === 'Stamina Leech'
@@ -762,12 +761,13 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
           [() => {}, CHOREO.betweenAttacks],
           [() => {
             if (sSide === p) choreo.triggerPlayerSlam(sSlamWeight);
+            else choreo.triggerAiSlam(sSlamWeight);
             const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
             if (sSide !== p) hapticForIncomingHit(sWeight);
             gainAmp(sSide, WEIGHT_AMP[sWeight]);
             if (sSide === p) checkPostPlayerAttack();
             if (sSide === p) { setAiHitKey(k => k + 1); }
-            else { setPlayerHitKey(k => k + 1); setAiAttackKey(k => k + 1); }
+            else { setPlayerHitKey(k => k + 1); }
             const pK = p.active.hp <= 0;
             const aK = a.active.hp <= 0;
             if (aK) { setLastDefeatedAiCard(a.active); gainAmp(sSide, 15); }
@@ -830,11 +830,11 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       await runSteps([
         [() => {}, CHOREO.drawSettle],
         [() => {
+          choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);
-          setAiAttackKey(k => k + 1);
           pKilled = r.killed || p.active.hp <= 0;
           if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
           refresh();
@@ -896,11 +896,11 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       await runSteps([
         [() => {}, CHOREO.actionShow],
         [() => {
+          choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);
-          setAiAttackKey(k => k + 1);
           pKilled = r.killed || p.active.hp <= 0;
           if (pKilled) setLastDefeatedPlayerCard(p.active);
           refresh();
@@ -1000,11 +1000,11 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         [() => {}, CHOREO.actionShow],
         [() => {
           setSwapOutCardId(null);
+          choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);
-          setAiAttackKey(k => k + 1);
           pKilled = r.killed || p.active.hp <= 0;
           if (pKilled) { setLastDefeatedPlayerCard(p.active); gainAmp(a, 15); }
           refresh();
@@ -1144,7 +1144,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     playerKillCount: snap.playerKillCount,
     playerHitKey,
     aiHitKey,
-    aiAttackKey,
     lastDefeatedPlayerCard,
     lastDefeatedAiCard,
     swapOutCardId,
