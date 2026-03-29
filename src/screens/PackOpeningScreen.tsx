@@ -332,7 +332,7 @@ const ps = StyleSheet.create({
   name:       { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, letterSpacing:T.letterSpacing.md },
   sub:        { fontFamily:'Rajdhani_600SemiBold', fontSize:T.font.md, color:T.text.muted, marginTop:2 },
   pct:        { fontFamily:'Orbitron_900Black', fontSize:T.font.xl },
-  barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10 },
+  barTrack:   { height:5, borderRadius:3, overflow:'hidden', marginBottom:10, borderWidth:1, borderColor:'rgba(255,255,255,0.12)' },
   barFill:    { height:'100%', borderRadius:3 },
   rarityRow:  { flexDirection:'row', justifyContent:'space-between' },
   rarityItem: { alignItems:'center', gap:3 },

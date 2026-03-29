@@ -394,6 +394,8 @@ const styles = StyleSheet.create({
     backgroundColor: T.bg.elevated,
     borderRadius: 4,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   barFill: {
     height: '100%',

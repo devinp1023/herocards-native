@@ -64,7 +64,7 @@ function XpBar({ xpInLevel, xpNeeded }: { xpInLevel: number; xpNeeded: number })
 }
 
 const xpStyles = StyleSheet.create({
-  track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6 },
+  track: { height: 6, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', marginTop: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
   fill:  { height: '100%', borderRadius: 3, shadowColor: T.accent.violet, shadowOffset:{width:0,height:0}, shadowOpacity:0.8, shadowRadius:4 },
   gradient: { flex: 1, borderRadius: 3 },
 });
@@ -134,7 +134,7 @@ const qStyles = StyleSheet.create({
   checkBox:     { backgroundColor:T.status.vitality + '22', borderRadius:6, paddingHorizontal:6, paddingVertical:3, borderWidth:1, borderColor:T.status.vitality + '66' },
   checkmark:    { fontFamily:'Orbitron_700Bold', fontSize:T.font.xs, color:T.status.vitality, letterSpacing:T.letterSpacing.xs },
   progressText: { fontFamily:'Orbitron_700Bold', fontSize:T.font.sm, color:T.text.muted },
-  barTrack:     { height:4, backgroundColor:T.bg.elevated, borderRadius:2, overflow:'hidden' },
+  barTrack:     { height:4, backgroundColor:T.bg.elevated, borderRadius:2, overflow:'hidden', borderWidth:1, borderColor:'rgba(255,255,255,0.12)' },
   barFill:      { height:'100%', borderRadius:2 },
 });
 

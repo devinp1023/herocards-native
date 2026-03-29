@@ -66,7 +66,7 @@ const pStyles = StyleSheet.create({
   dot:      { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   name:     { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, letterSpacing: 0.5, width: 100 },
   count:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: T.text.primary, width: 52, textAlign: 'right' },
-  barTrack: { flex: 1, height: 5, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden' },
+  barTrack: { flex: 1, height: 5, backgroundColor: T.bg.elevated, borderRadius: 3, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
   barFill:  { height: '100%', borderRadius: 3 },
   pct:      { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, width: 40, textAlign: 'right' },
 });

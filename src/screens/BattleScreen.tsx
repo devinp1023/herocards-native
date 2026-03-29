@@ -615,7 +615,7 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
           </Text>
         </ReAnimated.View>
         {dmgDisplay && (
-          <ReAnimated.View style={dmgAnimStyle}>
+          <ReAnimated.View style={[ehp.popupWrap, dmgAnimStyle]}>
             <Text style={[ehp.dmgNumber, { color: dmgColor, ...TEXT_FX.glow(dmgColor) }]}>
               -{dmgDisplay.damage}
             </Text>
@@ -655,7 +655,7 @@ const ehp = StyleSheet.create({
     borderRadius: EXT_HP_BAR_H / 2,
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderWidth: 1,
-    borderColor: T.bg.border,
+    borderColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
@@ -665,6 +665,11 @@ const ehp = StyleSheet.create({
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.sm,
     letterSpacing: 1,
+  },
+  popupWrap: {
+    position: 'absolute',
+    left: '100%',
+    marginLeft: 3,
   },
   dmgNumber: {
     fontFamily: 'Orbitron_900Black',
@@ -750,9 +755,12 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
           {stamina}
         </Text>
         {staDisplay && (
-          <ReAnimated.View style={staAnimStyle}>
-            <Text style={[esta.popupNumber, { color: T.domain.stamina, ...TEXT_FX.glow(T.domain.stamina) }]}>
-              +{staDisplay.amount}
+          <ReAnimated.View style={[esta.popupWrap, staAnimStyle]}>
+            <Text style={[esta.popupNumber, {
+              color: staDisplay.amount > 0 ? T.domain.stamina : T.status.danger,
+              ...TEXT_FX.glow(staDisplay.amount > 0 ? T.domain.stamina : T.status.danger),
+            }]}>
+              {staDisplay.amount > 0 ? '+' : ''}{staDisplay.amount}
             </Text>
           </ReAnimated.View>
         )}
@@ -795,6 +803,11 @@ const esta = StyleSheet.create({
     fontSize: T.font.sm,
     letterSpacing: 1,
   },
+  popupWrap: {
+    position: 'absolute',
+    left: '100%',
+    marginLeft: 3,
+  },
   pip: {
     flex: 1,
     height: '100%',
@@ -811,7 +824,7 @@ const esta = StyleSheet.create({
   pipEmpty: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderWidth: 1,
-    borderColor: T.bg.border,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   pipGloss: {
     position: 'absolute',

@@ -679,6 +679,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
           choreo.triggerPlayerSlam(slamWeight);
           const r = executeAttack(p.active, a.active, p, a, events, weight, ampRef.current);
           choreo.fireDamagePopup(r.damage, 'ai', slamWeight, getTypeMultiplier(p.active.type, a.active.type));
+          if (r.staminaCost > 0) choreo.fireStaminaPopup(-r.staminaCost, 'player');
           gainAmp(p, WEIGHT_AMP[weight]);
           checkPostPlayerAttack();
           setTypeRevealed(true);
@@ -735,6 +736,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       else choreo.triggerAiSlam(fSlamWeight);
       const r1 = executeAttack(fSide.active, fOpp.active, fSide, fOpp, events, fWeight, ampRef.current);
       choreo.fireDamagePopup(r1.damage, fOpp === a ? 'ai' : 'player', fSlamWeight, getTypeMultiplier(fSide.active.type, fOpp.active.type));
+      if (r1.staminaCost > 0) choreo.fireStaminaPopup(-r1.staminaCost, fSide === p ? 'player' : 'ai');
       if (fSide !== p) hapticForIncomingHit(fWeight);
       gainAmp(fSide, WEIGHT_AMP[fWeight]);
       if (fSide === p) checkPostPlayerAttack();
@@ -773,6 +775,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
             else choreo.triggerAiSlam(sSlamWeight);
             const r2 = executeAttack(sSide.active, sOpp.active, sSide, sOpp, events, sWeight, ampRef.current);
             choreo.fireDamagePopup(r2.damage, sOpp === a ? 'ai' : 'player', sSlamWeight, getTypeMultiplier(sSide.active.type, sOpp.active.type));
+            if (r2.staminaCost > 0) choreo.fireStaminaPopup(-r2.staminaCost, sSide === p ? 'player' : 'ai');
             if (sSide !== p) hapticForIncomingHit(sWeight);
             gainAmp(sSide, WEIGHT_AMP[sWeight]);
             if (sSide === p) checkPostPlayerAttack();
@@ -847,6 +850,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           choreo.fireDamagePopup(r.damage, 'player', aiSlamW, getTypeMultiplier(a.active.type, p.active.type));
+          if (r.staminaCost > 0) choreo.fireStaminaPopup(-r.staminaCost, 'ai');
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);
@@ -892,7 +896,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     applyRestAction(p.active, p, events);
     choreo.fireStaminaPopup(5, 'player');
     gainAmp(p, 2);
-    choreo.showActionLabel('RESTED +5 STA', 'player');
     refresh();
 
     processAiAmp(events);
@@ -919,6 +922,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           choreo.fireDamagePopup(r.damage, 'player', aiSlamW, getTypeMultiplier(a.active.type, p.active.type));
+          if (r.staminaCost > 0) choreo.fireStaminaPopup(-r.staminaCost, 'ai');
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);
@@ -1028,6 +1032,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
           choreo.triggerAiSlam(aiSlamW);
           const r = executeAttack(a.active, p.active, a, p, events, aiWeight, ampRef.current);
           choreo.fireDamagePopup(r.damage, 'player', aiSlamW, getTypeMultiplier(a.active.type, p.active.type));
+          if (r.staminaCost > 0) choreo.fireStaminaPopup(-r.staminaCost, 'ai');
           hapticForIncomingHit(aiWeight);
           gainAmp(a, WEIGHT_AMP[aiWeight]);
           setPlayerHitKey(k => k + 1);

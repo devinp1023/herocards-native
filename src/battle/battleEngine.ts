@@ -347,7 +347,7 @@ export function aiSelectCard(hand: BattleCard[], opponentActiveType: string): Ba
 
 // ── 9. Execute one attack ─────────────────────────────────────────────────────
 
-export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[], weight: AttackWeight = 'medium', amp?: AmpField): { damage: number; killed: boolean } {
+export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideState, defSide: SideState, log: BattleEvent[], weight: AttackWeight = 'medium', amp?: AmpField): { damage: number; killed: boolean; staminaCost: number } {
   // Riposte: if defender rested and is Riposte, block the hit and retaliate
   if (def._riposteActive && !isNullified(def)) {
     const atkPowRip = effPower(atk);
@@ -356,7 +356,7 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
     const riposteDmg = Math.max(1, Math.round(baseDmgRip * 0.5));
     atk.hp = Math.max(0, atk.hp - riposteDmg);
     log.push({ type: 'ABILITY', ability: 'Riposte', card: def.name, side: defSide._label, effect: `Blocked! Retaliated ${riposteDmg} dmg`, hpAfter: atk.hp });
-    return { damage: 0, killed: false };
+    return { damage: 0, killed: false, staminaCost: 0 };
   }
 
   // Stamina cost — Steady makes Light free; doubled if Exhaustion active against this attacker
@@ -482,7 +482,7 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
     def._smokeUsed = true;
     if (Math.random() < 0.5) {
       log.push({ type: 'ATTACK', attacker: atk.name, attackerSide: atkSide._label, defender: def.name, defenderSide: defSide._label, damage: 0, typeMultiplier: mult, attackWeight: weight, hpBefore: def.hp, hpAfter: def.hp, defenderMaxHp: def.maxHp, missed: true });
-      return { damage: 0, killed: false };
+      return { damage: 0, killed: false, staminaCost };
     }
   }
 
@@ -572,19 +572,19 @@ export function executeAttack(atk: BattleCard, def: BattleCard, atkSide: SideSta
       def._secondWindUsed = true;
       def.hp = Math.ceil(def.maxHp * 0.2);
       log.push({ type: 'ABILITY', ability: 'Second Wind', card: def.name, effect: `Survived! HP restored to ${def.hp}` });
-      return { damage: dmg, killed: false };
+      return { damage: dmg, killed: false, staminaCost };
     }
     if (def.ability === 'Last Stand' && !def._lastStandUsed) {
       def._lastStandUsed   = true;
       def._lastStandActive = true;
       def.hp = 1;
       log.push({ type: 'ABILITY', ability: 'Last Stand', card: def.name, effect: 'Survived with 1 HP! +50% attack' });
-      return { damage: dmg, killed: false };
+      return { damage: dmg, killed: false, staminaCost };
     }
     log.push({ type: 'DEFEAT', card: def.name, byCard: atk.name });
-    return { damage: dmg, killed: true };
+    return { damage: dmg, killed: true, staminaCost };
   }
-  return { damage: dmg, killed: false };
+  return { damage: dmg, killed: false, staminaCost };
 }
 
 // ── 10. On-kill triggers ──────────────────────────────────────────────────────

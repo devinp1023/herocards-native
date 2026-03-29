@@ -424,6 +424,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a35',
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
 
   barFill: {
