@@ -10,6 +10,7 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 - **Battle PRD**: `PRDs/HeroCards_BattleSystem_v2_PRD.md` — battle engine rules, abilities, AI logic (v2)
 - **Career Screen PRD**: `PRDs/CAREER_SCREEN.md` — achievement skill tree UI, collection flow, category layout
 - **Visual Polish PRD**: `PRDs/VISUAL_POLISH.md` — materials, textures, animations, rarity tiers, haptics, choreography (COMPLETE)
+- **Amp Particle PRD**: `PRDs/Particles/AMP_PARTICLE_SHAKE_PRD.md` — particle drift + card shake amp visualization
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -92,6 +93,7 @@ All 14 build sessions complete. The app has:
 - **Level up**: Success notification (both battle overlay and global toast)
 - **Achievement earned**: Light impact
 - **Achievement collected**: Medium impact
+- **Amp 90% threshold**: Medium impact (once on crossing 90%, triggers card shake)
 - No audio — sound effects were not implemented.
 
 ## Architecture
@@ -131,6 +133,7 @@ herocards-native/
     │   ├── CardWrapper.tsx          ← Scale container for HeroCard/MiniCard
     │   ├── FaceDownCard.tsx         ← Skia face-down card
     │   ├── GradientBorder.tsx       ← Animated gradient border overlays (violet/mint/gold)
+    │   ├── AmpParticleWrap.tsx      ← Horizontal particle drift + card shake for active battle cards
     │   ├── HeroCard.tsx             ← Skia hero card (glow, shine, tilt, rarity shimmer)
     │   ├── LevelUpToast.tsx         ← Global level-up toast (slam, burst, swipe-to-dismiss)
     │   ├── LightningStrike.tsx      ← Damage number + screen shake visual
@@ -261,8 +264,9 @@ Key rules:
 - **Battle state persistence** — battle saved to Firestore at each `'ready'` phase checkpoint; resumes on app reopen (expires after 24h). Serialization helpers in `battleEngine.ts` (`serializeBattleCard`, `rehydrateBattleCard`, `serializeSideState`, `rehydrateSideState`). Cleared on battle end or forfeit. God Mode skips saves.
 - **Card preview modal** — tap any active card or hand card to see full-size HeroCard (0.85 scale) centered over dark overlay
 - **Action bar** — two skewed gradient buttons (REST + ATTACK); ATTACK opens a submenu with Light/Medium/Heavy options. Uses `expo-linear-gradient` + `skewX` transform.
-- **Amp bars** — Skia-drawn ∩ arches positioned absolute-left of each active card, with path trimming for fill. Shared amp effect shown as banner in VS divider row. TRIGGER/SPEND buttons appear below player's arch.
+- **Amp visualization** — `AmpParticleWrap` wraps each active card with horizontal particle drift (dots + amp number text) from left/right edges, intensity-scaled border glow, and card shake at 90%+ amp. Vertical effect name label (`AmpEffectLabel`) on right side with REROLL/TRIGGER buttons. Tap effect name to open info modal with description.
 - **Deck piles** — stacked card backs with offset layers (1–4 visible based on cards remaining) for 3D depth effect
+- **Low HP** — HP bar and number pulse red (opacity 0.35→1.0) when card drops to 25% HP or below
 
 ## Navigation Structure
 ```

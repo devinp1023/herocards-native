@@ -31,6 +31,7 @@ import { HeroCard } from '../components/HeroCard';
 import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
+import { AmpParticleWrap } from '../components/AmpParticleWrap';
 import { T, MOTION, TIMING, SPRING, EASE } from '../theme/theme';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
@@ -175,88 +176,6 @@ const da = StyleSheet.create({
   absolute: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
 });
 
-// ── Amp card glow — rendered OUTSIDE CardWrapper to escape overflow:hidden ────
-const CARD_CORNER_SCALED = Math.round(14 * ACTIVE_SCALE); // ≈7px at 0.52 scale
-
-function AmpCardGlow({ ampPercent, ampColor, children }: {
-  ampPercent: number; ampColor: string; children: React.ReactNode;
-}) {
-  const ampSv    = useSharedValue(0);
-  const ampPulse = useSharedValue(1.0);
-  const pulsingRef = useRef(false);
-
-  useEffect(() => {
-    ampSv.value = withTiming(ampPercent, { duration: 300, easing: Easing.out(Easing.cubic) });
-  }, [ampPercent]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (ampPercent >= 75 && !pulsingRef.current) {
-      pulsingRef.current = true;
-      ampPulse.value = withRepeat(
-        withSequence(
-          withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1.0, { duration: 400, easing: Easing.inOut(Easing.ease) }),
-        ),
-        -1,
-        false,
-      );
-    } else if (ampPercent < 75 && pulsingRef.current) {
-      pulsingRef.current = false;
-      cancelAnimation(ampPulse);
-      ampPulse.value = withTiming(1.0, { duration: 200 });
-    }
-    return () => { cancelAnimation(ampPulse); pulsingRef.current = false; };
-  }, [ampPercent]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const ring1 = useAnimatedStyle(() => {
-    'worklet';
-    const pct = ampSv.value;
-    if (pct < 25) return { opacity: 0 };
-    return { opacity: (pct >= 100 ? 0.85 : 0.25) * ampPulse.value };
-  });
-  const ring2 = useAnimatedStyle(() => {
-    'worklet';
-    const pct = ampSv.value;
-    if (pct < 50) return { opacity: 0 };
-    return { opacity: (pct >= 100 ? 0.7 : 0.35) * ampPulse.value };
-  });
-  const ring3 = useAnimatedStyle(() => {
-    'worklet';
-    const pct = ampSv.value;
-    if (pct < 75) return { opacity: 0 };
-    return { opacity: (pct >= 100 ? 0.55 : 0.45) * ampPulse.value };
-  });
-
-  const ringBase = {
-    position: 'absolute' as const,
-    borderWidth: 1.5,
-    borderColor: ampColor,
-    shadowColor: ampColor,
-    shadowOffset: { width: 0, height: 0 } as const,
-    shadowOpacity: 1,
-  };
-
-  return (
-    <View style={amp.wrap}>
-      <ReAnimated.View style={[ringBase, ring1, {
-        top: -5, left: -5, width: ACTIVE_W + 10, height: ACTIVE_H + 10,
-        borderRadius: CARD_CORNER_SCALED + 5, shadowRadius: 8,
-      }]} pointerEvents="none" />
-      <ReAnimated.View style={[ringBase, ring2, {
-        top: -10, left: -10, width: ACTIVE_W + 20, height: ACTIVE_H + 20,
-        borderRadius: CARD_CORNER_SCALED + 10, shadowRadius: 14,
-      }]} pointerEvents="none" />
-      <ReAnimated.View style={[ringBase, ring3, {
-        top: -16, left: -16, width: ACTIVE_W + 32, height: ACTIVE_H + 32,
-        borderRadius: CARD_CORNER_SCALED + 16, shadowRadius: 22,
-      }]} pointerEvents="none" />
-      {children}
-    </View>
-  );
-}
-const amp = StyleSheet.create({
-  wrap: { position: 'relative' },
-});
 
 // ── AI active section (no gesture) ───────────────────────────────────────────
 function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKey, defeatingCard, aiAmp, onCardMeasure, onPreview }: {
@@ -344,7 +263,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
           >
             <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
               <ReAnimated.View style={entryStyle}>
-                <AmpCardGlow ampPercent={aiAmp} ampColor="#B14EFF">
+                <AmpParticleWrap ampPercent={aiAmp} ampColor="#B14EFF">
                   <CardWrapper scale={ACTIVE_SCALE}>
                     <HeroCard
                       card={card}
@@ -357,7 +276,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, attackKe
                       hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                     />
                   </CardWrapper>
-                </AmpCardGlow>
+                </AmpParticleWrap>
               </ReAnimated.View>
             </TouchableOpacity>
             <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
@@ -484,7 +403,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
         <ReAnimated.View style={shakeStyle}>
           <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)}>
             <ReAnimated.View style={entryStyle}>
-              <AmpCardGlow ampPercent={playerAmp} ampColor="#00FFAA">
+              <AmpParticleWrap ampPercent={playerAmp} ampColor="#00FFAA">
                 <CardWrapper scale={ACTIVE_SCALE}>
                   <HeroCard
                     card={card}
@@ -497,7 +416,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
                 </CardWrapper>
-              </AmpCardGlow>
+              </AmpParticleWrap>
             </ReAnimated.View>
           </TouchableOpacity>
           <ReAnimated.View style={[flashStyle, pas.flashOverlay]} pointerEvents="none" />
@@ -782,6 +701,86 @@ const AMP_EFFECT_LABELS: Record<AmpEffectName, string> = {
   Overcharge: 'OVERCHARGE', TypeFlip: 'TYPE FLIP', Exhaustion: 'EXHAUSTION',
   FieldMedic: 'FIELD MEDIC', LockOn: 'LOCK ON', Equaliser: 'EQUALISER',
 };
+const AMP_EFFECT_DESCRIPTIONS: Record<AmpEffectName, { duration: string; desc: string }> = {
+  Overcharge:  { duration: '2 rounds', desc: 'Your active card deals double damage.' },
+  TypeFlip:    { duration: '2 rounds', desc: 'Your type disadvantage becomes an advantage. No effect if neutral or already advantaged.' },
+  Exhaustion:  { duration: '2 rounds', desc: "Opponent's active card pays double stamina for all attacks." },
+  FieldMedic:  { duration: 'Instant',  desc: 'Restores 40% of your active card\'s max HP immediately.' },
+  LockOn:      { duration: '3 rounds', desc: 'Opponent cannot swap or draw cards.' },
+  Equaliser:   { duration: '2 rounds', desc: 'Both cards\' Power and Defense are averaged together.' },
+};
+
+// ── Amp effect info modal ─────────────────────────────────────────────────────
+function AmpEffectInfoModal({ effect, onClose }: { effect: AmpEffectName; onClose: () => void }) {
+  const color = AMP_EFFECT_COLORS[effect];
+  const label = AMP_EFFECT_LABELS[effect];
+  const info = AMP_EFFECT_DESCRIPTIONS[effect];
+
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={aei.backdrop} activeOpacity={1} onPress={onClose}>
+        <View style={aei.barWrap} onStartShouldSetResponder={() => true}>
+          <View style={[aei.bar, { borderColor: color + '66' }]}>
+            <View style={aei.header}>
+              <Text style={[aei.title, { color }]}>{label}</Text>
+              <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Text style={aei.close}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={aei.duration}>{info.duration}</Text>
+            <Text style={aei.desc}>{info.desc}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+const aei = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+  },
+  barWrap: {
+    paddingHorizontal: 16,
+  },
+  bar: {
+    backgroundColor: T.bg.elevated,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  title: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.xl,
+    letterSpacing: 2,
+  },
+  close: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: 20,
+    color: T.text.muted,
+  },
+  duration: {
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: T.font.xs,
+    color: T.text.muted,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  desc: {
+    fontFamily: 'Rajdhani_600SemiBold',
+    fontSize: T.font.lg,
+    color: T.text.body,
+    lineHeight: 22,
+  },
+});
 
 
 // ── Attack buttons ────────────────────────────────────────────────────────────
@@ -1112,6 +1111,9 @@ export default function BattleScreen({ navigation, route }: Props) {
   const [previewCard, setPreviewCard] = useState<BattleCard | null>(null);
   const onPreview = useCallback((c: BattleCard) => setPreviewCard(c), []);
 
+  // ── Amp effect info modal ──────────────────────────────────────────────────
+  const [showEffectInfo, setShowEffectInfo] = useState(false);
+
   // ── Attack submenu ──────────────────────────────────────────────────────
   const [showAttackMenu, setShowAttackMenu] = useState(false);
   // Close menu when phase leaves 'ready'
@@ -1248,6 +1250,7 @@ export default function BattleScreen({ navigation, route }: Props) {
             onReroll={handleAmpReroll}
             onTrigger={handleAmpTrigger}
             canInteract={battle.phase === 'ready'}
+            onEffectPress={() => setShowEffectInfo(true)}
           />
         </View>
       </View>
@@ -1278,6 +1281,14 @@ export default function BattleScreen({ navigation, route }: Props) {
       {/* Card preview modal */}
       {previewCard && (
         <CardPreviewModal card={previewCard} onClose={() => setPreviewCard(null)} />
+      )}
+
+      {/* Amp effect info modal */}
+      {showEffectInfo && (
+        <AmpEffectInfoModal
+          effect={battle.ampActiveEffect ?? battle.ampPoolEffect}
+          onClose={() => setShowEffectInfo(false)}
+        />
       )}
 
     </ScreenBackground>

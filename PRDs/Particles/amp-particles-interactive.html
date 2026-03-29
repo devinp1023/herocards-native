@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeroCards — Amp Particle Drift</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050508;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    gap: 48px;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: #6e7191;
+    letter-spacing: 3px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: #3a3b4a;
+    font-size: 11px;
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    margin-top: -36px;
+  }
+
+  /* ── SLIDER CONTROLS ── */
+  .controls {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+
+  .control-label.violet { color: #B14EFF; }
+  .control-label.mint   { color: #00FFAA; }
+
+  .amp-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+  .amp-display.violet { color: #B14EFF; text-shadow: 0 0 12px #B14EFF88; }
+  .amp-display.mint   { color: #00FFAA; text-shadow: 0 0 12px #00FFAA88; }
+
+  input[type="range"] {
+    width: 160px;
+    accent-color: #00FFAA;
+    cursor: pointer;
+  }
+
+  input[type="range"].violet-range { accent-color: #B14EFF; }
+
+  /* ── PHONE SHELL ── */
+  .phone {
+    width: 300px;
+    background: #07070c;
+    border-radius: 32px;
+    border: 1px solid #1e2030;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── BATTLE LAYOUT ── */
+  .battle-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .card-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 175px;
+    overflow: hidden;
+  }
+
+  /* ── CARD ── */
+  .card {
+    width: 170px;
+    height: 155px;
+    border-radius: 10px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    gap: 4px;
+    flex-shrink: 0;
+    transition: border-color 0.5s, box-shadow 0.5s;
+  }
+
+  .card.opponent { background: linear-gradient(135deg, #0e0f16, #0b0c14); border: 1px solid #B14EFF22; }
+  .card.player   { background: linear-gradient(135deg, #0b0e12, #090c10); border: 1px solid #00FFAA22; }
+
+  .card-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .opponent .card-name { color: #B14EFF; }
+  .player   .card-name { color: #00FFAA; }
+
+  .card-image {
+    flex: 1;
+    background: #050508;
+    border-radius: 5px;
+    border: 1px solid #1e2030;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e2030;
+    font-size: 22px;
+  }
+
+  .hp-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .hp-label { font-size: 7px; color: #6e7191; width: 12px; }
+
+  .hp-track {
+    flex: 1; height: 3px;
+    background: #1e2030;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .hp-fill { height: 100%; border-radius: 2px; }
+  .hp-fill.low  { background: #FF4757; width: 30%; box-shadow: 0 0 4px #FF475799; }
+  .hp-fill.high { background: #2ED573; width: 75%; box-shadow: 0 0 4px #2ED57399; }
+
+  .hp-val { font-family: 'Orbitron', sans-serif; font-size: 7px; font-weight: 700; }
+  .hp-val.low  { color: #FF4757; }
+  .hp-val.high { color: #2ED573; }
+
+  /* ── PARTICLE CANVAS ── */
+  .particle-zone {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 65px;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle-zone.left  { right: calc(50% + 84px); left: 0; }
+  .particle-zone.right { left:  calc(50% + 84px); right: 0; }
+
+  /* ── ZONE DIVIDER ── */
+  .zone-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #1e2030 30%, #1e2030 70%, transparent);
+    margin: 0 16px;
+  }
+
+  /* ── HAND ── */
+  .hand {
+    display: flex;
+    gap: 4px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.3);
+    border-top: 1px solid #1e2030;
+  }
+
+  .mini {
+    width: 56px; height: 72px;
+    border-radius: 6px;
+    background: #0a0b10;
+    border: 1px solid #1e2030;
+    flex-shrink: 0;
+    opacity: 0.75;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e2030;
+    font-size: 16px;
+  }
+
+  /* ── BUTTONS ── */
+  .btns { display: flex; }
+
+  .btn {
+    flex: 1;
+    padding: 14px 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .btn-sub { font-family: 'Rajdhani', sans-serif; font-size: 8px; letter-spacing: 1px; opacity: 0.6; }
+  .btn.rest   { background: #1a3a1a; color: #2ED573; }
+  .btn.attack { background: #3a1a1a; color: #FF4757; }
+
+  /* ── AMP EFFECT LABEL ── */
+  .amp-effect-label {
+    position: absolute;
+    right: 8px;
+    top: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+    gap: 0;
+  }
+
+  .amp-letter {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 2px;
+    transition: color 0.8s, text-shadow 0.8s;
+  }
+
+  /* ── NOTE ── */
+  .note {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    color: #3a3b4a;
+    text-align: center;
+    letter-spacing: 1px;
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  .note span { color: #6e7191; }
+</style>
+</head>
+<body>
+
+<h1>AMP PARTICLE DRIFT — INTERACTIVE</h1>
+<p class="subtitle">DRAG THE SLIDERS TO SEE AMP INTENSITY SCALE IN REAL TIME</p>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label violet">OPPONENT AMP</span>
+    <div class="amp-display violet" id="aiAmpDisplay">66</div>
+    <input type="range" class="violet-range" id="aiAmpSlider" min="0" max="100" value="66">
+  </div>
+  <div class="control-group">
+    <span class="control-label mint">YOUR AMP</span>
+    <div class="amp-display mint" id="playerAmpDisplay">73</div>
+    <input type="range" id="playerAmpSlider" min="0" max="100" value="73">
+  </div>
+</div>
+
+<!-- PHONE -->
+<div class="phone">
+  <div class="battle-zone">
+
+    <!-- OPPONENT ROW -->
+    <div class="card-row opponent-row" id="opponentRow">
+      <div class="particle-zone left"  id="aiLeft"></div>
+      <div class="card opponent" id="opponentCard">
+        <div class="card-name">Reedwhisper</div>
+        <div class="card-image">◇</div>
+        <div class="hp-row">
+          <span class="hp-label">HP</span>
+          <div class="hp-track"><div class="hp-fill low"></div></div>
+          <span class="hp-val low">50</span>
+        </div>
+      </div>
+      <div class="particle-zone right" id="aiRight"></div>
+    </div>
+
+    <div class="zone-divider"></div>
+
+    <!-- PLAYER ROW -->
+    <div class="card-row player-row" id="playerRow">
+      <div class="particle-zone left"  id="playerLeft"></div>
+      <div class="card player" id="playerCard">
+        <div class="card-name">Buzzsaw</div>
+        <div class="card-image">◇</div>
+        <div class="hp-row">
+          <span class="hp-label">HP</span>
+          <div class="hp-track"><div class="hp-fill high"></div></div>
+          <span class="hp-val high">77</span>
+        </div>
+      </div>
+      <div class="particle-zone right" id="playerRight"></div>
+    </div>
+
+  </div>
+
+  <!-- AMP EFFECT LABEL — runs full height of battle zone -->
+  <div class="amp-effect-label" id="ampEffectLabel">
+    <span class="amp-letter">E</span>
+    <span class="amp-letter">Q</span>
+    <span class="amp-letter">U</span>
+    <span class="amp-letter">A</span>
+    <span class="amp-letter">L</span>
+    <span class="amp-letter">I</span>
+    <span class="amp-letter">S</span>
+    <span class="amp-letter">E</span>
+    <span class="amp-letter">R</span>
+  </div>
+
+  <div class="hand">
+    <div class="mini">◇</div>
+    <div class="mini">◇</div>
+    <div class="mini">◇</div>
+    <div class="mini">◇</div>
+  </div>
+
+  <div class="btns">
+    <button class="btn rest">REST<span class="btn-sub">+5 STA</span></button>
+    <button class="btn attack">ATTACK</button>
+  </div>
+</div>
+
+<p class="note">
+  <span>Particles scale in count, size, speed and reach with amp intensity.</span><br>
+  Some particles randomly display the actual amp value instead of being dots.<br>
+  <span>At 95%+ the card shakes — subtle tremor at 95%, frantic shudder at 99%.</span>
+</p>
+
+<script>
+  const VIOLET = '#B14EFF';
+  const MINT   = '#00FFAA';
+
+  let playerAmp = 73;
+  let aiAmp     = 66;
+
+  // Active particle instances
+  const activeParticles = { aiLeft: [], aiRight: [], playerLeft: [], playerRight: [] };
+  const intervals = {};
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function ampToIntensity(amp) { return amp / 100; }
+
+  // How many particles to spawn per second based on amp
+  function spawnRate(amp) {
+    if (amp < 5)  return 0;
+    if (amp < 25) return 1.5;
+    if (amp < 50) return 3.0;
+    if (amp < 75) return 5.0;
+    if (amp < 90) return 7.0;
+    return 10.0;
+  }
+
+  // Particle size range based on amp
+  function particleSize(amp) {
+    const min = lerp(1.5, 2.5, amp / 100);
+    const max = lerp(2.5, 5.0, amp / 100);
+    return min + Math.random() * (max - min);
+  }
+
+  // How far particles travel based on amp
+  function travelDistance(amp) {
+    return lerp(15, 62, amp / 100);
+  }
+
+  // Duration of particle life based on amp (faster at higher amp)
+  function particleDuration(amp) {
+    return lerp(2200, 900, amp / 100);
+  }
+
+  // Chance a particle shows the amp number instead of being a dot
+  function numberChance(amp) {
+    if (amp < 5)  return 0;
+    if (amp < 25) return 0.35;
+    if (amp < 50) return 0.28;
+    if (amp < 70) return 0.22;
+    if (amp < 90) return 0.28;
+    return 0.35;
+  }
+
+  function createParticle(container, amp, color, direction) {
+    const zone = document.getElementById(container);
+    if (!zone) return;
+
+    const intensity = ampToIntensity(amp);
+    const isNumber  = Math.random() < numberChance(amp);
+    const size      = isNumber ? null : particleSize(amp);
+    const travel    = travelDistance(amp);
+    const duration  = particleDuration(amp);
+    const topPct    = 8 + Math.random() * 84; // vertical position within card row
+
+    const el = document.createElement('div');
+
+    if (isNumber) {
+      // Number particle
+      const fontSize = lerp(6, 11, intensity);
+      el.style.cssText = `
+        position: absolute;
+        font-family: 'Orbitron', sans-serif;
+        font-size: ${fontSize}px;
+        font-weight: 900;
+        color: ${color};
+        opacity: 0;
+        top: ${topPct}%;
+        ${direction === 'left' ? 'right: 0' : 'left: 0'};
+        white-space: nowrap;
+        pointer-events: none;
+        letter-spacing: -0.5px;
+        text-shadow: 0 0 ${lerp(4, 10, intensity)}px ${color};
+      `;
+      el.textContent = amp;
+    } else {
+      // Dot particle
+      el.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        background: ${color};
+        opacity: 0;
+        top: ${topPct}%;
+        ${direction === 'left' ? 'right: 0' : 'left: 0'};
+        box-shadow: 0 0 ${lerp(3, 8, intensity)}px ${color};
+        pointer-events: none;
+      `;
+    }
+
+    zone.appendChild(el);
+
+    // Animate: fade in → drift → fade out
+    const translateX = direction === 'left' ? -travel : travel;
+    const verticalDrift = (Math.random() - 0.5) * 12; // slight vertical wobble
+
+    el.animate([
+      { opacity: 0,                         transform: 'translate(0, 0)' },
+      { opacity: lerp(0.4, 1.0, intensity), transform: `translate(${translateX * 0.3}px, ${verticalDrift * 0.3}px)`, offset: 0.2 },
+      { opacity: lerp(0.3, 0.85, intensity),transform: `translate(${translateX * 0.7}px, ${verticalDrift * 0.7}px)`, offset: 0.65 },
+      { opacity: 0,                         transform: `translate(${translateX}px, ${verticalDrift}px)` },
+    ], {
+      duration,
+      easing: 'ease-out',
+      fill: 'forwards',
+    }).onfinish = () => {
+      el.remove();
+    };
+  }
+
+  function startParticles(container, getAmp, color, direction) {
+    if (intervals[container]) {
+      clearInterval(intervals[container]);
+    }
+
+    function scheduleNext() {
+      const amp = getAmp();
+      const rate = spawnRate(amp);
+
+      if (rate === 0) {
+        intervals[container] = setTimeout(scheduleNext, 400);
+        return;
+      }
+
+      const delay = 1000 / rate + (Math.random() - 0.5) * (600 / rate);
+
+      intervals[container] = setTimeout(() => {
+        const currentAmp = getAmp();
+        if (currentAmp >= 10) {
+          createParticle(container, currentAmp, color, direction);
+          // Occasionally spawn a second particle in quick succession at high amp
+          if (currentAmp > 70 && Math.random() < 0.35) {
+            setTimeout(() => createParticle(container, getAmp(), color, direction), 80 + Math.random() * 120);
+          }
+        }
+        scheduleNext();
+      }, delay);
+    }
+
+    scheduleNext();
+  }
+
+  function updateCardGlow(cardEl, amp, color) {
+    const intensity = amp / 100;
+    if (amp < 25) {
+      cardEl.style.boxShadow = 'none';
+      cardEl.style.borderColor = color + '22';
+    } else if (amp < 50) {
+      cardEl.style.boxShadow = `0 0 ${lerp(0, 8, intensity)}px ${color}22`;
+      cardEl.style.borderColor = color + '44';
+    } else if (amp < 75) {
+      cardEl.style.boxShadow = `0 0 ${lerp(8, 16, intensity)}px ${color}33, -3px 0 ${lerp(4,10,intensity)}px ${color}22, 3px 0 ${lerp(4,10,intensity)}px ${color}22`;
+      cardEl.style.borderColor = color + '66';
+    } else if (amp < 100) {
+      cardEl.style.boxShadow = `0 0 ${lerp(16, 28, intensity)}px ${color}55, -6px 0 ${lerp(10,20,intensity)}px ${color}33, 6px 0 ${lerp(10,20,intensity)}px ${color}33`;
+      cardEl.style.borderColor = color + '99';
+    } else {
+      cardEl.style.boxShadow = `0 0 32px ${color}88, -8px 0 24px ${color}55, 8px 0 24px ${color}55, 0 0 60px ${color}33`;
+      cardEl.style.borderColor = color;
+    }
+  }
+
+  function updateEffectLabel(playerAmp, aiAmp) {
+    const letters = document.querySelectorAll('.amp-letter');
+    const maxAmp = Math.max(playerAmp, aiAmp);
+    const intensity = maxAmp / 100;
+    const neckAndNeck = Math.abs(playerAmp - aiAmp) <= 10 && playerAmp > 40 && aiAmp > 40;
+
+    let color, glowColor;
+
+    if (neckAndNeck) {
+      // Oscillate — handled by CSS animation override
+      color = lerp(0, 1, (Math.sin(Date.now() / 1000) + 1) / 2) > 0.5 ? MINT : VIOLET;
+      glowColor = color;
+    } else {
+      color = playerAmp >= aiAmp ? MINT : VIOLET;
+      glowColor = color;
+    }
+
+    const baseOpacity = lerp(0.25, 1.0, intensity);
+    const glowRadius  = lerp(0, 14, intensity);
+
+    letters.forEach(l => {
+      l.style.color      = intensity < 0.1 ? '#6e7191' : color;
+      l.style.opacity    = baseOpacity;
+      l.style.textShadow = intensity > 0.1 ? `0 0 ${glowRadius}px ${glowColor}` : 'none';
+    });
+  }
+
+  function update() {
+    updateCardGlow(document.getElementById('opponentCard'), aiAmp, VIOLET);
+    updateCardGlow(document.getElementById('playerCard'),   playerAmp, MINT);
+    updateEffectLabel(playerAmp, aiAmp);
+    updateCardShake('opponentRow', aiAmp);
+    updateCardShake('playerRow',   playerAmp);
+  }
+
+  // ── CARD SHAKE SYSTEM ──
+  const shakeAnimations = {};
+
+  function updateCardShake(rowId, amp) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+
+    if (amp < 95) {
+      // Stop shaking — cancel any running animation
+      if (shakeAnimations[rowId]) {
+        shakeAnimations[rowId].cancel();
+        shakeAnimations[rowId] = null;
+        row.style.transform = '';
+      }
+      return;
+    }
+
+    // Already shaking at this level — don't restart
+    if (shakeAnimations[rowId] && shakeAnimations[rowId]._amp === amp) return;
+
+    // Cancel previous if exists
+    if (shakeAnimations[rowId]) {
+      shakeAnimations[rowId].cancel();
+    }
+
+    // Scale shake intensity and speed with amp
+    // 95% = subtle tremor, 99% = frantic shudder
+    const t           = (amp - 95) / 5;          // 0.0 at 95%, 1.0 at 100%
+    const amplitude   = lerp(1.5, 4.5, t);        // px left-right
+    const rotation    = lerp(0.3, 1.2, t);        // degrees rotation
+    const duration    = lerp(160, 65, t);          // ms per cycle — faster = more frantic
+
+    const keyframes = [
+      { transform: `translateX(0px) rotate(0deg)` },
+      { transform: `translateX(${amplitude}px) rotate(${rotation}deg)` },
+      { transform: `translateX(${-amplitude * 0.8}px) rotate(${-rotation * 0.7}deg)` },
+      { transform: `translateX(${amplitude * 0.6}px) rotate(${rotation * 0.5}deg)` },
+      { transform: `translateX(${-amplitude * 0.4}px) rotate(${-rotation * 0.3}deg)` },
+      { transform: `translateX(0px) rotate(0deg)` },
+    ];
+
+    const anim = row.animate(keyframes, {
+      duration,
+      iterations: Infinity,
+      easing: 'ease-in-out',
+    });
+
+    anim._amp = amp;
+    shakeAnimations[rowId] = anim;
+  }
+
+  // Slider listeners
+  document.getElementById('playerAmpSlider').addEventListener('input', e => {
+    playerAmp = parseInt(e.target.value);
+    document.getElementById('playerAmpDisplay').textContent = playerAmp;
+    update();
+    updateCardShake('playerRow', playerAmp);
+  });
+
+  document.getElementById('aiAmpSlider').addEventListener('input', e => {
+    aiAmp = parseInt(e.target.value);
+    document.getElementById('aiAmpDisplay').textContent = aiAmp;
+    update();
+    updateCardShake('opponentRow', aiAmp);
+  });
+
+  // Start all four particle streams
+  startParticles('aiLeft',     () => aiAmp,     VIOLET, 'left');
+  startParticles('aiRight',    () => aiAmp,     VIOLET, 'right');
+  startParticles('playerLeft', () => playerAmp, MINT,   'left');
+  startParticles('playerRight',() => playerAmp, MINT,   'right');
+
+  // Continuously update effect label for neck-and-neck oscillation
+  setInterval(() => updateEffectLabel(playerAmp, aiAmp), 100);
+
+  // Initial render
+  update();
+</script>
+
+</body>
+</html>

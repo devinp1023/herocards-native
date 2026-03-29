@@ -187,21 +187,21 @@ export function HeroCard({
   const hpBarColor = displayHpPct > 0.5 ? T.status.vitality : displayHpPct > 0.25 ? T.status.caution : T.status.danger;
   const isLowHp = displayHpPct <= 0.25 && currentHp != null;
 
-  // Low HP pulse animation
-  const lowHpPulse = useSharedValue(0.15);
+  // Low HP pulse animation — pulses the HP bar + number
+  const lowHpPulse = useSharedValue(1);
   useEffect(() => {
-    if (!isLowHp) { cancelAnimation(lowHpPulse); lowHpPulse.value = 0; return; }
+    if (!isLowHp) { cancelAnimation(lowHpPulse); lowHpPulse.value = 1; return; }
     lowHpPulse.value = withRepeat(
       withSequence(
         withTiming(0.35, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.15, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0,  { duration: 600, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       false,
     );
     return () => cancelAnimation(lowHpPulse);
   }, [isLowHp]);
-  const lowHpOpacity = useDerivedValue(() => lowHpPulse.value);
+  const lowHpStyle = useAnimatedStyle(() => ({ opacity: lowHpPulse.value }));
 
   // Active glow pulse animation
   const activeGlow = useSharedValue(0.3);
@@ -417,11 +417,6 @@ export function HeroCard({
           />
         </Rect>
 
-        {/* Low HP red pulse overlay */}
-        {isLowHp && (
-          <Rect x={PAD} y={IMG_Y} width={INNER_W} height={IMG_H}
-            color="#FF4757" opacity={lowHpOpacity} />
-        )}
 
         {/* 3h. Rarity line at top of art window */}
         <Rect x={PAD} y={IMG_Y} width={INNER_W} height={2}>
@@ -519,7 +514,7 @@ export function HeroCard({
       {/* Card image */}
       {card.imageUrl && (
         <View pointerEvents="none"
-          style={[styles.imageOverlay, { borderColor, opacity: isLowHp ? 0.65 : 1 }]}>
+          style={[styles.imageOverlay, { borderColor }]}>
           <RNImage
             source={{ uri: card.imageUrl }}
             style={styles.image}
@@ -555,7 +550,7 @@ export function HeroCard({
         <View style={[styles.statsAccentBar, { backgroundColor: rm.color }]} />
 
         {/* HP row */}
-        <View style={styles.hpSection}>
+        <Animated.View style={[styles.hpSection, isLowHp && lowHpStyle]}>
           <View style={styles.statRowHeader}>
             <Text style={styles.statTag}>HP</Text>
             <Text style={[styles.statValue, { color: hpBarColor }]}>{displayHp}</Text>
@@ -565,7 +560,7 @@ export function HeroCard({
               <View style={styles.hpBarGloss} />
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* STA row */}
         <View style={styles.stamSection}>

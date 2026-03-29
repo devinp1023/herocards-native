@@ -42,6 +42,7 @@ interface AmpEffectLabelProps {
   onReroll: () => void;      // spend 50 amp to change effect
   onTrigger: () => void;     // spend 100 amp to trigger effect
   canInteract?: boolean;     // false during AI turn processing
+  onEffectPress?: () => void; // tap the effect name to show description
 }
 
 // ── Color constants ────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ function AmpEffectLabelInner({
   onReroll,
   onTrigger,
   canInteract = true,
+  onEffectPress,
 }: AmpEffectLabelProps) {
   const focused = useIsFocused();
 
@@ -230,18 +232,20 @@ function AmpEffectLabelInner({
 
   return (
     <View style={styles.container}>
-      {/* Vertical effect name */}
-      <ReAnimated.View style={[styles.labelWrap, textContainerStyle]}>
-        {letters.map((ch, i) =>
-          ch === ' ' ? (
-            <View key={i} style={styles.wordGap} />
-          ) : (
-            <ReAnimated.Text key={i} style={[styles.letter, textStyle]}>
-              {ch}
-            </ReAnimated.Text>
-          )
-        )}
-      </ReAnimated.View>
+      {/* Vertical effect name — tappable for description */}
+      <TouchableOpacity activeOpacity={0.7} onPress={onEffectPress} disabled={!onEffectPress} style={styles.labelTouchable}>
+        <ReAnimated.View style={[styles.labelWrap, textContainerStyle]}>
+          {letters.map((ch, i) =>
+            ch === ' ' ? (
+              <View key={i} style={styles.wordGap} />
+            ) : (
+              <ReAnimated.Text key={i} style={[styles.letter, textStyle]}>
+                {ch}
+              </ReAnimated.Text>
+            )
+          )}
+        </ReAnimated.View>
+      </TouchableOpacity>
 
       {/* Contextual buttons — no layout shift, fade in/out via opacity */}
       <View style={styles.btnCol}>
@@ -278,6 +282,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
+  },
+  labelTouchable: {
+    flex: 1,
   },
   labelWrap: {
     flex: 1,
