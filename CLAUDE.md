@@ -12,7 +12,7 @@ The web version lives at https://github.com/devinp1023/herocards and is complete
 - **Visual Polish PRD**: `PRDs/VISUAL_POLISH.md` — materials, textures, animations, rarity tiers, haptics, choreography (COMPLETE)
 - **Amp Particle PRD**: `PRDs/Particles/AMP_PARTICLE_SHAKE_PRD.md` — particle drift + card shake amp visualization
 - **Slam Animation PRD**: `PRDs/Battle Choreography/SLAM_ANIMATION.md` — per-weight attack slam animation (COMPLETE)
-- **Battle Choreography PRD**: `PRDs/Battle Choreography/Battle choreography.md` — full round lifecycle choreography (7 sprints)
+- **Battle Choreography PRD**: `PRDs/Battle Choreography/Battle choreography.md` — full round lifecycle choreography (COMPLETE — all 7 sprints)
 - **Web source**: https://github.com/devinp1023/herocards — original web app for reference
 - **CMS**: https://hero-cards-1f345.web.app — creator-only card management UI (vanilla JS, Firebase Hosting)
 - **CMS repo**: https://github.com/devinp1023/herocards-CMS
@@ -270,7 +270,8 @@ Key rules:
 - **Card preview modal** — tap any active card or hand card to see full-size HeroCard (0.85 scale) centered over dark overlay
 - **Action bar** — two skewed gradient buttons (REST + ATTACK); ATTACK opens a submenu with Light/Medium/Heavy options. Uses `expo-linear-gradient` + `skewX` transform.
 - **Amp visualization** — `AmpParticleWrap` wraps each active card with horizontal particle drift (dots + amp number text) from left/right edges, intensity-scaled border glow, and card shake at 90%+ amp. Vertical effect name label (`AmpEffectLabel`) on right side with REROLL/TRIGGER buttons. Tap effect name to open info modal with description.
-- **Deck piles** — stacked card backs with offset layers (1–4 visible based on cards remaining) for 3D depth effect
+- **External HP/STA bars** — `ExternalHpBar` and `ExternalStaBar` render outside the Skia card (above/below) as holographic projections. Styled with transparent track, sweep beam, chromatic fringe, floor glow slab, flicker, and outer glow pulse. `HeroCard` passes `hideHpBar`, `hideStaBar`, and `hideAccentBars` props when in active battle slots to suppress the internal bars and rarity accent lines. HP damage popup appears above the bar and drifts top-left on exit; STA popup appears below and drifts bottom-left.
+- **Deck piles** — stacked card backs with offset layers (1–4 visible based on cards remaining) for 3D depth effect. Vertically aligned to the active card's image area (not the card bottom).
 - **Low HP** — HP bar and number pulse red (opacity 0.35→1.0) when card drops to 25% HP or below
 
 ## Navigation Structure

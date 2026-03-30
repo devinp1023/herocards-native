@@ -575,43 +575,47 @@ The following already exist and do NOT need to be built from scratch:
 6. Add rest visual (green glow + "+5 STA" float) for BOTH sides
 7. Verify non-attack-then-attack sequencing: label resolves before opponent's slam
 
-### Sprint 4: Damage Popup
-**Goal:** Damage numbers at slam impact with weight + type styling.
+### Sprint 4: External HP/STA Bars + Damage & Stamina Popups — COMPLETE
+**Goal:** Battle HUD bars that extend beyond card edges, inline damage/stamina popups.
 
 1. Add `damageEvent` signal to `useBattleChoreography` + `fireDamagePopup()` trigger
-2. Build `DamagePopup` with weight and typeMultiplier styling
-3. Render on BOTH active card sections
-4. Call `fireDamagePopup()` at each damage point in `useBattle.ts`
-5. Delay appearance by `liftDuration + slamDuration` for impact sync
-6. Hold during `CHOREO.damageSettle`, then fade
+2. Add `staminaEvent` signal to `useBattleChoreography` + `fireStaminaPopup()` trigger
+3. Build `ExternalHpBar` — extends 40px beyond each card edge, full-width track with gloss, low-HP pulse, inline -N damage popup
+4. Build `ExternalStaBar` — same width as HP bar, pip-based stamina display, inline +N/-N stamina popup
+5. Hide in-card HP/STA sections during battle (`hideHpBar`, `hideStaBar` props on HeroCard)
+6. Damage popup appears to right of HP number (absolutely positioned, no layout shift)
+7. Stamina popup appears to right of STA number — +N green on rest, -N red on attack
+8. Return `staminaCost` from `executeAttack()` to power the -N popup
+9. Remove "RESTED +5 STA" action label (STA bar popup replaces it)
+10. Add thin white stroke to all progress bars app-wide
 
-### Sprint 5: Card Draw Animation
+### Sprint 5: Card Draw Animation — COMPLETE
 **Goal:** Drawing is visible for BOTH sides.
 
-1. Add `playerDrawKey` and `aiDrawKey` signals to `useBattleChoreography` + `fireDrawAnimation()` trigger
-2. Build `DrawCardAnimation` component
-3. Add `onLayout` callbacks to deck and hand containers in `BattleScreen`, cache bounds in refs
-4. Delay state update to sync with animation
-5. Player: card-back → travel → flip → land
+1. Add `drawEvent` signal to `useBattleChoreography` + `fireDrawAnimation()` trigger
+2. Build `DrawCardAnimation` component — 3-phase Pokemon TCG Pocket-style player draw (card-back exit → full HeroCard reveal with dark overlay → shrink to hand slot), simple card-back flight for AI
+3. Add `onLayout` + `measureInWindow` callbacks to deck and hand containers in `BattleScreen`, cache bounds in refs
+4. Delay state update to sync with animation — card appears in hand only after animation lands
+5. Player: card-back slides off screen → card front slides up as big reveal → card shrinks into hand
 6. AI: card-back → travel → land as face-down
 
-### Sprint 6: KO + Replacement Polish
+### Sprint 6: KO + Replacement Polish — COMPLETE
 **Goal:** Dramatic defeats and readable replacements for BOTH sides.
 
 1. Add `defeatSide` signal to `useBattleChoreography` + `showDefeat()`/`clearDefeat()` triggers
 2. KO overlay (pulsing red vignette) during `CHOREO.defeatHold` — BOTH sides
 3. `CHOREO.defeatGap` pause after fall
-4. AI replacement: card slides from AI hand to active (not instant)
-5. Player replacement: after selection, card slides from hand to active
-6. Empty deck + draw-then-replace sequence
+4. `choreographDefeat` async helper replaces all inline death handling with choreographed `runSteps` sequences
+5. AI replacement: delayed by KO hold + fall + gap, then card springs into active slot
+6. Player replacement: same choreographed gap before `selecting` phase begins
 
-### Sprint 7: Amp Activation Moment
+### Sprint 7: Amp Activation Moment — COMPLETE
 **Goal:** Amp triggers feel cinematic for BOTH sides.
 
-1. Add `ampTriggerEvent` signal to `useBattleChoreography` + `fireAmpTrigger()` trigger
-2. Trigger sequence: particle burst, dim overlay, label pulse
-3. Spend/reroll text scramble animation
-4. Same visual for player and AI triggers
+1. Add `ampActivation` signal to `useBattleChoreography` + `fireAmpActivation()` trigger
+2. Trigger sequence: screen dims 20%, effect label bursts with "ACTIVATED" sub-label, 2.2s choreographed pause
+3. Spend/reroll text scramble animation — cycles through 3 random effect names before landing on new one
+4. Same visual for player and AI triggers — `processAiAmp` returns action type, callers add choreography waits
 
 ---
 
