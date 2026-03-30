@@ -29,6 +29,13 @@ export interface DrawEvent {
   key: number;
 }
 
+export interface AmpActivationEvent {
+  side: 'player' | 'ai';
+  effect: string;
+  type: 'trigger' | 'spend';
+  key: number;
+}
+
 export interface DamagePopupEvent {
   damage: number;
   side: 'player' | 'ai';          // which card RECEIVED the hit
@@ -59,6 +66,10 @@ export interface BattleChoreography {
   showDefeat: (side: 'player' | 'ai') => void;
   clearDefeat: () => void;
 
+  // ── Amp activation ──
+  fireAmpActivation: (side: 'player' | 'ai', effect: string, type: 'trigger' | 'spend') => void;
+  clearAmpActivation: () => void;
+
   // ── Announcements ──
   showActionLabel: (text: string, side: 'player' | 'ai') => void;
   clearActionLabel: () => void;
@@ -86,6 +97,7 @@ export interface BattleChoreography {
   staminaPopup:       StaminaPopupEvent | null;
   drawEvent:          DrawEvent | null;
   defeatSide:         'player' | 'ai' | null;
+  ampActivation:      AmpActivationEvent | null;
 }
 
 export function useBattleChoreography(): BattleChoreography {
@@ -122,6 +134,10 @@ export function useBattleChoreography(): BattleChoreography {
 
   // ── Defeat ────────────────────────────────────────────────────────────
   const [defeatSide, setDefeatSide] = useState<'player' | 'ai' | null>(null);
+
+  // ── Amp activation ────────────────────────────────────────────────────
+  const [ampActivation, setAmpActivation] = useState<AmpActivationEvent | null>(null);
+  const ampActivationKeyRef = useRef(0);
 
   // ── Action label ("REST", "DREW A CARD", "AI SWAPPED", etc.) ──────────
   const [actionLabel, setActionLabel] = useState<ActionLabelEvent | null>(null);
@@ -252,6 +268,15 @@ export function useBattleChoreography(): BattleChoreography {
     setDefeatSide(null);
   }, []);
 
+  // ── Amp activation triggers ──────────────────────────────────────────
+  const fireAmpActivation = useCallback((side: 'player' | 'ai', effect: string, type: 'trigger' | 'spend') => {
+    ampActivationKeyRef.current += 1;
+    setAmpActivation({ side, effect, type, key: ampActivationKeyRef.current });
+  }, []);
+  const clearAmpActivation = useCallback(() => {
+    setAmpActivation(null);
+  }, []);
+
   // ── Action label triggers ─────────────────────────────────────────────
   const showActionLabel = useCallback((text: string, side: 'player' | 'ai') => {
     actionLabelKeyRef.current += 1;
@@ -272,6 +297,8 @@ export function useBattleChoreography(): BattleChoreography {
     clearDrawEvent,
     showDefeat,
     clearDefeat,
+    fireAmpActivation,
+    clearAmpActivation,
     showActionLabel,
     clearActionLabel,
     playerSlamKey,
@@ -292,5 +319,6 @@ export function useBattleChoreography(): BattleChoreography {
     staminaPopup,
     drawEvent,
     defeatSide,
+    ampActivation,
   };
 }

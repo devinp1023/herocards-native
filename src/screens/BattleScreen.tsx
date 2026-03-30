@@ -147,6 +147,21 @@ const cb = StyleSheet.create({
 });
 
 
+// ── Amp dim overlay — fades in on mount ──────────────────────────────────────
+function AmpDimOverlay() {
+  const op = useSharedValue(0);
+  useEffect(() => {
+    op.value = withTiming(0.2, { duration: 200, easing: Easing.out(Easing.quad) });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const style = useAnimatedStyle(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+    opacity: op.value,
+    zIndex: 800,
+  }));
+  return <ReAnimated.View style={style} pointerEvents="none" />;
+}
+
 // ── Defeat animation — KO hold with red vignette, then fall ──────────────────
 function DefeatingCardAnim({ card, absolute = false, holdDuration = 0 }: {
   card: BattleCard; absolute?: boolean; holdDuration?: number;
@@ -2507,6 +2522,8 @@ export default function BattleScreen({ navigation, route }: Props) {
             playerAmp={battle.playerAmp}
             aiAmp={battle.aiAmp}
             isTriggered={isAmpTriggered}
+            activationLabel={battle.choreo.ampActivation?.type === 'trigger' ? 'ACTIVATED' : null}
+            isScrambling={battle.choreo.ampActivation?.type === 'spend'}
             onReroll={handleAmpReroll}
             onTrigger={handleAmpTrigger}
             canInteract={battle.phase === 'ready'}
@@ -2551,6 +2568,9 @@ export default function BattleScreen({ navigation, route }: Props) {
           onClose={() => setShowEffectInfo(false)}
         />
       )}
+
+      {/* Amp activation dim overlay — trigger only */}
+      {battle.choreo.ampActivation?.type === 'trigger' && <AmpDimOverlay />}
 
       {/* Draw card animation overlay */}
       <DrawCardAnimation

@@ -14,7 +14,7 @@
  *   TRIGGER · 100 — visible when playerAmp === 100
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import ReAnimated, {
   useSharedValue,
@@ -34,11 +34,16 @@ import { T, MOTION, glowShadow, FONTS } from '../theme/theme';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
+// Effect name pool for scramble animation
+const SCRAMBLE_NAMES = ['OVERCHARGE', 'TYPE FLIP', 'EXHAUSTION', 'FIELD MEDIC', 'LOCK ON', 'EQUALISER'];
+
 interface AmpEffectLabelProps {
   effectName: string;        // e.g. 'TYPE FLIP', 'EQUALISER'
   playerAmp: number;         // 0–100
   aiAmp: number;             // 0–100
   isTriggered?: boolean;     // brief eruption state when amp hits 100
+  activationLabel?: string | null;  // "ACTIVATED" sub-label during trigger sequence
+  isScrambling?: boolean;    // text scramble animation during reroll
   onReroll: () => void;      // spend 50 amp to change effect
   onTrigger: () => void;     // spend 100 amp to trigger effect
   canInteract?: boolean;     // false during AI turn processing
@@ -58,12 +63,52 @@ function AmpEffectLabelInner({
   playerAmp,
   aiAmp,
   isTriggered = false,
+  activationLabel = null,
+  isScrambling = false,
   onReroll,
   onTrigger,
   canInteract = true,
   onEffectPress,
 }: AmpEffectLabelProps) {
   const focused = useIsFocused();
+
+  // ── Text scramble for reroll ──────────────────────────────────────────
+  const [displayName, setDisplayName] = useState(effectName);
+  const scrambleRef = useRef(false);
+  useEffect(() => {
+    if (isScrambling && !scrambleRef.current) {
+      scrambleRef.current = true;
+      // Cycle through 3 random names, ~200ms each
+      const pool = SCRAMBLE_NAMES.filter(n => n !== effectName);
+      const pick = () => pool[Math.floor(Math.random() * pool.length)];
+      setDisplayName(pick());
+      const t1 = setTimeout(() => setDisplayName(pick()), 200);
+      const t2 = setTimeout(() => setDisplayName(pick()), 400);
+      const t3 = setTimeout(() => { setDisplayName(effectName); scrambleRef.current = false; }, 600);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
+    if (!isScrambling) {
+      scrambleRef.current = false;
+      setDisplayName(effectName);
+    }
+  }, [isScrambling, effectName]);
+  // Keep displayName in sync when not scrambling
+  useEffect(() => { if (!scrambleRef.current) setDisplayName(effectName); }, [effectName]);
+
+  // ── Activation sub-label animation ──────────────────────────────────
+  const activationOp = useSharedValue(0);
+  useEffect(() => {
+    if (activationLabel) {
+      activationOp.value = withSequence(
+        withTiming(1, { duration: 200 }),
+        withTiming(0.7, { duration: 400 }),
+        withTiming(1, { duration: 300 }),
+      );
+    } else {
+      activationOp.value = withTiming(0, { duration: 150 });
+    }
+  }, [activationLabel]); // eslint-disable-line react-hooks/exhaustive-deps
+  const activationStyle = useAnimatedStyle(() => ({ opacity: activationOp.value }));
 
   // ── Intensity: 0–1 based on max amp ────────────────────────────────────
   const intensitySv = useSharedValue(0);
@@ -228,7 +273,7 @@ function AmpEffectLabelInner({
 
   // ── Render ────────────────────────────────────────────────────────────
 
-  const letters = effectName.split('');
+  const letters = displayName.split('');
 
   return (
     <View style={styles.container}>
@@ -243,6 +288,12 @@ function AmpEffectLabelInner({
                 {ch}
               </ReAnimated.Text>
             )
+          )}
+          {/* "ACTIVATED" sub-label during trigger */}
+          {activationLabel && (
+            <ReAnimated.View style={[styles.activationWrap, activationStyle]}>
+              <Text style={styles.activationText}>{activationLabel}</Text>
+            </ReAnimated.View>
           )}
         </ReAnimated.View>
       </TouchableOpacity>
@@ -299,6 +350,22 @@ const styles = StyleSheet.create({
   },
   wordGap: {
     height: 8,
+  },
+  activationWrap: {
+    marginTop: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: T.accent.mint + '22',
+    borderWidth: 1,
+    borderColor: T.accent.mint + '66',
+  },
+  activationText: {
+    fontFamily: FONTS.orbitronBold,
+    fontSize: T.font.xs,
+    color: T.accent.mint,
+    letterSpacing: T.letterSpacing.xs,
+    textAlign: 'center',
   },
   btnCol: {
     width: '100%',

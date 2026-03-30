@@ -655,13 +655,24 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── AI Amp decision (trigger/spend at start of each round) ────────────────
-  const processAiAmp = useCallback((events: BattleEvent[]) => {
+  // Returns 'trigger' | 'spend' | null so the caller can add choreography waits.
+  const processAiAmp = useCallback((events: BattleEvent[]): 'trigger' | 'spend' | null => {
     const a   = aRef.current!;
     const p   = pRef.current!;
     const amp = ampRef.current;
     const decision = aiDecideAmp(a, p, amp);
-    if (decision === 'trigger') triggerAmpFn(a, p, amp, events);
-    else if (decision === 'spend') spendAmpFn(a, amp, events);
+    if (decision === 'trigger') {
+      const effectName = amp.poolEffect;
+      choreo.fireAmpActivation('ai', effectName, 'trigger');
+      triggerAmpFn(a, p, amp, events);
+      return 'trigger';
+    }
+    if (decision === 'spend') {
+      choreo.fireAmpActivation('ai', 'scramble', 'spend');
+      spendAmpFn(a, amp, events);
+      return 'spend';
+    }
+    return null;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ATTACK — sequential steps ──────────────────────────────────────────────
@@ -697,7 +708,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     updatePhase('animating');
 
     // AI Amp decision happens at round start, before actions resolve
-    processAiAmp(events);
+    const aiAmpAction = processAiAmp(events);
+    if (aiAmpAction) {
+      refresh();
+      const ampWait = aiAmpAction === 'trigger'
+        ? CHOREO.ampTriggerFlash + CHOREO.ampEffectReveal + CHOREO.ampEffectHold
+        : 800;
+      await runSteps([[() => {}, ampWait], [() => { choreo.clearAmpActivation(); }, 0]], cancelled);
+      if (cancelled()) return;
+    }
 
     const aiAction = aiDecide(a, p, ampRef.current, events);
     const slamWeight = weight.toUpperCase() as 'LIGHT' | 'MEDIUM' | 'HEAVY';
@@ -869,7 +888,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     ], cancelled);
     if (cancelled()) return;
 
-    processAiAmp(events);
+    const drawAiAmpAction = processAiAmp(events);
+    if (drawAiAmpAction) {
+      refresh();
+      const ampWait = drawAiAmpAction === 'trigger'
+        ? CHOREO.ampTriggerFlash + CHOREO.ampEffectReveal + CHOREO.ampEffectHold
+        : 800;
+      await runSteps([[() => {}, ampWait], [() => { choreo.clearAmpActivation(); }, 0]], cancelled);
+      if (cancelled()) return;
+    }
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
@@ -936,7 +963,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     gainAmp(p, 2);
     refresh();
 
-    processAiAmp(events);
+    const restAiAmpAction = processAiAmp(events);
+    if (restAiAmpAction) {
+      refresh();
+      const ampWait = restAiAmpAction === 'trigger'
+        ? CHOREO.ampTriggerFlash + CHOREO.ampEffectReveal + CHOREO.ampEffectHold
+        : 800;
+      await runSteps([[() => {}, ampWait], [() => { choreo.clearAmpActivation(); }, 0]], cancelled);
+      if (cancelled()) return;
+    }
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
@@ -1042,7 +1077,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     updatePhase('animating');
     refresh();
 
-    processAiAmp(events);
+    const swapAiAmpAction = processAiAmp(events);
+    if (swapAiAmpAction) {
+      refresh();
+      const ampWait = swapAiAmpAction === 'trigger'
+        ? CHOREO.ampTriggerFlash + CHOREO.ampEffectReveal + CHOREO.ampEffectHold
+        : 800;
+      await runSteps([[() => {}, ampWait], [() => { choreo.clearAmpActivation(); }, 0]], cancelled);
+      if (cancelled()) return;
+    }
     const aiAction = aiDecide(a, p, ampRef.current, events);
 
     if (aiAction !== 'attack') {
@@ -1116,7 +1159,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   }, [phase]);
 
   // ── TRIGGER AMP ────────────────────────────────────────────────────────────
-  const triggerAmp = useCallback(() => {
+  const triggerAmp = useCallback(async () => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     const a = aRef.current!;
@@ -1125,7 +1168,12 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     if (a.amp >= 80) incStat('photoFinishTriggers');
     // Track amp race: both meters were at 100 this same trigger moment
     if (a.amp >= 100) incStat('ampRaceTriggers');
+
+    const effectName = ampRef.current.poolEffect;
+    updatePhase('animating');
+    choreo.fireAmpActivation('player', effectName, 'trigger');
     triggerAmpFn(p, a, ampRef.current, eventsRef.current);
+
     // Track battlefield control: count distinct effects the player has triggered this battle
     const triggeredEffects = new Set(
       eventsRef.current
@@ -1136,14 +1184,37 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       perBattleStatsRef.current.battlefieldControlBattles = 1;
     }
     refresh();
+
+    // Choreographed pause — screen dim + label burst + hold
+    await runSteps([
+      [() => {}, CHOREO.ampTriggerFlash],
+      [() => {}, CHOREO.ampEffectReveal],
+      [() => {}, CHOREO.ampEffectHold],
+      [() => { choreo.clearAmpActivation(); }, 0],
+    ], cancelled);
+    if (cancelled()) return;
+
+    updatePhase('ready');
+    refresh();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SPEND AMP ──────────────────────────────────────────────────────────────
-  const spendAmp = useCallback(() => {
+  const spendAmp = useCallback(async () => {
     if (phase !== 'ready') return;
     const p = pRef.current!;
     if (p.amp < 50) return;
+
+    updatePhase('animating');
+    choreo.fireAmpActivation('player', 'scramble', 'spend');
+    refresh();
+
+    // Wait for text scramble to play, then apply the spend
+    await runSteps([[() => {}, 800]], cancelled);
+    if (cancelled()) return;
+
     spendAmpFn(p, ampRef.current, eventsRef.current);
+    choreo.clearAmpActivation();
+    updatePhase('ready');
     refresh();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 

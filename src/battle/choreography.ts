@@ -32,7 +32,7 @@ export const CHOREO = {
   postAttackPause:   900,   // breathing room after damage settles
 
   // ── Between two attacks (both-attack rounds) ────────────
-  betweenAttacks:   1000,   // gap between first and second slam
+  betweenAttacks:    600,   // gap between first and second slam
 
   // ── Card events ─────────────────────────────────────────
   defeatHold:       1200,   // defeated card visible with KO overlay
