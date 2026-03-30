@@ -35,6 +35,7 @@ import { MaterialSurface } from '../components/MaterialSurface';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { SuccessBurst, SuccessBurstHandle } from '../components/SuccessBurst';
 import { AmpParticleWrap } from '../components/AmpParticleWrap';
+import { DrawCardAnimation, DrawAnimBounds } from '../components/DrawCardAnimation';
 import { T, MOTION, TIMING, SPRING, EASE, TEXT_FX } from '../theme/theme';
 import { CHOREO } from '../battle/choreography';
 
@@ -1240,7 +1241,7 @@ const esta = StyleSheet.create({
   },
 });
 
-function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, aiAmp, damageEvent, staminaEvent, onCardMeasure, onPreview }: {
+function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatingCard, aiAmp, damageEvent, staminaEvent, onCardMeasure, onPreview, deckBoundsRef }: {
   card: BattleCard | null; revealed: boolean; deckCount: number;
   targeted: boolean; hitKey: number; defeatingCard: BattleCard | null;
   aiAmp: number;
@@ -1248,8 +1249,10 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
   staminaEvent: StaminaPopupEvent | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
+  deckBoundsRef: React.RefObject<DrawAnimBounds | null>;
 }) {
   const cardRef = useRef<View>(null);
+  const deckRef = useRef<View>(null);
 
   // ── Shake + flash on hit ─────────────────────────────────────────────────────
   const shakeX   = useSharedValue(0);
@@ -1297,7 +1300,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
     <View style={aas.row}>
       <View style={aas.deckCol}>
         {deckCount > 0 ? (
-          <View style={aas.deckWrap}>
+          <View ref={deckRef} style={aas.deckWrap} onLayout={() => deckRef.current?.measureInWindow((x, y, w, h) => { deckBoundsRef.current = { x, y, w, h }; })}>
             <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
             <View style={aas.badge}><Text style={aas.badgeText}>{deckCount}</Text></View>
           </View>
@@ -1357,7 +1360,7 @@ const aas = StyleSheet.create({
 
 // ── Player active section (tap deck to draw; hand cards drag-to-swap) ─────────
 function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw,
-  swapTargeted, hitKey, defeatingCard, playerAmp, damageEvent, staminaEvent, onCardMeasure, onPreview }: {
+  swapTargeted, hitKey, defeatingCard, playerAmp, damageEvent, staminaEvent, onCardMeasure, onPreview, deckBoundsRef }: {
   card: BattleCard | null; revealed: boolean; phase: BattlePhase;
   deckCount: number; onDraw: () => void; canDraw: boolean;
   swapTargeted: boolean;
@@ -1368,8 +1371,10 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
   staminaEvent: StaminaPopupEvent | null;
   onCardMeasure: (b: Bounds) => void;
   onPreview: (c: BattleCard) => void;
+  deckBoundsRef: React.RefObject<DrawAnimBounds | null>;
 }) {
   const cardSlotRef      = useRef<View>(null);
+  const deckMeasureRef   = useRef<View>(null);
   const onCardMeasureRef = useRef(onCardMeasure);
   onCardMeasureRef.current = onCardMeasure;
 
@@ -1416,7 +1421,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
     <View style={aas.deckCol}>
       {deckCount > 0 ? (
         <TouchableOpacity onPress={onDraw} disabled={!canDraw} activeOpacity={canDraw ? 0.7 : 1}>
-          <View style={aas.deckWrap}>
+          <View ref={deckMeasureRef} style={aas.deckWrap} onLayout={() => deckMeasureRef.current?.measureInWindow((x, y, w, h) => { deckBoundsRef.current = { x, y, w, h }; })}>
             <DeckPile w={DECK_W} h={DECK_H} count={deckCount} />
             <View style={[aas.badge, canDraw && pas.deckBadgeActive]}>
               <Text style={[aas.badgeText, canDraw && pas.deckCountActive]}>{deckCount}</Text>
@@ -1500,8 +1505,10 @@ const pas = StyleSheet.create({
 });
 
 // ── Top zone — AI face-down hand only (deck moved beside active card) ─────────
-function AIZone({ handCount }: { handCount: number }) {
+function AIZone({ handCount, handBoundsRef }: { handCount: number; handBoundsRef: React.RefObject<DrawAnimBounds | null> }) {
+  const containerRef = useRef<View>(null);
   return (
+    <View ref={containerRef} onLayout={() => containerRef.current?.measureInWindow((x, y, w, h) => { handBoundsRef.current = { x, y, w, h }; })}>
     <MaterialSurface material="brushedMetal" style={az.container} borderRadius={0}>
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const filled = i < handCount;
@@ -1512,6 +1519,7 @@ function AIZone({ handCount }: { handCount: number }) {
         );
       })}
     </MaterialSurface>
+    </View>
   );
 }
 const az = StyleSheet.create({
@@ -1717,7 +1725,7 @@ const gt = StyleSheet.create({
 });
 
 // ── Bottom zone — player hand only (deck moved beside active card) ────────────
-function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId, playerKillCount, onPreview }: {
+function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSwapHover, swapOutCardId, playerKillCount, onPreview, handBoundsRef }: {
   hand: BattleCard[]; phase: BattlePhase;
   onSelect: (id: number) => void; onSwap: (id: number) => void;
   playerActiveBoundsRef: React.MutableRefObject<Bounds | null>;
@@ -1725,8 +1733,11 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
   swapOutCardId: number | null;
   playerKillCount: number;
   onPreview: (c: BattleCard) => void;
+  handBoundsRef: React.RefObject<DrawAnimBounds | null>;
 }) {
+  const containerRef = useRef<View>(null);
   return (
+    <View ref={containerRef} onLayout={() => containerRef.current?.measureInWindow((x, y, w, h) => { handBoundsRef.current = { x, y, w, h }; })}>
     <MaterialSurface material="brushedMetal" style={pz.container} borderRadius={0}>
       {Array.from({ length: MAX_HAND }).map((_, i) => {
         const card = hand[i];
@@ -1748,6 +1759,7 @@ function PlayerZone({ hand, phase, onSelect, onSwap, playerActiveBoundsRef, onSw
         );
       })}
     </MaterialSurface>
+    </View>
   );
 }
 const pz = StyleSheet.create({
@@ -2187,6 +2199,12 @@ export default function BattleScreen({ navigation, route }: Props) {
   const aiActiveBounds     = useRef<Bounds | null>(null);
   const playerActiveBounds = useRef<Bounds | null>(null);
 
+  // ── Draw animation measurement refs ──────────────────────────────────────
+  const playerDeckBounds = useRef<DrawAnimBounds | null>(null);
+  const playerHandBounds = useRef<DrawAnimBounds | null>(null);
+  const aiDeckBounds     = useRef<DrawAnimBounds | null>(null);
+  const aiHandBounds     = useRef<DrawAnimBounds | null>(null);
+
   const onAiCardMeasure     = useCallback((b: Bounds) => { aiActiveBounds.current = b; }, []);
   const onPlayerCardMeasure = useCallback((b: Bounds) => { playerActiveBounds.current = b; }, []);
 
@@ -2364,7 +2382,7 @@ export default function BattleScreen({ navigation, route }: Props) {
       </MaterialSurface>
 
       {/* AI zone — face-down hand only */}
-      <AIZone handCount={battle.aiHandCount} />
+      <AIZone handCount={battle.aiHandCount} handBoundsRef={aiHandBounds} />
 
       {/* Combat zone */}
       <View style={s.combatZone}>
@@ -2384,6 +2402,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               staminaEvent={battle.choreo.staminaPopup?.side === 'ai' ? battle.choreo.staminaPopup : null}
               onCardMeasure={onAiCardMeasure}
               onPreview={onPreview}
+              deckBoundsRef={aiDeckBounds}
             />
             </ReAnimated.View>
             {/* Shockwave rings — centered on AI card at player slam impact */}
@@ -2423,6 +2442,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               staminaEvent={battle.choreo.staminaPopup?.side === 'player' ? battle.choreo.staminaPopup : null}
               onCardMeasure={onPlayerCardMeasure}
               onPreview={onPreview}
+              deckBoundsRef={playerDeckBounds}
             />
             </ReAnimated.View>
             {/* Shockwave ring — AI slam impact on player card */}
@@ -2471,6 +2491,7 @@ export default function BattleScreen({ navigation, route }: Props) {
         swapOutCardId={battle.swapOutCardId}
         playerKillCount={battle.playerKillCount}
         onPreview={onPreview}
+        handBoundsRef={playerHandBounds}
       />
 
       {/* Action bar — Rest + Attack */}
@@ -2495,6 +2516,15 @@ export default function BattleScreen({ navigation, route }: Props) {
           onClose={() => setShowEffectInfo(false)}
         />
       )}
+
+      {/* Draw card animation overlay */}
+      <DrawCardAnimation
+        event={battle.choreo.drawEvent}
+        playerDeckBounds={playerDeckBounds}
+        playerHandBounds={playerHandBounds}
+        aiDeckBounds={aiDeckBounds}
+        aiHandBounds={aiHandBounds}
+      />
 
       {/* Round banner — full-width, centered on screen */}
       <RoundBanner round={battle.choreo.bannerRound} bannerKey={battle.choreo.roundBannerKey} />

@@ -9,6 +9,7 @@ import {
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { SLAM_CONFIG } from '../data/constants';
+import type { BattleCard } from '../battle/battleEngine';
 
 export interface ActionLabelEvent {
   text: string;
@@ -19,6 +20,12 @@ export interface ActionLabelEvent {
 export interface StaminaPopupEvent {
   amount: number;
   side: 'player' | 'ai';
+  key: number;
+}
+
+export interface DrawEvent {
+  side: 'player' | 'ai';
+  card: BattleCard | null;   // card being drawn (for player reveal render)
   key: number;
 }
 
@@ -43,6 +50,10 @@ export interface BattleChoreography {
 
   // ── Stamina popup ──
   fireStaminaPopup: (amount: number, side: 'player' | 'ai') => void;
+
+  // ── Card draw ──
+  fireDrawAnimation: (side: 'player' | 'ai', card?: BattleCard | null) => void;
+  clearDrawEvent: () => void;
 
   // ── Announcements ──
   showActionLabel: (text: string, side: 'player' | 'ai') => void;
@@ -69,6 +80,7 @@ export interface BattleChoreography {
   actionLabel:        ActionLabelEvent | null;
   damagePopup:        DamagePopupEvent | null;
   staminaPopup:       StaminaPopupEvent | null;
+  drawEvent:          DrawEvent | null;
 }
 
 export function useBattleChoreography(): BattleChoreography {
@@ -98,6 +110,10 @@ export function useBattleChoreography(): BattleChoreography {
   // ── Stamina popup ─────────────────────────────────────────────────────
   const [staminaPopup, setStaminaPopup] = useState<StaminaPopupEvent | null>(null);
   const staminaPopupKeyRef = useRef(0);
+
+  // ── Draw event ─────────────────────────────────────────────────────────
+  const [drawEvent, setDrawEvent] = useState<DrawEvent | null>(null);
+  const drawEventKeyRef = useRef(0);
 
   // ── Action label ("REST", "DREW A CARD", "AI SWAPPED", etc.) ──────────
   const [actionLabel, setActionLabel] = useState<ActionLabelEvent | null>(null);
@@ -210,6 +226,16 @@ export function useBattleChoreography(): BattleChoreography {
     setStaminaPopup({ amount, side, key: staminaPopupKeyRef.current });
   }, []);
 
+  // ── Draw animation triggers ──────────────────────────────────────────
+  const fireDrawAnimation = useCallback((side: 'player' | 'ai', card?: BattleCard | null) => {
+    drawEventKeyRef.current += 1;
+    setDrawEvent({ side, card: card ?? null, key: drawEventKeyRef.current });
+  }, []);
+
+  const clearDrawEvent = useCallback(() => {
+    setDrawEvent(null);
+  }, []);
+
   // ── Action label triggers ─────────────────────────────────────────────
   const showActionLabel = useCallback((text: string, side: 'player' | 'ai') => {
     actionLabelKeyRef.current += 1;
@@ -226,6 +252,8 @@ export function useBattleChoreography(): BattleChoreography {
     showRoundBanner,
     fireDamagePopup,
     fireStaminaPopup,
+    fireDrawAnimation,
+    clearDrawEvent,
     showActionLabel,
     clearActionLabel,
     playerSlamKey,
@@ -244,5 +272,6 @@ export function useBattleChoreography(): BattleChoreography {
     actionLabel,
     damagePopup,
     staminaPopup,
+    drawEvent,
   };
 }

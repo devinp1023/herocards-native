@@ -12,7 +12,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { TIER_INFO } from '../data/constants';
-import { CHOREO, slamDuration, runSteps } from '../battle/choreography';
+import { CHOREO, slamDuration, drawDuration, runSteps } from '../battle/choreography';
 import { useBattleChoreography, BattleChoreography } from './useBattleChoreography';
 import { useGameStateContext } from '../context/GameStateContext';
 import {
@@ -600,12 +600,13 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
   }, [endBattle, doAiReplace, finishRound, checkLegendaryStuck]);
 
   // ── Execute AI's chosen action (non-combat part) ──────────────────────────
+  // When AI draws, only fires the animation — call completeAiDraw() after drawDuration('ai') to mutate state.
   const executeAiAction = useCallback((aiAction: RoundAction, events: BattleEvent[]) => {
     const a   = aRef.current!;
     const p   = pRef.current!;
     if (aiAction === 'draw') {
-      drawCard(a);
-      gainAmp(a, 2);
+      choreo.fireDrawAnimation('ai');
+      // State mutation deferred to completeAiDraw()
     } else if (aiAction === 'swap') {
       executeAIProactiveSwap(a, p, events);
       gainAmp(a, 3);
@@ -615,6 +616,13 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       gainAmp(a, 2);
     }
     // 'attack' has no pre-combat side effect
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Complete AI draw — called after draw animation lands
+  const completeAiDraw = useCallback(() => {
+    const a = aRef.current!;
+    drawCard(a);
+    gainAmp(a, 2);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── AI Amp decision (trigger/spend at start of each round) ────────────────
@@ -672,8 +680,13 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       choreo.showActionLabel(aiLabel, 'ai');
       refresh();
 
+      if (aiAction === 'draw') {
+        await runSteps([[() => {}, drawDuration('ai')], [() => { completeAiDraw(); refresh(); }, 0]], cancelled);
+        if (cancelled()) return;
+      }
+
       await runSteps([
-        [() => {}, CHOREO.actionShow],
+        [() => {}, aiAction === 'draw' ? CHOREO.aiDrawSettle : CHOREO.actionShow],
         [() => {
           choreo.clearActionLabel();
           choreo.triggerPlayerSlam(slamWeight);
@@ -820,11 +833,16 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     setTypeRevealed(false);
     updatePhase('animating');
 
-    drawCard(p);
-    gainAmp(p, 2);
-    events.push({ type: 'PLAYER_DRAW', card: p.hand[p.hand.length - 1].name });
+    const topCard = p.deck[p.deck.length - 1]; // peek at card that will be drawn
+    choreo.fireDrawAnimation('player', topCard);
     choreo.showActionLabel('DREW A CARD', 'player');
-    refresh();
+
+    // Wait for draw animation to land, THEN add the card to hand
+    await runSteps([
+      [() => {}, drawDuration('player')],
+      [() => { drawCard(p); gainAmp(p, 2); events.push({ type: 'PLAYER_DRAW', card: p.hand[p.hand.length - 1].name }); refresh(); }, CHOREO.drawSettle],
+    ], cancelled);
+    if (cancelled()) return;
 
     processAiAmp(events);
     const aiAction = aiDecide(a, p, ampRef.current, events);
@@ -832,8 +850,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     if (aiAction !== 'attack') {
       const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
-        [() => {}, CHOREO.drawSettle],
-        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, aiAction === 'draw' ? drawDuration('ai') : CHOREO.actionShow],
+        [() => { if (aiAction === 'draw') { completeAiDraw(); refresh(); } }, aiAction === 'draw' ? CHOREO.aiDrawSettle : 0],
         [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;
@@ -844,7 +862,6 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       let pKilled = false;
 
       await runSteps([
-        [() => {}, CHOREO.drawSettle],
         [() => {
           choreo.clearActionLabel();
           choreo.triggerAiSlam(aiSlamW);
@@ -905,7 +922,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
         [() => {}, CHOREO.actionShow],
-        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, aiAction === 'draw' ? drawDuration('ai') : CHOREO.actionShow],
+        [() => { if (aiAction === 'draw') { completeAiDraw(); refresh(); } }, aiAction === 'draw' ? CHOREO.aiDrawSettle : 0],
         [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;
@@ -1014,7 +1032,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       const aiLabel = aiAction === 'rest' ? 'AI RESTED' : aiAction === 'draw' ? 'AI DREW A CARD' : 'AI SWAPPED';
       await runSteps([
         [() => {}, CHOREO.actionShow],
-        [() => { setSwapOutCardId(null); choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, CHOREO.actionShow],
+        [() => { setSwapOutCardId(null); choreo.clearActionLabel(); choreo.showActionLabel(aiLabel, 'ai'); executeAiAction(aiAction, events); refresh(); }, aiAction === 'draw' ? drawDuration('ai') : CHOREO.actionShow],
+        [() => { if (aiAction === 'draw') { completeAiDraw(); refresh(); } }, aiAction === 'draw' ? CHOREO.aiDrawSettle : 0],
         [() => { choreo.clearActionLabel(); }, 0],
       ], cancelled);
       if (cancelled()) return;

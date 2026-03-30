@@ -23,44 +23,49 @@ export async function runSteps(steps: Step[], cancelled: () => boolean) {
 
 export const CHOREO = {
   // ── Announcements / Labels ──────────────────────────────
-  roundBanner:      1400,   // "ROUND 3" banner hold time
-  actionLabel:       600,   // "REST" / "DRAW" / "SWAP" label hold time
+  roundBanner:      1800,   // "ROUND 3" banner hold time
+  actionLabel:       900,   // "REST" / "DRAW" / "SWAP" label hold time
 
   // ── Attack pacing (gaps around the slam animation) ──────
-  preSlamPause:      300,   // beat after action label fades, before slam begins
-  damageSettle:      900,   // HP bar drain + damage number display after slam
-  postAttackPause:   600,   // breathing room after damage settles
+  preSlamPause:      500,   // beat after action label fades, before slam begins
+  damageSettle:     1300,   // HP bar drain + damage number display after slam
+  postAttackPause:   900,   // breathing room after damage settles
 
   // ── Between two attacks (both-attack rounds) ────────────
-  betweenAttacks:    700,   // gap between first and second slam
+  betweenAttacks:   1000,   // gap between first and second slam
 
   // ── Card events ─────────────────────────────────────────
-  defeatHold:        800,   // defeated card visible with KO overlay
-  defeatFall:        500,   // fall + fade animation
-  defeatGap:         400,   // pause after card disappears
-  replaceDraw:       400,   // new card draws from deck/hand to active
-  replaceEntry:      350,   // new card scale-spring into active slot
-  replaceSettle:     300,   // pause after new card is in place
+  defeatHold:       1200,   // defeated card visible with KO overlay
+  defeatFall:        700,   // fall + fade animation
+  defeatGap:         600,   // pause after card disappears
+  replaceDraw:       600,   // new card draws from deck/hand to active
+  replaceEntry:      500,   // new card scale-spring into active slot
+  replaceSettle:     500,   // pause after new card is in place
 
-  // ── Card draw from deck ─────────────────────────────────
-  drawLift:          250,   // card lifts off deck pile
-  drawTravel:        400,   // card travels to hand slot
-  drawLand:          200,   // card lands in hand (spring)
-  drawSettle:        500,   // pause after draw completes
+  // ── Player card draw (3-phase cinematic) ────────────────
+  drawExit:          300,   // card-back slides down off screen from deck
+  drawRevealIn:      400,   // card front slides up from bottom to center
+  drawRevealHold:    700,   // hold at center — player sees what they drew
+  drawRevealOut:     400,   // card shrinks + moves to hand slot
+  drawSettle:       1500,   // breathing room after card lands in hand
+
+  // ── AI card draw (simple flight) ──────────────────────
+  aiDrawTravel:      500,   // card-back flies from AI deck to AI hand
+  aiDrawSettle:      200,   // pause after AI draw
 
   // ── Action announcements ────────────────────────────────
-  actionShow:        900,   // action label visible (both AI and player)
-  actionFade:        200,   // label fade out
+  actionShow:       1300,   // action label visible (both AI and player)
+  actionFade:        300,   // label fade out
 
   // ── Amp events ──────────────────────────────────────────
-  ampTriggerFlash:   400,   // flash when amp hits 100
-  ampEffectReveal:   600,   // effect name reveal + glow
-  ampEffectHold:     500,   // hold effect name visible
+  ampTriggerFlash:   600,   // flash when amp hits 100
+  ampEffectReveal:   900,   // effect name reveal + glow
+  ampEffectHold:     700,   // hold effect name visible
 
   // ── Round transition ────────────────────────────────────
-  roundEndPause:     700,   // pause after last event in round
-  roundTransition:  1000,   // round banner entrance + hold + exit
-  roundStartDelay:   300,   // pause before controls re-enable
+  roundEndPause:    1000,   // pause after last event in round
+  roundTransition:  1400,   // round banner entrance + hold + exit
+  roundStartDelay:   500,   // pause before controls re-enable
 } as const;
 
 // ── Helper: total slam duration for a given weight ────────
@@ -69,4 +74,9 @@ export const CHOREO = {
 export function slamDuration(weight: 'LIGHT' | 'MEDIUM' | 'HEAVY'): number {
   const cfg = SLAM_CONFIG[weight];
   return cfg.liftDuration + cfg.slamDuration + cfg.holdDuration + cfg.returnBuffer;
+}
+
+export function drawDuration(side: 'player' | 'ai'): number {
+  if (side === 'ai') return CHOREO.aiDrawTravel;
+  return CHOREO.drawExit + CHOREO.drawRevealIn + CHOREO.drawRevealHold + CHOREO.drawRevealOut;
 }
