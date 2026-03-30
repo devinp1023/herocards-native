@@ -631,6 +631,7 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
   const dmgScale   = useSharedValue(0);
   const dmgOpacity = useSharedValue(0);
   const dmgTransX  = useSharedValue(0);
+  const dmgTransY  = useSharedValue(0);
   const prevDmgKey = useRef(0);
   const [dmgDisplay, setDmgDisplay] = useState<DamagePopupEvent | null>(null);
 
@@ -639,10 +640,11 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
     prevDmgKey.current = damageEvent.key;
     setDmgDisplay(damageEvent);
 
-    // Pop in from right, hold, fade out
+    // Pop in from below, hold, drift to top-left on exit
     dmgScale.value = 0;
     dmgOpacity.value = 0;
-    dmgTransX.value = 8;
+    dmgTransX.value = 0;
+    dmgTransY.value = 8;
     dmgScale.value = withSequence(
       withTiming(MOTION.burst.overshoot, { duration: 120, easing: EASE.enter }),
       withTiming(1, { duration: 100, easing: EASE.inOut }),
@@ -651,14 +653,18 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
       withTiming(1, { duration: 80 }),
       withDelay(DAMAGE_HOLD, withTiming(0, { duration: DAMAGE_FADE, easing: EASE.exit })),
     );
-    dmgTransX.value = withTiming(0, { duration: 180, easing: EASE.enter });
+    dmgTransY.value = withSequence(
+      withTiming(0, { duration: 180, easing: EASE.enter }),
+      withDelay(DAMAGE_HOLD, withTiming(-14, { duration: DAMAGE_FADE, easing: EASE.exit })),
+    );
+    dmgTransX.value = withDelay(DAMAGE_HOLD, withTiming(-10, { duration: DAMAGE_FADE, easing: EASE.exit }));
     // Clear from DOM after animation completes
     const clearId = setTimeout(() => setDmgDisplay(null), 80 + DAMAGE_HOLD + DAMAGE_FADE + 50);
     return () => clearTimeout(clearId);
   }, [damageEvent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dmgAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: dmgScale.value }, { translateX: dmgTransX.value }],
+    transform: [{ scale: dmgScale.value }, { translateX: dmgTransX.value }, { translateY: dmgTransY.value }],
     opacity: dmgOpacity.value,
   }));
 
@@ -761,7 +767,7 @@ const ehp = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -44,
+    right: -40,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -856,8 +862,9 @@ const ehp = StyleSheet.create({
   },
   popupWrap: {
     position: 'absolute',
-    left: '100%',
-    marginLeft: 3,
+    bottom: '100%',
+    marginBottom: 4,
+    left: 0,
   },
   dmgNumber: {
     fontFamily: 'Orbitron_900Black',
@@ -898,6 +905,7 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
   const staScale   = useSharedValue(0);
   const staOpacity = useSharedValue(0);
   const staTransX  = useSharedValue(0);
+  const staTransY  = useSharedValue(0);
   const prevStaKey = useRef(0);
   const [staDisplay, setStaDisplay] = useState<StaminaPopupEvent | null>(null);
 
@@ -906,9 +914,11 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
     prevStaKey.current = staminaEvent.key;
     setStaDisplay(staminaEvent);
 
+    // Pop in from above, hold, drift to bottom-left on exit
     staScale.value = 0;
     staOpacity.value = 0;
-    staTransX.value = 8;
+    staTransX.value = 0;
+    staTransY.value = -8;
     staScale.value = withSequence(
       withTiming(MOTION.burst.overshoot, { duration: 120, easing: EASE.enter }),
       withTiming(1, { duration: 100, easing: EASE.inOut }),
@@ -917,14 +927,18 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
       withTiming(1, { duration: 80 }),
       withDelay(DAMAGE_HOLD, withTiming(0, { duration: DAMAGE_FADE, easing: EASE.exit })),
     );
-    staTransX.value = withTiming(0, { duration: 180, easing: EASE.enter });
+    staTransY.value = withSequence(
+      withTiming(0, { duration: 180, easing: EASE.enter }),
+      withDelay(DAMAGE_HOLD, withTiming(14, { duration: DAMAGE_FADE, easing: EASE.exit })),
+    );
+    staTransX.value = withDelay(DAMAGE_HOLD, withTiming(-10, { duration: DAMAGE_FADE, easing: EASE.exit }));
     // Clear from DOM after animation completes
     const clearId = setTimeout(() => setStaDisplay(null), 80 + DAMAGE_HOLD + DAMAGE_FADE + 50);
     return () => clearTimeout(clearId);
   }, [staminaEvent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const staAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: staScale.value }, { translateX: staTransX.value }],
+    transform: [{ scale: staScale.value }, { translateX: staTransX.value }, { translateY: staTransY.value }],
     opacity: staOpacity.value,
   }));
 
@@ -1090,7 +1104,7 @@ const esta = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -44,
+    right: -40,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -1119,8 +1133,9 @@ const esta = StyleSheet.create({
   },
   popupWrap: {
     position: 'absolute',
-    left: '100%',
-    marginLeft: 3,
+    top: '100%',
+    marginTop: 4,
+    left: 0,
   },
   pip: {
     flex: 1,
