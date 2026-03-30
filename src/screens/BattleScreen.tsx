@@ -528,6 +528,7 @@ const dp = StyleSheet.create({
 const EXT_HP_OVERHANG = 40;   // px beyond each card edge
 const EXT_HP_W = ACTIVE_W + EXT_HP_OVERHANG * 2;   // 236px
 const EXT_HP_BAR_H = 8;
+const SWEEP_W = 24; // width of the sweep beam gradient
 
 const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent }: {
   hp: number; maxHp: number; damageEvent: DamagePopupEvent | null;
@@ -555,6 +556,76 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
     return () => cancelAnimation(pulseOp);
   }, [isLow]); // eslint-disable-line react-hooks/exhaustive-deps
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulseOp.value }));
+
+  // Glow pulse — slow breathing rhythm on the full-track outer glow
+  const glowPulse = useSharedValue(0.3);
+  useEffect(() => {
+    glowPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(glowPulse);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const glowPulseStyle = useAnimatedStyle(() => ({ opacity: glowPulse.value }));
+
+  // Flicker — irregular opacity oscillation simulating projection instability
+  const flickerOp = useSharedValue(1);
+  useEffect(() => {
+    flickerOp.value = withRepeat(
+      withSequence(
+        withTiming(1,    { duration: 1600 }),
+        withTiming(0.5,  { duration: 45  }),
+        withTiming(1,    { duration: 80  }),
+        withTiming(0.65, { duration: 35  }),
+        withTiming(1,    { duration: 120 }),
+        withTiming(0.12, { duration: 25  }),
+        withTiming(1,    { duration: 90  }),
+        withTiming(1,    { duration: 1100 }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(flickerOp);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const flickerStyle = useAnimatedStyle(() => ({ opacity: flickerOp.value }));
+
+  // Sweep line
+  const sweepX = useSharedValue(-SWEEP_W);
+  useEffect(() => {
+    sweepX.value = -SWEEP_W;
+    sweepX.value = withRepeat(
+      withTiming(EXT_HP_W + SWEEP_W, { duration: 2500, easing: Easing.linear }),
+      -1, false,
+    );
+    return () => cancelAnimation(sweepX);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: sweepX.value }],
+  }));
+
+  // Glitch snap — matches flicker timing so number shifts during brightness dips
+  const glitchX = useSharedValue(0);
+  useEffect(() => {
+    glitchX.value = withRepeat(
+      withSequence(
+        withTiming(0,   { duration: 1600 }),
+        withTiming(2,   { duration: 20  }),
+        withTiming(0,   { duration: 105 }),
+        withTiming(-1,  { duration: 15  }),
+        withTiming(0,   { duration: 140 }),
+        withTiming(2,   { duration: 12  }),
+        withTiming(0,   { duration: 103 }),
+        withTiming(0,   { duration: 1100 }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(glitchX);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const glitchStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: glitchX.value }],
+  }));
 
   // Inline damage number
   const dmgScale   = useSharedValue(0);
@@ -599,20 +670,67 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
     : T.status.danger;
 
   return (
-    <View style={ehp.container} pointerEvents="none">
+    <ReAnimated.View style={[ehp.container, flickerStyle]} pointerEvents="none">
       <Text style={ehp.tag}>HP</Text>
-      {/* Bar track — full width */}
-      <ReAnimated.View style={[ehp.track, pulseStyle, { shadowColor: fillColor }]}>
-        <View style={[ehp.fill, { width: `${pct * 100}%`, backgroundColor: fillColor }]}>
-          <View style={ehp.gloss} />
-        </View>
-      </ReAnimated.View>
+      {/* Bar track with ambient bloom behind it */}
+      <View>
+        {/* Full-track outer glow — pulsing colored halo behind entire track */}
+        <ReAnimated.View
+          style={[ehp.trackGlow, glowPulseStyle, { backgroundColor: fillColor, shadowColor: fillColor }]}
+          pointerEvents="none"
+        />
+        {/* Chromatic fringe — violet ghost offset below-right, behind everything */}
+        <View style={ehp.chromaticFringe} pointerEvents="none" />
+        {/* Ambient bloom — behind the track, matches fill width */}
+        <View
+          style={[ehp.bloom, { width: pct * EXT_HP_W, backgroundColor: fillColor, shadowColor: fillColor }]}
+          pointerEvents="none"
+        />
+        {/* Bar track — full width */}
+        <ReAnimated.View style={[ehp.track, pulseStyle, {
+          shadowColor: 'white',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.7,
+          shadowRadius: 8,
+        }]}>
+          <View style={[ehp.fill, { width: `${pct * 100}%`, shadowColor: fillColor }]}>
+            <LinearGradient
+              colors={[fillColor + '80', fillColor, fillColor]}
+              locations={[0, 0.1, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFillObject}
+              pointerEvents="none"
+            />
+            <View style={ehp.topGlow} pointerEvents="none" />
+            <View style={ehp.gloss} />
+          </View>
+          {/* Sweep beam — clipped by track overflow:hidden */}
+          <ReAnimated.View style={[ehp.sweepBeam, sweepStyle]} pointerEvents="none">
+            <LinearGradient
+              colors={['transparent', 'rgba(255,255,255,0.65)', 'transparent']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFillObject}
+              pointerEvents="none"
+            />
+          </ReAnimated.View>
+        </ReAnimated.View>
+        {/* Floor glow — diffuse colored bloom cast below bar onto card surface */}
+        <View
+          style={[ehp.floorGlow, { backgroundColor: fillColor, shadowColor: fillColor }]}
+          pointerEvents="none"
+        />
+      </View>
       {/* HP number + damage popup — absolutely positioned to the right */}
       <View style={ehp.numberRow}>
-        <ReAnimated.View style={pulseStyle}>
-          <Text style={[ehp.value, { color: fillColor, ...TEXT_FX.glow(fillColor) }]}>
-            {hp}
-          </Text>
+        <ReAnimated.View style={[pulseStyle, glitchStyle]}>
+          <View>
+            <Text style={[ehp.value, ehp.chromaGhost]} pointerEvents="none">{hp}</Text>
+            <Text style={[ehp.value, { color: fillColor, textShadowColor: fillColor + 'ff', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 24 }]}>
+              {hp}
+            </Text>
+          </View>
         </ReAnimated.View>
         {dmgDisplay && (
           <ReAnimated.View style={[ehp.popupWrap, dmgAnimStyle]}>
@@ -622,7 +740,7 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
           </ReAnimated.View>
         )}
       </View>
-    </View>
+    </ReAnimated.View>
   );
 });
 
@@ -643,7 +761,7 @@ const ehp = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -24,
+    right: -32,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -653,18 +771,88 @@ const ehp = StyleSheet.create({
     width: '100%',
     height: EXT_HP_BAR_H,
     borderRadius: EXT_HP_BAR_H / 2,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,20,40,0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.6)',
     overflow: 'hidden',
+  },
+  sweepBeam: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: SWEEP_W,
+  },
+  trackGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: EXT_HP_BAR_H,
+    borderRadius: EXT_HP_BAR_H / 2,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
+    shadowOpacity: 1,
+    shadowRadius: 20,
+  },
+  floorGlow: {
+    position: 'absolute',
+    top: EXT_HP_BAR_H + 4,
+    left: EXT_HP_OVERHANG,
+    width: ACTIVE_W,
+    height: 4,
+    borderRadius: 2,
+    opacity: 0.3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 18,
+  },
+  chromaticFringe: {
+    position: 'absolute',
+    top: 2,
+    left: 1,
+    right: -1,
+    height: EXT_HP_BAR_H,
+    borderRadius: EXT_HP_BAR_H / 2,
+    backgroundColor: '#cc44ff',
+    opacity: 0.55,
+  },
+  bloom: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: EXT_HP_BAR_H,
+    borderRadius: EXT_HP_BAR_H / 2,
+    opacity: 0.35,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+  },
+  topGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,1.0)',
+    borderRadius: 99,
+    shadowColor: 'white',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
   },
   value: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.sm,
-    letterSpacing: 1,
+    letterSpacing: 3,
+  },
+  chromaGhost: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    color: '#cc44ff',
+    opacity: 0.55,
+    textShadowColor: 'transparent',
+    textShadowRadius: 0,
   },
   popupWrap: {
     position: 'absolute',
@@ -680,6 +868,11 @@ const ehp = StyleSheet.create({
     height: '100%',
     borderRadius: EXT_HP_BAR_H / 2,
     overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.5)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
   },
   gloss: {
     position: 'absolute',
@@ -735,25 +928,136 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
     opacity: staOpacity.value,
   }));
 
+  // Glow pulse — start at midpoint so HP and STA breathe out of phase
+  const staGlowPulse = useSharedValue(0.65);
+  useEffect(() => {
+    staGlowPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 2100, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.8, { duration: 2100, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(staGlowPulse);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const staGlowPulseStyle = useAnimatedStyle(() => ({ opacity: staGlowPulse.value }));
+
+  // Flicker — offset phase from HP bar
+  const staFlickerOp = useSharedValue(1);
+  useEffect(() => {
+    staFlickerOp.value = withRepeat(
+      withSequence(
+        withTiming(1,    { duration: 1100 }),
+        withTiming(0.45, { duration: 40  }),
+        withTiming(1,    { duration: 70  }),
+        withTiming(1,    { duration: 1800 }),
+        withTiming(0.6,  { duration: 50  }),
+        withTiming(1,    { duration: 85  }),
+        withTiming(0.15, { duration: 20  }),
+        withTiming(1,    { duration: 100 }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(staFlickerOp);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const staFlickerStyle = useAnimatedStyle(() => ({ opacity: staFlickerOp.value }));
+
+  // Sweep line — start offset mid-cycle so HP and STA sweeps are staggered
+  const staSweepX = useSharedValue(EXT_HP_W * 0.5);
+  useEffect(() => {
+    staSweepX.value = withRepeat(
+      withTiming(EXT_HP_W + SWEEP_W, { duration: 2500, easing: Easing.linear }),
+      -1, false,
+    );
+    return () => cancelAnimation(staSweepX);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const staSweepStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: staSweepX.value }],
+  }));
+
+  // Glitch snap — matches STA flicker timing
+  const staGlitchX = useSharedValue(0);
+  useEffect(() => {
+    staGlitchX.value = withRepeat(
+      withSequence(
+        withTiming(0,   { duration: 1100 }),
+        withTiming(-2,  { duration: 20  }),
+        withTiming(0,   { duration: 90  }),
+        withTiming(0,   { duration: 1800 }),
+        withTiming(1,   { duration: 20  }),
+        withTiming(0,   { duration: 115 }),
+        withTiming(-2,  { duration: 10  }),
+        withTiming(0,   { duration: 110 }),
+      ),
+      -1, false,
+    );
+    return () => cancelAnimation(staGlitchX);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const staGlitchStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: staGlitchX.value }],
+  }));
+
   return (
-    <View style={esta.container} pointerEvents="none">
+    <ReAnimated.View style={[esta.container, staFlickerStyle]} pointerEvents="none">
       <Text style={esta.tag}>STA</Text>
       {/* Pip track — full width */}
+      <View>
+        {/* Full-track outer glow — pulsing cyan halo behind entire track */}
+        <ReAnimated.View style={[esta.trackGlow, staGlowPulseStyle]} pointerEvents="none" />
       <View style={esta.track}>
         {Array.from({ length: maxStamina }, (_, i) => (
           <View key={i} style={[
             esta.pip,
             i < stamina ? esta.pipFilled : esta.pipEmpty,
+            i < stamina && { backgroundColor: 'transparent' as const },
           ]}>
-            {i < stamina && <View style={esta.pipGloss} />}
+            {i < stamina && (
+              <>
+                <LinearGradient
+                  colors={[T.domain.stamina + '80', T.domain.stamina]}
+                  locations={[0, 0.35]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={StyleSheet.absoluteFillObject}
+                  pointerEvents="none"
+                />
+                <View style={esta.pipTopGlow} pointerEvents="none" />
+                <View style={esta.pipGloss} />
+              </>
+            )}
           </View>
         ))}
+        {/* Sweep beam — fades to transparent at edges so no hard clip needed */}
+        <ReAnimated.View style={[esta.sweepBeam, staSweepStyle]} pointerEvents="none">
+          <LinearGradient
+            colors={['transparent', 'rgba(255,255,255,0.65)', 'transparent']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+        </ReAnimated.View>
+      </View>
+        {/* Floor glow — one slab per pip, only filled pips cast a shadow */}
+        <View style={esta.floorGlowRow} pointerEvents="none">
+          {Array.from({ length: maxStamina }, (_, i) => (
+            <View
+              key={i}
+              style={[esta.floorGlowPip, i < stamina ? esta.floorGlowPipFilled : esta.floorGlowPipEmpty]}
+            />
+          ))}
+        </View>
       </View>
       {/* Number + popup — absolutely positioned to the right */}
       <View style={esta.numberRow}>
-        <Text style={[esta.value, { color: T.domain.stamina, ...TEXT_FX.glow(T.domain.stamina) }]}>
-          {stamina}
-        </Text>
+        <ReAnimated.View style={staGlitchStyle}>
+          <View>
+            <Text style={[esta.value, esta.chromaGhost]} pointerEvents="none">{stamina}</Text>
+            <Text style={[esta.value, { color: T.domain.stamina, textShadowColor: T.domain.stamina + 'ff', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 24 }]}>
+              {stamina}
+            </Text>
+          </View>
+        </ReAnimated.View>
         {staDisplay && (
           <ReAnimated.View style={[esta.popupWrap, staAnimStyle]}>
             <Text style={[esta.popupNumber, {
@@ -765,7 +1069,7 @@ const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina,
           </ReAnimated.View>
         )}
       </View>
-    </View>
+    </ReAnimated.View>
   );
 });
 
@@ -786,7 +1090,7 @@ const esta = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -24,
+    right: -32,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -797,11 +1101,21 @@ const esta = StyleSheet.create({
     height: EXT_STA_BAR_H,
     flexDirection: 'row',
     gap: EXT_STA_PIP_GAP,
+    overflow: 'hidden',
   },
   value: {
     fontFamily: 'Orbitron_700Bold',
     fontSize: T.font.sm,
-    letterSpacing: 1,
+    letterSpacing: 3,
+  },
+  chromaGhost: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    color: '#cc44ff',
+    opacity: 0.55,
+    textShadowColor: 'transparent',
+    textShadowRadius: 0,
   },
   popupWrap: {
     position: 'absolute',
@@ -812,19 +1126,88 @@ const esta = StyleSheet.create({
     flex: 1,
     height: '100%',
     borderRadius: EXT_STA_BAR_H / 2,
-    overflow: 'hidden',
   },
-  pipFilled: {
+  sweepBeam: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: SWEEP_W,
+  },
+  trackGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: EXT_STA_BAR_H,
+    borderRadius: EXT_STA_BAR_H / 2,
     backgroundColor: T.domain.stamina,
     shadowColor: T.domain.stamina,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 1,
+    shadowRadius: 18,
+  },
+  floorGlowRow: {
+    position: 'absolute',
+    top: EXT_STA_BAR_H + 3,
+    left: EXT_HP_OVERHANG,
+    width: ACTIVE_W,
+    height: 3,
+    flexDirection: 'row',
+    gap: EXT_STA_PIP_GAP,
+  },
+  floorGlowPip: {
+    flex: 1,
+    height: 3,
+    borderRadius: 1,
+  },
+  floorGlowPipFilled: {
+    backgroundColor: T.domain.stamina,
+    shadowColor: T.domain.stamina,
+    opacity: 0.35,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+  },
+  floorGlowPipEmpty: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    shadowColor: 'white',
+    opacity: 0.5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+  },
+  pipFilled: {
+    backgroundColor: T.domain.stamina,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: 'white',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+  },
+  pipTopGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,1.0)',
+    borderRadius: 99,
+    shadowColor: 'white',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
     shadowRadius: 4,
   },
   pipEmpty: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,20,40,0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: 'white',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
   },
   pipGloss: {
     position: 'absolute',
@@ -928,6 +1311,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
                     isActive
                     hideHpBar
                     hideStaBar
+                    hideAccentBars
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
                 </CardWrapper>
@@ -946,7 +1330,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
 const aas = StyleSheet.create({
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, position: 'relative' as const },
   empty:        { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xl, color: T.bg.border },
-  deckCol:      { position: 'absolute', left: 6, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', gap: 4 },
+  deckCol:      { position: 'absolute', left: 6, top: Math.round((50 + 150 / 2) * ACTIVE_SCALE - (DECK_H + DECK_LAYER_OFFSET * 3) / 2), alignItems: 'center', gap: 4 },
   deckWrap:     { position: 'relative' },
   badge:        { position: 'absolute', bottom: -4, right: -4, backgroundColor: T.bg.elevated, borderWidth: 1, borderColor: '#3a2a6a', borderRadius: 4, paddingHorizontal: 3, minWidth: 16, alignItems: 'center' },
   badgeText:    { fontFamily: 'Orbitron_700Bold', fontSize: T.font.xs, color: '#9966ff', lineHeight: 14 },
@@ -1073,6 +1457,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
                     isActive
                     hideHpBar
                     hideStaBar
+                    hideAccentBars
                     hpPct={card.maxHp > 0 ? card.hp / card.maxHp : 1}
                   />
                 </CardWrapper>

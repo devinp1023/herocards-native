@@ -152,6 +152,7 @@ interface HeroCardProps extends BattleProps {
   card: Card;
   showShine?: boolean;   // shimmer sweep — default false
   enableTilt?: boolean;  // 3D tilt on touch — default false
+  hideAccentBars?: boolean; // hides rarity vertical accent bars (used in active battle slots)
 }
 
 export function HeroCard({
@@ -166,6 +167,7 @@ export function HeroCard({
   hpPct,
   hideHpBar = false,
   hideStaBar = false,
+  hideAccentBars = false,
 }: HeroCardProps) {
   const fonts = useFontContext();
   const noiseImage = useImage(noiseSource);
@@ -551,7 +553,7 @@ export function HeroCard({
 
       {/* Stats group wrapper — HP, STA, pills in one box */}
       <View pointerEvents="none" style={styles.statsWrapper}>
-        <View style={[styles.statsAccentBar, { backgroundColor: rm.color }]} />
+        {!hideAccentBars && <View style={[styles.statsAccentBar, { backgroundColor: rm.color }]} />}
 
         {/* HP row — invisible when external battle HP bar is active (keep space) */}
         <Animated.View style={[styles.hpSection, isLowHp && lowHpStyle, hideHpBar && { opacity: 0 }]}>
@@ -607,7 +609,7 @@ export function HeroCard({
       {/* Ability text */}
       {card.ability && abilityDesc && (
         <>
-          <View pointerEvents="none" style={[styles.abilityAccentBar, { backgroundColor: rm.color }]} />
+          {!hideAccentBars && <View pointerEvents="none" style={[styles.abilityAccentBar, { backgroundColor: rm.color }]} />}
           <View pointerEvents="none" style={styles.abilityOverlay}>
             <Text style={styles.abilityText} numberOfLines={3}>
               <Text style={styles.abilityName}>{card.ability}: </Text>{abilityDesc}
