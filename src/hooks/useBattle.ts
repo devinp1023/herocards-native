@@ -546,58 +546,87 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
     events.push({ type: 'CARD_ENTER', side: 'ai', card: next.name, rarity: next.rarity, hp: next.hp, maxHp: next.maxHp });
   }, [endBattle]);
 
-  // ── Two-way combat deaths handler (both attacked) ─────────────────────────
-  const handleCombatDeaths = useCallback((pKilled: boolean, aKilled: boolean, events: BattleEvent[]) => {
+  // ── Choreographed defeat sequence ──────────────────────────────────────────
+  // Plays KO hold → fall → gap → replacement for killed cards.
+  // Returns true if battle ended (no cards left).
+  const choreographDefeat = useCallback(async (
+    pKilled: boolean,
+    aKilled: boolean,
+    events: BattleEvent[],
+  ) => {
     const p = pRef.current!;
     const a = aRef.current!;
 
-    // NOTE: setLastDefeated* must be called by the caller before invoking this function.
+    // KO hold — defeated card visible with pulsing red vignette
+    // (DefeatingCardAnim renders via lastDefeatedPlayerCard / lastDefeatedAiCard)
+    refresh();
+    await runSteps([[() => {}, CHOREO.defeatHold]], cancelled);
+    if (cancelled()) return true;
+
+    // Resolve kills and set active to null → triggers fall animation
     if (aKilled && pKilled) {
       resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
       (a as any).active = null; (p as any).active = null;
-      if (a.hand.length === 0 && a.deck.length === 0 && p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
-      if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-      if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'),     0); return; }
-      if (a.hand.length === 0 && a.deck.length > 0) drawCard(a);
-      const next = aiSelectCard(a.hand, 'Brawler');
-      if (next) { a.hand = a.hand.filter(c => c.id !== next.id); a.active = next; applyEntryEffects(next, a, p, events, true); }
-      if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-      updatePhase('result'); refresh(); return;
-    }
-    if (aKilled) {
+    } else if (aKilled) {
       resolveKill(p.active, p, a, events); resolveDefeat(a.active, a, events, p);
       (a as any).active = null;
-      if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-      // Sprint 5: AI stuck with only locked Legendaries
-      if (checkLegendaryStuck(a, 'ai', events)) return;
-      doAiReplace(events);
-      updatePhase('result'); refresh(); return;
-    }
-    if (pKilled) {
+    } else if (pKilled) {
       resolveKill(a.active, a, p, events); resolveDefeat(p.active, p, events, a);
-      // Last Effort could kill a.active
+      // Check Last Effort killing AI
       if (a.active && a.active.hp <= 0) {
         resolveDefeat(a.active, a, events);
         setLastDefeatedAiCard(a.active);
-        (a as any).active = null; (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0 && a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return; }
-        if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-        // Sprint 5: AI stuck with only locked Legendaries
-        if (checkLegendaryStuck(a, 'ai', events)) return;
-        doAiReplace(events);
-        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        updatePhase('result'); refresh(); return;
+        (a as any).active = null;
       }
       (p as any).active = null;
-      if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-      if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-      // Sprint 5: player stuck with only locked Legendaries
-      if (checkLegendaryStuck(p, 'player', events)) return;
-      updatePhase('result'); refresh(); return;
     }
-    finishRound(events);
-  }, [endBattle, doAiReplace, finishRound, checkLegendaryStuck]);
+    refresh();
+
+    // Defeat fall + gap — empty slot visible
+    await runSteps([
+      [() => {}, CHOREO.defeatFall],
+      [() => {}, CHOREO.defeatGap],
+    ], cancelled);
+    if (cancelled()) return true;
+
+    // Check battle end conditions
+    const aOut = !a.active && a.hand.length === 0 && a.deck.length === 0;
+    const pOut = !p.active && p.hand.length === 0 && p.deck.length === 0;
+    if (aOut && pOut) { updatePhase('result'); refresh(); setTimeout(() => endBattle('tie'), 0); return true; }
+    if (aOut) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return true; }
+    if (pOut) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return true; }
+
+    // AI replacement — card springs into active slot
+    if (!a.active) {
+      if (checkLegendaryStuck(a, 'ai', events)) return true;
+      if (a.hand.length === 0 && a.deck.length > 0) drawCard(a);
+      doAiReplace(events);
+      refresh();
+      await runSteps([[() => {}, CHOREO.replaceEntry + CHOREO.replaceSettle]], cancelled);
+      if (cancelled()) return true;
+    }
+
+    // Player forced draw if needed
+    if (!p.active) {
+      if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
+      if (checkLegendaryStuck(p, 'player', events)) return true;
+    }
+
+    return false; // battle continues
+  }, [endBattle, doAiReplace, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Two-way combat deaths handler (both attacked) ─────────────────────────
+  // NOTE: setLastDefeated* must be called by the caller before invoking.
+  const handleCombatDeaths = useCallback(async (pKilled: boolean, aKilled: boolean, events: BattleEvent[]) => {
+    if (pKilled || aKilled) {
+      const ended = await choreographDefeat(pKilled, aKilled, events);
+      if (ended || cancelled()) return;
+      updatePhase('result'); refresh();
+    } else {
+      finishRound(events);
+    }
+  }, [choreographDefeat, finishRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Execute AI's chosen action (non-combat part) ──────────────────────────
   // When AI draws, only fires the animation — call completeAiDraw() after drawDuration('ai') to mutate state.
@@ -710,12 +739,8 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       if (aKilled) {
         setLastDefeatedAiCard(a.active);
         gainAmp(p, 15);
-        resolveKill(p.active, p, a, events);
-        resolveDefeat(a.active, a, events, p);
-        (a as any).active = null;
-        if (a.hand.length === 0 && a.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('player'), 0); return; }
-        if (checkLegendaryStuck(a, 'ai', events)) return;
-        doAiReplace(events);
+        const ended = await choreographDefeat(false, true, events);
+        if (ended || cancelled()) return;
         updatePhase('result'); refresh();
       } else {
         finishRound(events);
@@ -813,7 +838,7 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
         else finishRound(events);
       }
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, doAiReplace, finishRound, handleCombatDeaths]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, doAiReplace, finishRound, handleCombatDeaths, choreographDefeat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── DRAW — sequential steps ────────────────────────────────────────────────
   //  step 1 (t=0):       player draws → card bounces into hand
@@ -881,18 +906,14 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       if (cancelled()) return;
 
       if (pKilled) {
-        resolveKill(a.active, a, p, events);
-        resolveDefeat(p.active, p, events, a);
-        (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        if (checkLegendaryStuck(p, 'player', events)) return;
+        const ended = await choreographDefeat(true, false, events);
+        if (ended || cancelled()) return;
         updatePhase('result'); refresh();
       } else {
         finishRound(events);
       }
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck, choreographDefeat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── REST — sequential steps ────────────────────────────────────────────────
   //  step 1 (t=0):       player rests (+5 stamina) — no attack
@@ -955,18 +976,14 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
 
       if (pKilled) {
         gainAmp(a, 15);
-        resolveKill(a.active, a, p, events);
-        resolveDefeat(p.active, p, events, a);
-        (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        if (checkLegendaryStuck(p, 'player', events)) return;
+        const ended = await choreographDefeat(true, false, events);
+        if (ended || cancelled()) return;
         updatePhase('result'); refresh();
       } else {
         finishRound(events);
       }
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck, choreographDefeat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SWAP MODE (kept for UI compatibility) ──────────────────────────────────
   const enterSwapMode = useCallback(() => {
@@ -1065,18 +1082,15 @@ export function useBattle(playerDeckIds: number[], tier: number, savedState?: an
       if (cancelled()) return;
 
       if (pKilled) {
-        resolveKill(a.active, a, p, events);
-        resolveDefeat(p.active, p, events, a);
-        (p as any).active = null;
-        if (p.hand.length === 0 && p.deck.length === 0) { updatePhase('result'); refresh(); setTimeout(() => endBattle('ai'), 0); return; }
-        if (p.hand.length === 0 && p.deck.length > 0) drawCard(p);
-        if (checkLegendaryStuck(p, 'player', events)) return;
+        gainAmp(a, 15);
+        const ended = await choreographDefeat(true, false, events);
+        if (ended || cancelled()) return;
         updatePhase('result'); refresh();
       } else {
         finishRound(events);
       }
     }
-  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, round, executeAiAction, processAiAmp, endBattle, finishRound, checkLegendaryStuck, choreographDefeat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Forced card replacement (active card was killed) ──────────────────────
   const selectCard = useCallback((id: number) => {

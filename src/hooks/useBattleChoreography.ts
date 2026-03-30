@@ -55,6 +55,10 @@ export interface BattleChoreography {
   fireDrawAnimation: (side: 'player' | 'ai', card?: BattleCard | null) => void;
   clearDrawEvent: () => void;
 
+  // ── Defeat ──
+  showDefeat: (side: 'player' | 'ai') => void;
+  clearDefeat: () => void;
+
   // ── Announcements ──
   showActionLabel: (text: string, side: 'player' | 'ai') => void;
   clearActionLabel: () => void;
@@ -81,6 +85,7 @@ export interface BattleChoreography {
   damagePopup:        DamagePopupEvent | null;
   staminaPopup:       StaminaPopupEvent | null;
   drawEvent:          DrawEvent | null;
+  defeatSide:         'player' | 'ai' | null;
 }
 
 export function useBattleChoreography(): BattleChoreography {
@@ -114,6 +119,9 @@ export function useBattleChoreography(): BattleChoreography {
   // ── Draw event ─────────────────────────────────────────────────────────
   const [drawEvent, setDrawEvent] = useState<DrawEvent | null>(null);
   const drawEventKeyRef = useRef(0);
+
+  // ── Defeat ────────────────────────────────────────────────────────────
+  const [defeatSide, setDefeatSide] = useState<'player' | 'ai' | null>(null);
 
   // ── Action label ("REST", "DREW A CARD", "AI SWAPPED", etc.) ──────────
   const [actionLabel, setActionLabel] = useState<ActionLabelEvent | null>(null);
@@ -236,6 +244,14 @@ export function useBattleChoreography(): BattleChoreography {
     setDrawEvent(null);
   }, []);
 
+  // ── Defeat triggers ──────────────────────────────────────────────────
+  const showDefeat = useCallback((side: 'player' | 'ai') => {
+    setDefeatSide(side);
+  }, []);
+  const clearDefeat = useCallback(() => {
+    setDefeatSide(null);
+  }, []);
+
   // ── Action label triggers ─────────────────────────────────────────────
   const showActionLabel = useCallback((text: string, side: 'player' | 'ai') => {
     actionLabelKeyRef.current += 1;
@@ -254,6 +270,8 @@ export function useBattleChoreography(): BattleChoreography {
     fireStaminaPopup,
     fireDrawAnimation,
     clearDrawEvent,
+    showDefeat,
+    clearDefeat,
     showActionLabel,
     clearActionLabel,
     playerSlamKey,
@@ -273,5 +291,6 @@ export function useBattleChoreography(): BattleChoreography {
     damagePopup,
     staminaPopup,
     drawEvent,
+    defeatSide,
   };
 }

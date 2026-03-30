@@ -147,18 +147,46 @@ const cb = StyleSheet.create({
 });
 
 
-// ── Defeat animation — card falls and fades ───────────────────────────────────
-function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absolute?: boolean }) {
-  const translateY = useSharedValue(0);
-  const opacity    = useSharedValue(1);
+// ── Defeat animation — KO hold with red vignette, then fall ──────────────────
+function DefeatingCardAnim({ card, absolute = false, holdDuration = 0 }: {
+  card: BattleCard; absolute?: boolean; holdDuration?: number;
+}) {
+  const translateY  = useSharedValue(0);
+  const opacity     = useSharedValue(1);
+  const vignetteOp  = useSharedValue(0);
+
   useEffect(() => {
-    translateY.value = withTiming(70, { duration: 500, easing: Easing.in(Easing.cubic) });
-    opacity.value    = withTiming(0,  { duration: 420, easing: Easing.in(Easing.quad) });
+    // Red vignette pulsing during hold
+    if (holdDuration > 0) {
+      vignetteOp.value = withRepeat(
+        withSequence(
+          withTiming(0.5, { duration: 300 }),
+          withTiming(0.15, { duration: 300 }),
+        ), -1, true,
+      );
+    }
+
+    // Fall starts after hold
+    translateY.value = withDelay(holdDuration,
+      withTiming(70, { duration: CHOREO.defeatFall, easing: Easing.in(Easing.cubic) }),
+    );
+    opacity.value = withDelay(holdDuration,
+      withTiming(0, { duration: CHOREO.defeatFall - 80, easing: Easing.in(Easing.quad) }),
+    );
+    // Stop vignette pulse when fall starts
+    if (holdDuration > 0) {
+      vignetteOp.value = withDelay(holdDuration, withTiming(0, { duration: 100 }));
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
+  const vignetteStyle = useAnimatedStyle(() => ({
+    opacity: vignetteOp.value,
+  }));
+
   return (
     <ReAnimated.View
       style={[absolute && da.absolute, animStyle]}
@@ -174,11 +202,18 @@ function DefeatingCardAnim({ card, absolute = false }: { card: BattleCard; absol
           hpPct={0}
         />
       </CardWrapper>
+      {/* Red KO vignette overlay */}
+      <ReAnimated.View style={[da.vignette, vignetteStyle]} pointerEvents="none" />
     </ReAnimated.View>
   );
 }
 const da = StyleSheet.create({
   absolute: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
+  vignette: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 8, borderWidth: 3, borderColor: T.status.danger,
+    backgroundColor: T.status.danger + '30',
+  },
 });
 
 
@@ -1288,7 +1323,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
     if (defeatingCard && defeatingCard !== lastDefeatRef.current) {
       lastDefeatRef.current = defeatingCard;
       setShowDefeat(true);
-      const t = setTimeout(() => setShowDefeat(false), 620);
+      const t = setTimeout(() => setShowDefeat(false), CHOREO.defeatHold + CHOREO.defeatFall + 100);
       return () => clearTimeout(t);
     }
   }, [defeatingCard]);
@@ -1339,7 +1374,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
           <ExternalHpBar hp={card.hp} maxHp={card.maxHp} damageEvent={damageEvent} />
           <ExternalStaBar stamina={card.stamina} maxStamina={card.maxStamina} staminaEvent={staminaEvent} />
           <ReAnimated.View style={[flashStyle, aas.flashOverlay]} pointerEvents="none" />
-          {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute />}
+          {showDefeat && defeatingCard && <DefeatingCardAnim card={defeatingCard} absolute holdDuration={CHOREO.defeatHold} />}
         </View>
       </ReAnimated.View>
     </View>
@@ -1412,7 +1447,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
     if (defeatingCard && defeatingCard !== lastDefeatRef.current) {
       lastDefeatRef.current = defeatingCard;
       setShowDefeat(true);
-      const t = setTimeout(() => setShowDefeat(false), 620);
+      const t = setTimeout(() => setShowDefeat(false), CHOREO.defeatHold + CHOREO.defeatFall + 100);
       return () => clearTimeout(t);
     }
   }, [defeatingCard]);
@@ -1445,7 +1480,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
           onLayout={() => cardSlotRef.current?.measureInWindow((x, y, w, h) => onCardMeasureRef.current({ x, y, w, h }))}
         >
           {showDefeat && defeatingCard
-            ? <DefeatingCardAnim card={defeatingCard} />
+            ? <DefeatingCardAnim card={defeatingCard} holdDuration={CHOREO.defeatHold} />
             : <Text style={pas.emptyActiveHint}>drag card{'\n'}here</Text>
           }
         </View>
