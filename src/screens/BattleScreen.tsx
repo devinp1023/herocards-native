@@ -527,7 +527,7 @@ const dp = StyleSheet.create({
 // ── External HP Bar — extends beyond card edges during battle ─────────────────
 const EXT_HP_OVERHANG = 40;   // px beyond each card edge
 const EXT_HP_W = ACTIVE_W + EXT_HP_OVERHANG * 2;   // 236px
-const EXT_HP_BAR_H = 8;
+const EXT_HP_BAR_H = 11;
 const SWEEP_W = 24; // width of the sweep beam gradient
 
 const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent }: {
@@ -747,7 +747,7 @@ const ExternalHpBar = React.memo(function ExternalHpBar({ hp, maxHp, damageEvent
 const ehp = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: Math.round(285 * ACTIVE_SCALE),
+    top: Math.round(275 * ACTIVE_SCALE) - 3,
     left: -EXT_HP_OVERHANG,
     width: EXT_HP_W,
     justifyContent: 'center',
@@ -761,7 +761,7 @@ const ehp = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -32,
+    right: -44,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -808,7 +808,7 @@ const ehp = StyleSheet.create({
   },
   chromaticFringe: {
     position: 'absolute',
-    top: 2,
+    top: 3,
     left: 1,
     right: -1,
     height: EXT_HP_BAR_H,
@@ -886,7 +886,7 @@ const ehp = StyleSheet.create({
 });
 
 // ── External Stamina Bar — extends beyond card edges during battle ────────────
-const EXT_STA_BAR_H = 6;
+const EXT_STA_BAR_H = 9;
 const EXT_STA_PIP_GAP = 2;
 
 const ExternalStaBar = React.memo(function ExternalStaBar({ stamina, maxStamina, staminaEvent }: {
@@ -1090,7 +1090,7 @@ const esta = StyleSheet.create({
   },
   numberRow: {
     position: 'absolute',
-    right: -32,
+    right: -44,
     top: Math.round(T.font.xs + 1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -1179,7 +1179,7 @@ const esta = StyleSheet.create({
   },
   pipFilled: {
     backgroundColor: T.domain.stamina,
-    borderRadius: 3,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.6)',
     shadowColor: 'white',
