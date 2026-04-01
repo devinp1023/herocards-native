@@ -16,13 +16,14 @@ export const CARD_H = 433;
 interface CardWrapperProps {
   scale?: number;
   style?: ViewStyle;
+  allowOverflow?: boolean;
   children: React.ReactNode;
 }
 
-export function CardWrapper({ scale = 1, style, children }: CardWrapperProps) {
+export function CardWrapper({ scale = 1, style, allowOverflow, children }: CardWrapperProps) {
   return (
     // Outer view occupies exactly the scaled footprint in layout
-    <View style={[{ width: CARD_W * scale, height: CARD_H * scale, overflow: 'hidden' }, style]}>
+    <View style={[{ width: CARD_W * scale, height: CARD_H * scale, overflow: allowOverflow ? 'visible' : 'hidden' }, style]}>
       {/* Inner view is full 300×433 but visually scaled from the top-left corner.
           transformOrigin (RN 0.73+) pins the scale anchor to top-left so
           no manual translate math is needed. */}

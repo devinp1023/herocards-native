@@ -41,7 +41,7 @@ import { CHOREO } from '../battle/choreography';
 
 type Props = NativeStackScreenProps<BattleStackParamList, 'Battle'>;
 
-const ACTIVE_SCALE   = 0.52;
+const ACTIVE_SCALE   = 0.60;
 const HAND_SCALE     = 0.30;
 const AI_HAND_SCALE  = 0.14;
 const HAND_OVERLAP   = -18;
@@ -1368,7 +1368,7 @@ function AIActiveSection({ card, revealed, deckCount, targeted, hitKey, defeatin
           <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)} style={{ overflow: 'visible' }}>
             <ReAnimated.View style={[entryStyle, { overflow: 'visible' }]}>
               <AmpParticleWrap ampPercent={aiAmp} ampColor="#B14EFF">
-                <CardWrapper scale={ACTIVE_SCALE}>
+                <CardWrapper scale={ACTIVE_SCALE} allowOverflow>
                   <HeroCard
                     card={card}
                     showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
@@ -1516,7 +1516,7 @@ function PlayerActiveSection({ card, revealed, phase, deckCount, onDraw, canDraw
           <TouchableOpacity activeOpacity={0.9} onPress={() => onPreview(card)} style={{ overflow: 'visible' }}>
             <ReAnimated.View style={[entryStyle, { overflow: 'visible' }]}>
               <AmpParticleWrap ampPercent={playerAmp} ampColor="#00FFAA">
-                <CardWrapper scale={ACTIVE_SCALE}>
+                <CardWrapper scale={ACTIVE_SCALE} allowOverflow>
                   <HeroCard
                     card={card}
                     showShine={card.rarity === 'Legendary' || card.rarity === 'Epic'}
@@ -2441,6 +2441,7 @@ export default function BattleScreen({ navigation, route }: Props) {
 
         <View style={s.cardColumn}>
           <ReAnimated.View style={[s.cardSection, aiSectionZStyle, { position: 'relative' as const }]}>
+           <View style={s.aiTiltWrap} shouldRasterizeIOS={true} renderToHardwareTextureAndroid={true}>
             <ReAnimated.View style={aiCardAnimatedStyle}>
             <AIActiveSection
               card={battle.aiActive} revealed={battle.typeRevealed}
@@ -2455,6 +2456,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               deckBoundsRef={aiDeckBounds}
             />
             </ReAnimated.View>
+           </View>
             {/* Shockwave rings — centered on AI card at player slam impact */}
             <Shockwave
               triggerKey={shockwaveActive}
@@ -2476,6 +2478,7 @@ export default function BattleScreen({ navigation, route }: Props) {
           </ReAnimated.View>
 
           <ReAnimated.View style={[s.cardSection, playerSectionZStyle, { position: 'relative' as const }]}>
+           <View style={s.tiltWrap} shouldRasterizeIOS={true} renderToHardwareTextureAndroid={true}>
             <ReAnimated.View style={playerCardAnimatedStyle}>
             <PlayerActiveSection
               card={battle.playerActive}
@@ -2495,6 +2498,7 @@ export default function BattleScreen({ navigation, route }: Props) {
               deckBoundsRef={playerDeckBounds}
             />
             </ReAnimated.View>
+           </View>
             {/* Shockwave ring — AI slam impact on player card */}
             <Shockwave
               triggerKey={aiShockwaveActive}
@@ -2615,6 +2619,8 @@ const s = StyleSheet.create({
   cardColumn: { flex: 1 },
   ampOverlay: { position: 'absolute' as const, right: 6, top: 6, bottom: 6 },
   cardSection:{ flex: 1, justifyContent: 'center' },
+  tiltWrap:     { transform: [{ perspective: 1200 }, { rotateX: '34deg' }, { scale: 1 }] },
+  aiTiltWrap:   { transform: [{ perspective: 1200 }, { rotateX: '34deg' }, { scale: 0.85 }] },
   vsText:     { fontFamily: 'Orbitron_900Black', fontSize: T.font.sm, color: T.accent.mintMuted, letterSpacing: T.letterSpacing.xxl, paddingHorizontal: 10 },
 
 });

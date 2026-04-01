@@ -228,7 +228,7 @@ function AmpEffectLabelInner({
 
   const textContainerStyle = useAnimatedStyle(() => ({
     opacity: textPulse.value,
-    transform: [{ scale: triggerScale.value }],
+    transform: [{ perspective: 600 }, { rotateX: '34deg' }, { scale: triggerScale.value }],
   }));
 
   const textStyle = useAnimatedStyle(() => {
